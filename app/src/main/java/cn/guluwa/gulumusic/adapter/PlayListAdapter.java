@@ -43,7 +43,7 @@ public class PlayListAdapter extends RecyclerView.Adapter<PlayListAdapter.ViewHo
     public void onBindViewHolder(PlayListAdapter.ViewHolder holder, int position) {
         holder.getmPlayListItemLayoutBinding().setSong(data.get(position));
         holder.getmPlayListItemLayoutBinding().setSinger(data.get(position).getAr().get(0));
-//        holder.getmPlayListItemLayoutBinding().set
+        holder.getmPlayListItemLayoutBinding().setIndex(position+1);
     }
 
     @Override
