@@ -15,7 +15,10 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
-import cn.guluwa.gulumusic.utils.NetWorkUtil;
+import cn.guluwa.gulumusic.data.remote.retrofit.exception.NoNetworkException;
+import cn.guluwa.gulumusic.data.remote.retrofit.exception.ServiceException;
+import cn.guluwa.gulumusic.manage.Contacts;
+import cn.guluwa.gulumusic.utils.AppUtils;
 import okhttp3.Interceptor;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
@@ -37,26 +40,20 @@ public class RetrofitWorker {
         OkHttpClient.Builder builder = new OkHttpClient.Builder()
                 .addInterceptor(new ChuckInterceptor(context))//打印
                 .addInterceptor(sLoggingInterceptor)
-                .addInterceptor(new Interceptor() {
-                    @Override
-                    public Response intercept(Chain chain) throws IOException {
-                        boolean connected = NetWorkUtil.isNetConnected();
-                        if (connected) {
-                            return chain.proceed(chain.request());
-                        } else {
-                            throw new NoNetworkException();
-                        }
+                .addInterceptor(chain -> {
+                    boolean connected = AppUtils.isNetConnected();
+                    if (connected) {
+                        return chain.proceed(chain.request());
+                    } else {
+                        throw new NoNetworkException();
                     }
                 })
-                .addInterceptor(new Interceptor() {
-                    @Override
-                    public Response intercept(Chain chain) throws IOException {
-                        Response proceed = chain.proceed(chain.request());
-                        if (proceed.code() == 404) {
-                            throw new ServiceException();
-                        } else {
-                            return proceed;
-                        }
+                .addInterceptor(chain -> {
+                    Response proceed = chain.proceed(chain.request());
+                    if (proceed.code() == 404) {
+                        throw new ServiceException();
+                    } else {
+                        return proceed;
                     }
                 })
                 .connectTimeout(15, TimeUnit.SECONDS)
