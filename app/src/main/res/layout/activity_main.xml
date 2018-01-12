@@ -15,35 +15,37 @@
 
         <!-- 正文内容必须放在第一个，侧边内容放在最后一个并且添加android:layout_gravity="start"，否则不能滑动-->
 
-        <android.support.constraint.ConstraintLayout
+        <android.support.design.widget.CoordinatorLayout
             android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            tools:context="cn.guluwa.gulumusic.ui.MainActivity">
+            android:layout_height="match_parent">
 
-            <android.support.v7.widget.Toolbar
-                android:id="@+id/mToolBar"
+            <android.support.design.widget.AppBarLayout
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:background="@color/green"
-                android:minHeight="?attr/actionBarSize"
-                android:popupTheme="@style/ThemeOverlay.AppCompat.Light"
-                app:titleTextColor="@color/white" />
+                android:layout_height="wrap_content">
+
+                <android.support.v7.widget.Toolbar
+                    android:id="@+id/mToolBar"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:background="@color/green"
+                    android:minHeight="?attr/actionBarSize"
+                    android:popupTheme="@style/ThemeOverlay.AppCompat.Light"
+                    app:layout_scrollFlags="scroll|enterAlways"
+                    app:titleTextColor="@color/white" />
+            </android.support.design.widget.AppBarLayout>
 
             <android.support.v4.widget.SwipeRefreshLayout
                 android:id="@+id/mSwipeRefreshLayout"
                 android:layout_width="match_parent"
-                android:layout_height="0dp"
-                android:background="@color/white"
-                app:layout_constraintBottom_toBottomOf="parent"
-                app:layout_constraintTop_toBottomOf="@id/mToolBar">
+                android:layout_height="match_parent"
+                app:layout_behavior="@string/appbar_scrolling_view_behavior"                android:background="@color/white">
 
                 <android.support.v7.widget.RecyclerView
                     android:id="@+id/mRecyclerView"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content" />
-
             </android.support.v4.widget.SwipeRefreshLayout>
-        </android.support.constraint.ConstraintLayout>
+        </android.support.design.widget.CoordinatorLayout>
 
         <android.support.constraint.ConstraintLayout
             android:layout_width="match_parent"

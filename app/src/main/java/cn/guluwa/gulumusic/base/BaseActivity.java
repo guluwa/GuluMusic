@@ -16,7 +16,7 @@ public abstract class BaseActivity extends AppCompatActivity{
 
     protected abstract void initViews();
 
-    protected abstract void  initDagger();
+    protected abstract void  initViewModel();
 
     public ViewDataBinding mViewDataBinding;
 
@@ -25,7 +25,7 @@ public abstract class BaseActivity extends AppCompatActivity{
         super.onCreate(savedInstanceState);
         mViewDataBinding= DataBindingUtil.setContentView(this,getViewLayoutId());
         initViews();
-        initDagger();
+        initViewModel();
     }
 
     public void showToast(String msg){

@@ -1,10 +1,11 @@
-package cn.guluwa.gulumusic.ui;
+package cn.guluwa.gulumusic.ui.main;
 
+import android.arch.lifecycle.ViewModelProviders;
 import android.graphics.Color;
 import android.support.v4.view.MenuItemCompat;
-import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.app.ActionBarDrawerToggle;
 import android.support.v7.widget.LinearLayoutManager;
+import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.SearchView;
 import android.util.Log;
 import android.view.Menu;
@@ -12,26 +13,22 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.Toast;
 
-import java.util.ArrayList;
-import java.util.List;
+import com.bumptech.glide.Glide;
 
-import javax.inject.Inject;
+import java.util.List;
 
 import cn.guluwa.gulumusic.R;
 import cn.guluwa.gulumusic.adapter.PlayListAdapter;
 import cn.guluwa.gulumusic.base.BaseActivity;
-import cn.guluwa.gulumusic.dagger.component.DaggerMainComponent;
-import cn.guluwa.gulumusic.dagger.module.MainModule;
-import cn.guluwa.gulumusic.data.bean.PlayListBean;
+import cn.guluwa.gulumusic.data.bean.TracksBean;
 import cn.guluwa.gulumusic.databinding.ActivityMainBinding;
-import cn.guluwa.gulumusic.presenter.MainPresenter;
 import cn.guluwa.gulumusic.utils.AppUtils;
 
 public class MainActivity extends BaseActivity {
 
-    @Inject
-    MainPresenter presenter;
     private ActivityMainBinding mMainBinding;
+    private boolean sIsScrolling;
+    private MainViewModel mViewModel;
 
     @Override
     public int getViewLayoutId() {
@@ -77,21 +74,67 @@ public class MainActivity extends BaseActivity {
         mMainBinding.mSwipeRefreshLayout.setColorSchemeColors(
                 getResources().getColor(R.color.yellow),
                 getResources().getColor(R.color.green));
-        mMainBinding.mSwipeRefreshLayout.setOnRefreshListener(() -> presenter.obtainNetCloudHot());
+        mMainBinding.mSwipeRefreshLayout.setOnRefreshListener(() -> {
+            mViewModel.refresh(true);
+        });
     }
 
     private void initRecyclerView() {
         PlayListAdapter mAdapter = new PlayListAdapter();
         mMainBinding.mRecyclerView.setLayoutManager(new LinearLayoutManager(this));
         mMainBinding.mRecyclerView.setAdapter(mAdapter);
+        mMainBinding.mRecyclerView.addOnScrollListener(new RecyclerView.OnScrollListener() {
+            @Override
+            public void onScrollStateChanged(RecyclerView recyclerView, int newState) {
+                super.onScrollStateChanged(recyclerView, newState);
+                if (newState == RecyclerView.SCROLL_STATE_DRAGGING || newState == RecyclerView.SCROLL_STATE_SETTLING) {
+                    sIsScrolling = true;
+                    Glide.with(MainActivity.this).pauseRequests();
+                } else if (newState == RecyclerView.SCROLL_STATE_IDLE) {
+                    if (sIsScrolling) {
+                        Glide.with(MainActivity.this).resumeRequests();
+
+                    }
+                    sIsScrolling = false;
+                }
+            }
+
+            @Override
+            public void onScrolled(RecyclerView recyclerView, int dx, int dy) {
+                super.onScrolled(recyclerView, dx, dy);
+            }
+        });
     }
 
     @Override
-    protected void initDagger() {
-        DaggerMainComponent.builder().mainModule(new MainModule(this))
-                .build().inject(this);
-        mMainBinding.mSwipeRefreshLayout.setRefreshing(true);
-        presenter.obtainNetCloudHot();
+    protected void initViewModel() {
+        mViewModel = ViewModelProviders.of(this).get(MainViewModel.class);
+        mViewModel.queryNetCloudHotSong().observe(this, listViewDataBean -> {
+            if (listViewDataBean == null) {
+                mMainBinding.mSwipeRefreshLayout.setRefreshing(false);
+                return;
+            }
+            switch (listViewDataBean.status) {
+                case Loading:
+                    System.out.println("loading");
+                    mMainBinding.mSwipeRefreshLayout.setRefreshing(true);
+                    break;
+                case Error:
+                    System.out.println("error: " + listViewDataBean.throwable.getMessage());
+                    mMainBinding.mSwipeRefreshLayout.setRefreshing(false);
+                    break;
+                case Empty:
+                    System.out.println("empty");
+                    mMainBinding.mSwipeRefreshLayout.setRefreshing(false);
+                    break;
+                case Content:
+                    System.out.println("content");
+                    mMainBinding.mSwipeRefreshLayout.setRefreshing(false);
+                    setData(listViewDataBean.data);
+                    break;
+            }
+        });
+        mViewModel.refresh(true);
     }
 
     @Override
@@ -104,7 +147,7 @@ public class MainActivity extends BaseActivity {
         //设置输入框提示文字样式
         mSearchAutoComplete.setHintTextColor(getResources().getColor(R.color.gray));//设置提示文字颜色
         mSearchAutoComplete.setTextColor(getResources().getColor(android.R.color.white));//设置内容文字颜色
-        searchView.setQueryHint("搜索歌手、歌名、专辑");
+        searchView.setQueryHint(getString(R.string.search_view_hint));
         searchView.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
             @Override
             public boolean onQueryTextSubmit(String query) {
@@ -136,11 +179,7 @@ public class MainActivity extends BaseActivity {
         return super.onOptionsItemSelected(item);
     }
 
-    public void setData(List<PlayListBean.PlaylistBean.TracksBean> data) {
-        ((PlayListAdapter)mMainBinding.mRecyclerView.getAdapter()).setData(data);
-    }
-
-    public ActivityMainBinding getmMainBinding() {
-        return mMainBinding;
+    public void setData(List<TracksBean> data) {
+        ((PlayListAdapter) mMainBinding.mRecyclerView.getAdapter()).setData(data);
     }
 }

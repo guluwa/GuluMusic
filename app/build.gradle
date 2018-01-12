@@ -48,10 +48,19 @@ dependencies {
     debugImplementation 'com.readystatesoftware.chuck:library:1.0.4'
     releaseImplementation 'com.readystatesoftware.chuck:library-no-op:1.0.4'
 
-    //dagger
-    implementation 'com.google.dagger:dagger:2.12'
-    annotationProcessor  'com.google.dagger:dagger-compiler:2.12'
-
     //calligraphy，字体
     implementation 'uk.co.chrisjenx:calligraphy:2.3.0'
+
+    //glide
+    implementation 'com.github.bumptech.glide:glide:4.1.1'
+
+    // Lifecycles, LiveData and ViewModel
+    implementation "android.arch.lifecycle:runtime:1.0.3"
+    implementation "android.arch.lifecycle:extensions:1.0.0"
+    annotationProcessor "android.arch.lifecycle:compiler:1.0.0"
+    implementation "android.arch.lifecycle:reactivestreams:1.0.0"
+
+    // room
+    implementation "android.arch.persistence.room:runtime:1.0.0"
+    annotationProcessor "android.arch.persistence.room:compiler:1.0.0"
 }

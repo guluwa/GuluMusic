@@ -4,6 +4,7 @@ import android.app.Application;
 import android.content.Context;
 
 import cn.guluwa.gulumusic.R;
+import cn.guluwa.gulumusic.data.local.db.DBHelper;
 import uk.co.chrisjenx.calligraphy.CalligraphyConfig;
 
 /**
@@ -21,6 +22,12 @@ public class MyApplication extends Application{
 
         CalligraphyConfig.initDefault(new CalligraphyConfig.Builder().
                 setDefaultFontPath("fonts/Roboto-Monospace-Regular.ttf").setFontAttrId(R.attr.fontPath).build());
+        initDataBase();
+    }
+
+
+    private void initDataBase() {
+        DBHelper.getInstance().initDataBase(this);
     }
 
     public static Context getContext() {
