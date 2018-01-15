@@ -10,6 +10,7 @@ import android.support.v7.graphics.Palette;
 import android.view.View;
 import android.widget.ImageView;
 
+import cn.guluwa.gulumusic.listener.OnColorListener;
 import cn.guluwa.gulumusic.manage.MyApplication;
 
 
@@ -68,15 +69,49 @@ public class AppUtils {
     /**
      * 根据图片设定背景颜色和文字颜色
      */
-    public static void setBackGround(ImageView imageView, View view, int position) {
+    public static void getBackGroundAndTextColor(ImageView imageView, OnColorListener listener) {
+        int[] colors = new int[3];
         Bitmap bitmap = ((BitmapDrawable) imageView.getDrawable()).getBitmap();
         Palette.Builder builder = Palette.from(bitmap);
         builder.generate(palette -> {
-            Palette.Swatch vibrantSwatch = palette.getVibrantSwatch();
-            if (vibrantSwatch != null) {
-                vibrantSwatch.getBodyTextColor();
-                vibrantSwatch.getTitleTextColor();
+            Palette.Swatch vibrantSwatch;
+            if ((vibrantSwatch = palette.getMutedSwatch()) != null) {
+                colors[0] = vibrantSwatch.getRgb();
+                colors[1] = vibrantSwatch.getBodyTextColor();
+                colors[2] = vibrantSwatch.getTitleTextColor();
+                listener.success(colors);
+            } else if ((vibrantSwatch = palette.getLightMutedSwatch()) != null) {
+                colors[0] = vibrantSwatch.getRgb();
+                colors[1] = vibrantSwatch.getBodyTextColor();
+                colors[2] = vibrantSwatch.getTitleTextColor();
+                listener.success(colors);
+            } else if ((vibrantSwatch = palette.getDarkMutedSwatch()) != null) {
+                colors[0] = vibrantSwatch.getRgb();
+                colors[1] = vibrantSwatch.getBodyTextColor();
+                colors[2] = vibrantSwatch.getTitleTextColor();
+                listener.success(colors);
+            } else if ((vibrantSwatch = palette.getVibrantSwatch()) != null) {
+                colors[0] = deepenMoreColor(vibrantSwatch.getRgb());
+                colors[1] = deepenColor(vibrantSwatch.getBodyTextColor());
+                colors[2] = deepenColor(vibrantSwatch.getTitleTextColor());
+                listener.success(colors);
             }
         });
+    }
+
+    /**
+     * 对颜色进行加深处理
+     *
+     * @return
+     */
+    private static int deepenMoreColor(int RGBValues) {
+        int alpha = RGBValues >> 24;
+        int red = RGBValues >> 16 & 0xFF;
+        int green = RGBValues >> 8 & 0xFF;
+        int blue = RGBValues & 0xFF;
+        red = (int) Math.floor(red * (1 + 0.9));
+        green = (int) Math.floor(green * (1 + 0.9));
+        blue = (int) Math.floor(blue * (1 + 0.9));
+        return Color.rgb(red, green, blue);
     }
 }

@@ -12,11 +12,10 @@
         <variable
             name="song"
             type="cn.guluwa.gulumusic.data.bean.TracksBean" />
-
+        
         <variable
-            name="singer"
-            type="cn.guluwa.gulumusic.data.bean.TracksBean.ArBean" />
-
+            name="clickListener"
+            type="android.view.View.OnClickListener" />
     </data>
 
     <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
@@ -31,6 +30,7 @@
             android:layout_height="match_parent"
             android:layout_margin="5dp"
             android:background='@color/white'
+            android:onClick="@{clickListener}"
             app:cardCornerRadius="5dp"
             app:cardElevation="5dp"
             app:contentPaddingBottom="5dp"
@@ -47,7 +47,7 @@
                     android:layout_width="50dp"
                     android:layout_height="50dp"
                     android:scaleType="fitCenter"
-                    app:imageUrl="@{song.al.picUrl}"
+                    app:circleImageUrl="@{song.al.picUrl}"
                     app:layout_constraintBottom_toBottomOf="parent"
                     app:layout_constraintHorizontal_chainStyle="spread"
                     app:layout_constraintStart_toStartOf="parent"
@@ -80,12 +80,12 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginStart="10dp"
-                        android:text='@{song.tag}'
-                        android:textColor="@color/text_gray"
-                        android:textSize="15sp"
                         android:ellipsize="end"
                         android:maxEms="10"
                         android:singleLine="true"
+                        android:text='@{song.tag}'
+                        android:textColor="@color/text_gray"
+                        android:textSize="15sp"
                         app:layout_constraintStart_toEndOf="@id/tvSongName"
                         app:layout_constraintTop_toTopOf="parent" />
 
@@ -96,7 +96,7 @@
                         android:layout_marginBottom="5dp"
                         android:ellipsize="end"
                         android:maxLength="20"
-                        android:text='@{String.format("%s - %s",singer.name,song.al.name)}'
+                        android:text='@{String.format("%s - %s",song.singer.name,song.al.name)}'
                         android:textColor="@color/text_gray"
                         android:textSize="12sp"
                         app:layout_constraintBottom_toBottomOf="parent"

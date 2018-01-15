@@ -33,11 +33,18 @@ public class ImageViewAttrAdapter {
         view.setImageResource(resId);
     }
 
-    @BindingAdapter({"imageUrl"})
+    @BindingAdapter({"circleImageUrl"})
     public static void loadCircleImage(ImageView imageView, String url) {
         Glide.with(imageView.getContext())
                 .load(url)
                 .apply(new RequestOptions().override(AppUtils.dip2px(imageView.getContext(), 50)).circleCrop())
+                .into(imageView);
+    }
+
+    @BindingAdapter({"bigImageUrl"})
+    public static void loadBigImage(ImageView imageView, String url) {
+        Glide.with(imageView.getContext())
+                .load(url)
                 .into(imageView);
     }
 }

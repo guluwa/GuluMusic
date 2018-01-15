@@ -26,9 +26,9 @@ public class MainViewModel extends ViewModel {
         if (songs == null) {
             mRefresh = new MutableLiveData<>();
             songs = Transformations.switchMap(mRefresh, input -> {
-                if (input)
+                if (input) {
                     return songsRepository.queryNetCloudHotSong();
-                else
+                } else
                     return null;
             });
         }

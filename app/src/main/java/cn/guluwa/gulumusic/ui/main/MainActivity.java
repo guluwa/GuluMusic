@@ -76,6 +76,7 @@ public class MainActivity extends BaseActivity {
                 getResources().getColor(R.color.green));
         mMainBinding.mSwipeRefreshLayout.setOnRefreshListener(() -> {
             mViewModel.refresh(true);
+            System.out.println("222222222");
         });
     }
 
@@ -93,7 +94,6 @@ public class MainActivity extends BaseActivity {
                 } else if (newState == RecyclerView.SCROLL_STATE_IDLE) {
                     if (sIsScrolling) {
                         Glide.with(MainActivity.this).resumeRequests();
-
                     }
                     sIsScrolling = false;
                 }
@@ -120,14 +120,17 @@ public class MainActivity extends BaseActivity {
                     mMainBinding.mSwipeRefreshLayout.setRefreshing(true);
                     break;
                 case Error:
+                    mViewModel.refresh(false);
                     System.out.println("error: " + listViewDataBean.throwable.getMessage());
                     mMainBinding.mSwipeRefreshLayout.setRefreshing(false);
                     break;
                 case Empty:
+                    mViewModel.refresh(false);
                     System.out.println("empty");
                     mMainBinding.mSwipeRefreshLayout.setRefreshing(false);
                     break;
                 case Content:
+                    mViewModel.refresh(false);
                     System.out.println("content");
                     mMainBinding.mSwipeRefreshLayout.setRefreshing(false);
                     setData(listViewDataBean.data);
@@ -135,6 +138,7 @@ public class MainActivity extends BaseActivity {
             }
         });
         mViewModel.refresh(true);
+        System.out.println("1111111");
     }
 
     @Override
