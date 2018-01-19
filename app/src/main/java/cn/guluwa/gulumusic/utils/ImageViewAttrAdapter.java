@@ -37,7 +37,7 @@ public class ImageViewAttrAdapter {
     public static void loadCircleImage(ImageView imageView, String url) {
         Glide.with(imageView.getContext())
                 .load(url)
-                .apply(new RequestOptions().override(AppUtils.dip2px(imageView.getContext(), 50)).circleCrop())
+                .apply(new RequestOptions().override(AppUtils.dp2px(imageView.getContext(), 50)).circleCrop())
                 .into(imageView);
     }
 

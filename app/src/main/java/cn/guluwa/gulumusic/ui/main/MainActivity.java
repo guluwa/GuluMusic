@@ -1,6 +1,7 @@
 package cn.guluwa.gulumusic.ui.main;
 
 import android.arch.lifecycle.ViewModelProviders;
+import android.content.Intent;
 import android.graphics.Color;
 import android.support.v4.view.MenuItemCompat;
 import android.support.v7.app.ActionBarDrawerToggle;
@@ -22,6 +23,7 @@ import cn.guluwa.gulumusic.adapter.PlayListAdapter;
 import cn.guluwa.gulumusic.base.BaseActivity;
 import cn.guluwa.gulumusic.data.bean.TracksBean;
 import cn.guluwa.gulumusic.databinding.ActivityMainBinding;
+import cn.guluwa.gulumusic.ui.play.PlayActivity;
 import cn.guluwa.gulumusic.utils.AppUtils;
 
 public class MainActivity extends BaseActivity {
@@ -76,12 +78,16 @@ public class MainActivity extends BaseActivity {
                 getResources().getColor(R.color.green));
         mMainBinding.mSwipeRefreshLayout.setOnRefreshListener(() -> {
             mViewModel.refresh(true);
-            System.out.println("222222222");
         });
     }
 
     private void initRecyclerView() {
-        PlayListAdapter mAdapter = new PlayListAdapter();
+        PlayListAdapter mAdapter = new PlayListAdapter(song -> {
+            Intent intent = new Intent(MainActivity.this, PlayActivity.class);
+            intent.putExtra("song", song);
+            startActivity(intent);
+            overridePendingTransition(0, 0);
+        });
         mMainBinding.mRecyclerView.setLayoutManager(new LinearLayoutManager(this));
         mMainBinding.mRecyclerView.setAdapter(mAdapter);
         mMainBinding.mRecyclerView.addOnScrollListener(new RecyclerView.OnScrollListener() {
@@ -138,7 +144,6 @@ public class MainActivity extends BaseActivity {
             }
         });
         mViewModel.refresh(true);
-        System.out.println("1111111");
     }
 
     @Override
@@ -185,5 +190,11 @@ public class MainActivity extends BaseActivity {
 
     public void setData(List<TracksBean> data) {
         ((PlayListAdapter) mMainBinding.mRecyclerView.getAdapter()).setData(data);
+    }
+
+    @Override
+    protected void onPause() {
+        overridePendingTransition(0, 0);
+        super.onPause();
     }
 }

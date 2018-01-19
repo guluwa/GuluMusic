@@ -3,6 +3,7 @@ package cn.guluwa.gulumusic.ui.play;
 import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.support.annotation.Nullable;
+import android.view.View;
 
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.load.DataSource;
@@ -33,15 +34,24 @@ public class PlayActivity extends BaseActivity {
         mSong = (TracksBean) getIntent().getSerializableExtra("song");
         mPlayBinding.setSong(mSong);
         initStatus();
+        mPlayBinding.setClickListener(view -> {
+            switch (view.getId()) {
+                case R.id.mPlayBtn:
+                    mPlayBinding.mPlayBtn.startAnimation();
+                    break;
+            }
+        });
     }
 
     private void initStatus() {
-        Glide.with(this).asBitmap().apply(new RequestOptions().centerCrop())
+        Glide.with(this).asBitmap().apply(new RequestOptions().circleCrop())
                 .load(mSong.getAl().getPicUrl())
                 .listener(new RequestListener<Bitmap>() {
                     @Override
                     public boolean onLoadFailed(@Nullable GlideException e, Object model, Target<Bitmap> target, boolean isFirstResource) {
-                        Glide.with(PlayActivity.this).asBitmap().load(R.mipmap.ic_launcher).into(mPlayBinding.ivSongPic);
+                        Glide.with(PlayActivity.this).asBitmap()
+                                .apply(new RequestOptions().circleCrop())
+                                .load(R.mipmap.ic_launcher).into(mPlayBinding.ivSongPic);
                         return true;
                     }
 
@@ -57,6 +67,14 @@ public class PlayActivity extends BaseActivity {
                                     mPlayBinding.tvSongSinger.setTextColor(colors[1]);
                                     mPlayBinding.ivDownBack.setColorFilter(colors[1]);
                                     mPlayBinding.ivPlayMore.setColorFilter(colors[1]);
+                                    mPlayBinding.mProgressView.setmProgressColor(AppUtils.deepenLittleColor(colors[0]));
+                                    mPlayBinding.mProgressView.setmIndicatorColor(AppUtils.deepenColor(colors[0]));
+                                    mPlayBinding.mPlayBtn.setTopColor(AppUtils.deepenLittleColor(colors[0]));
+                                    mPlayBinding.mPlayBtn.setBtmColor(AppUtils.deepenColor(colors[0]));
+                                    mPlayBinding.mPlayBtn.setPlaying(true);
+                                    mPlayBinding.mPlayBtn.startAnimation();
+                                    mPlayBinding.mLastSongBtn.setColor(AppUtils.deepenLittleColor(colors[0]));
+                                    mPlayBinding.mNextSongBtn.setColor(AppUtils.deepenLittleColor(colors[0]));
                                 }
                             });
                             return true;

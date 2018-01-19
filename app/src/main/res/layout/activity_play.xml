@@ -6,6 +6,10 @@
         <variable
             name="song"
             type="cn.guluwa.gulumusic.data.bean.TracksBean" />
+
+        <variable
+            name="ClickListener"
+            type="android.view.View.OnClickListener" />
     </data>
 
     <android.support.constraint.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
@@ -17,9 +21,14 @@
         tools:context="cn.guluwa.gulumusic.ui.play.PlayActivity">
 
         <android.support.constraint.ConstraintLayout
-            android:layout_width="match_parent"
+            android:id="@+id/mTopLayout"
+            android:layout_width="0dp"
             android:layout_height="0dp"
-            app:lave="1">
+            app:layout_constraintBottom_toTopOf="@+id/mBottomLayout"
+            app:layout_constraintLeft_toLeftOf="parent"
+            app:layout_constraintRight_toRightOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintVertical_weight="0.6">
 
             <ImageView
                 android:id="@+id/ivDownBack"
@@ -76,29 +85,80 @@
                 android:id="@+id/tvSongWord"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="50dp"
-                android:textSize="12sp"
+                android:layout_marginTop="40dp"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toBottomOf="@+id/ivSongPic" />
+
         </android.support.constraint.ConstraintLayout>
 
         <android.support.constraint.ConstraintLayout
-            android:layout_width="match_parent"
+            android:id="@+id/mBottomLayout"
+            android:layout_width="0dp"
             android:layout_height="0dp"
-            app:layout_constraintVertical_weight="1">
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintLeft_toLeftOf="parent"
+            app:layout_constraintRight_toRightOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/mTopLayout"
+            app:layout_constraintVertical_weight="0.4">
 
             <android.support.design.widget.TabLayout
                 android:id="@+id/mTabLayout"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="50dp"
+                android:layout_marginBottom="250dp"
+                app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toBottomOf="@id/tvSongWord" />
+                app:layout_constraintStart_toStartOf="parent" />
 
+            <cn.guluwa.gulumusic.view.ProgressView
+                android:id="@+id/mProgressView"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="200dp"
+                android:layout_marginEnd="30dp"
+                android:layout_marginStart="30dp"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintLeft_toLeftOf="parent"
+                app:layout_constraintRight_toRightOf="parent" />
 
+            <android.support.constraint.ConstraintLayout
+                android:layout_width="match_parent"
+                android:layout_height="100dp"
+                android:layout_marginBottom="50dp"
+                app:layout_constraintBottom_toBottomOf="parent">
+
+                <cn.guluwa.gulumusic.view.LastSongButton
+                    android:id="@+id/mLastSongBtn"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginEnd="60dp"
+                    android:padding="5dp"
+                    app:layout_constraintBottom_toBottomOf="parent"
+                    app:layout_constraintRight_toLeftOf="@+id/mPlayBtn"
+                    app:layout_constraintTop_toTopOf="parent" />
+
+                <cn.guluwa.gulumusic.view.PlayButton
+                    android:id="@+id/mPlayBtn"
+                    android:layout_width="64dp"
+                    android:layout_height="64dp"
+                    android:onClick="@{ClickListener}"
+                    app:layout_constraintBottom_toBottomOf="parent"
+                    app:layout_constraintLeft_toLeftOf="parent"
+                    app:layout_constraintRight_toRightOf="parent"
+                    app:layout_constraintTop_toTopOf="parent" />
+
+                <cn.guluwa.gulumusic.view.NextSongButton
+                    android:id="@+id/mNextSongBtn"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="60dp"
+                    android:padding="5dp"
+                    app:layout_constraintBottom_toBottomOf="parent"
+                    app:layout_constraintLeft_toRightOf="@+id/mPlayBtn"
+                    app:layout_constraintTop_toTopOf="parent" />
+
+            </android.support.constraint.ConstraintLayout>
         </android.support.constraint.ConstraintLayout>
-
     </android.support.constraint.ConstraintLayout>
 </layout>

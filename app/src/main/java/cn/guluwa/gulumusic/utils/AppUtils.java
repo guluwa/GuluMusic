@@ -1,5 +1,6 @@
 package cn.guluwa.gulumusic.utils;
 
+import android.app.Activity;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.Color;
@@ -7,6 +8,7 @@ import android.graphics.drawable.BitmapDrawable;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.support.v7.graphics.Palette;
+import android.util.DisplayMetrics;
 import android.view.View;
 import android.widget.ImageView;
 
@@ -53,7 +55,7 @@ public class AppUtils {
     /**
      * 根据手机的分辨率从 dp 的单位 转成为 px(像素)
      */
-    public static int dip2px(Context context, float dpValue) {
+    public static int dp2px(Context context, float dpValue) {
         final float scale = context.getResources().getDisplayMetrics().density;
         return (int) (dpValue * scale + 0.5f);
     }
@@ -64,6 +66,14 @@ public class AppUtils {
     public static int px2dip(Context context, float pxValue) {
         final float scale = context.getResources().getDisplayMetrics().density;
         return (int) (pxValue / scale + 0.5f);
+    }
+
+    /**
+     * 将sp值转换为px值，保证文字大小不变
+     */
+    public static int sp2px(Context context, float spValue) {
+        final float fontScale = context.getResources().getDisplayMetrics().scaledDensity;
+        return (int) (spValue * fontScale + 0.5f);
     }
 
     /**
@@ -104,7 +114,7 @@ public class AppUtils {
      *
      * @return
      */
-    private static int deepenMoreColor(int RGBValues) {
+    public static int deepenMoreColor(int RGBValues) {
         int alpha = RGBValues >> 24;
         int red = RGBValues >> 16 & 0xFF;
         int green = RGBValues >> 8 & 0xFF;
@@ -113,5 +123,28 @@ public class AppUtils {
         green = (int) Math.floor(green * (1 + 0.9));
         blue = (int) Math.floor(blue * (1 + 0.9));
         return Color.rgb(red, green, blue);
+    }
+
+    /**
+     * 对颜色进行加深处理
+     *
+     * @return
+     */
+    public static int deepenLittleColor(int RGBValues) {
+        int alpha = RGBValues >> 24;
+        int red = RGBValues >> 16 & 0xFF;
+        int green = RGBValues >> 8 & 0xFF;
+        int blue = RGBValues & 0xFF;
+        red = (int) Math.floor(red * (1 + 0.5));
+        green = (int) Math.floor(green * (1 + 0.5));
+        blue = (int) Math.floor(blue * (1 + 0.5));
+        return Color.rgb(red, green, blue);
+    }
+
+    //手机屏幕宽高
+    public static DisplayMetrics getDisplayMetrics(Context context) {
+        DisplayMetrics metric = new DisplayMetrics();
+        ((Activity) context).getWindowManager().getDefaultDisplay().getMetrics(metric);
+        return metric;
     }
 }

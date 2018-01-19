@@ -14,6 +14,7 @@ import java.util.List;
 import cn.guluwa.gulumusic.R;
 import cn.guluwa.gulumusic.data.bean.TracksBean;
 import cn.guluwa.gulumusic.databinding.PlayListItemLayoutBinding;
+import cn.guluwa.gulumusic.listener.OnClickListener;
 import cn.guluwa.gulumusic.ui.play.PlayActivity;
 
 /**
@@ -22,9 +23,12 @@ import cn.guluwa.gulumusic.ui.play.PlayActivity;
 
 public class PlayListAdapter extends RecyclerView.Adapter<PlayListAdapter.ViewHolder> {
 
+    private OnClickListener listener;
+
     private List<TracksBean> data = new ArrayList<>();
 
-    public PlayListAdapter() {
+    public PlayListAdapter(OnClickListener listener) {
+        this.listener = listener;
     }
 
     public void setData(List<TracksBean> data) {
@@ -66,9 +70,7 @@ public class PlayListAdapter extends RecyclerView.Adapter<PlayListAdapter.ViewHo
             super(mPlayListItemLayoutBinding.getRoot());
             this.mPlayListItemLayoutBinding = mPlayListItemLayoutBinding;
             mPlayListItemLayoutBinding.setClickListener(view -> {
-                Intent intent = new Intent(itemView.getContext(), PlayActivity.class);
-                intent.putExtra("song", data.get(getAdapterPosition()));
-                itemView.getContext().startActivity(intent);
+                listener.click(data.get(getAdapterPosition()));
             });
         }
     }

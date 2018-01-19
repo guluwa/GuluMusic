@@ -34,7 +34,7 @@ public class RemoteSongsDataSource implements SongDataSource {
     @Override
     public LiveData<ViewDataBean<List<TracksBean>>> queryNetCloudHotSong() {
         Map<String, Object> map = new HashMap<>();
-        map.put("types", Contacts.NET_CLOUD_HOT_TYPES);
+        map.put("types", "playlist");
         map.put("id", Contacts.NET_CLOUD_HOT_ID);
         return LiveDataObservableAdapter.fromObservableViewData(
                 RetrofitFactory.getRetrofit().createApi(ApiService.class)
