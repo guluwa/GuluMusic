@@ -3,6 +3,8 @@ package cn.guluwa.gulumusic.ui.main;
 import android.arch.lifecycle.ViewModelProviders;
 import android.content.Intent;
 import android.graphics.Color;
+import android.support.v4.app.ActivityCompat;
+import android.support.v4.app.ActivityOptionsCompat;
 import android.support.v4.view.MenuItemCompat;
 import android.support.v7.app.ActionBarDrawerToggle;
 import android.support.v7.widget.LinearLayoutManager;
@@ -82,11 +84,12 @@ public class MainActivity extends BaseActivity {
     }
 
     private void initRecyclerView() {
-        PlayListAdapter mAdapter = new PlayListAdapter(song -> {
+        PlayListAdapter mAdapter = new PlayListAdapter((song, imageView) -> {
             Intent intent = new Intent(MainActivity.this, PlayActivity.class);
             intent.putExtra("song", song);
-            startActivity(intent);
-            overridePendingTransition(0, 0);
+            ActivityOptionsCompat options = ActivityOptionsCompat.makeSceneTransitionAnimation(
+                    this, imageView, "songPic");
+            ActivityCompat.startActivity(this, intent, options.toBundle());
         });
         mMainBinding.mRecyclerView.setLayoutManager(new LinearLayoutManager(this));
         mMainBinding.mRecyclerView.setAdapter(mAdapter);
@@ -194,7 +197,6 @@ public class MainActivity extends BaseActivity {
 
     @Override
     protected void onPause() {
-        overridePendingTransition(0, 0);
         super.onPause();
     }
 }

@@ -13,6 +13,7 @@ import android.support.annotation.Nullable;
 import android.util.AttributeSet;
 import android.view.View;
 
+import cn.guluwa.gulumusic.R;
 import cn.guluwa.gulumusic.utils.AppUtils;
 
 /**
@@ -161,9 +162,9 @@ public class PlayButton extends View {
     }
 
     private void initPaint() {
-        mBtmColor = Color.GRAY;
-        mTopColor = Color.BLACK;
-        mLineWidth = AppUtils.dp2px(getContext(), 1);
+        mBtmColor = getResources().getColor(R.color.play_view_gray);
+        mTopColor = getResources().getColor(R.color.play_view_black);
+        mLineWidth = AppUtils.dp2px(getContext(), 2);
         mRadius = (AppUtils.dp2px(getContext(), 64) - 2 * mLineWidth) / 2;
         mViewWidth = mViewHeight = AppUtils.dp2px(getContext(), 64);
         mCircleX = mCircleY = 0;
@@ -231,23 +232,17 @@ public class PlayButton extends View {
     private void initAnimation() {
         //进入播放状态动画初始化
         mPlayAnimator = ValueAnimator.ofFloat(0f, 1f);
-        mPlayAnimator.setDuration(1000);
-        mPlayAnimator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
-            @Override
-            public void onAnimationUpdate(ValueAnimator valueAnimator) {
-                mPlayAnimatorValue = (float) valueAnimator.getAnimatedValue();
-                invalidate();
-            }
+        mPlayAnimator.setDuration(500);
+        mPlayAnimator.addUpdateListener(valueAnimator -> {
+            mPlayAnimatorValue = (float) valueAnimator.getAnimatedValue();
+            invalidate();
         });
         //进入暂停状态动画初始化
         mStopPlayAnimator = ValueAnimator.ofFloat(0f, 1f);
-        mStopPlayAnimator.setDuration(1000);
-        mStopPlayAnimator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
-            @Override
-            public void onAnimationUpdate(ValueAnimator valueAnimator) {
-                mStopPlayAnimatorValue = (float) valueAnimator.getAnimatedValue();
-                invalidate();
-            }
+        mStopPlayAnimator.setDuration(500);
+        mStopPlayAnimator.addUpdateListener(valueAnimator -> {
+            mStopPlayAnimatorValue = (float) valueAnimator.getAnimatedValue();
+            invalidate();
         });
     }
 
@@ -263,7 +258,6 @@ public class PlayButton extends View {
         canvas.translate(mViewWidth / 2, mViewHeight / 2);
         canvas.drawCircle(mCircleX, mCircleY, mRadius, mBtmCirclePaint);
         if (isPlaying) {//播放--》暂停
-            canvas.drawCircle(mCircleX, mCircleY, mRadius, mTopCirclePaint);
             if (mStopPlayAnimatorValue <= 0.2) {
                 canvas.rotate(180);
                 mPathMeasure.setPath(mLeftLinePath, false);
@@ -280,7 +274,7 @@ public class PlayButton extends View {
                 mPathMeasure.setPath(mNiCirclePath, false);
                 mDstPath.reset();
                 mPathMeasure.getSegment(0, (float) (mPathMeasure.getLength() * (mStopPlayAnimatorValue - 0.2) * 5 / 4), mDstPath, true);
-                canvas.drawPath(mDstPath, mBtmCirclePaint);
+                canvas.drawPath(mDstPath, mTopCirclePaint);
                 if (mStopPlayAnimatorValue >= 0.8) {
                     canvas.rotate(-90);
                     mPathMeasure.setPath(mNiTrianglePath, false);
@@ -342,8 +336,7 @@ public class PlayButton extends View {
 
     public void setTopColor(int mTopColor) {
         this.mTopColor = mTopColor;
-        mTopCirclePaint.setColor(mTopColor
-        );
+        mTopCirclePaint.setColor(mTopColor);
         invalidate();
     }
 }

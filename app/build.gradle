@@ -53,6 +53,7 @@ dependencies {
 
     //glide
     implementation 'com.github.bumptech.glide:glide:4.1.1'
+    implementation 'jp.wasabeef:glide-transformations:3.0.1'
 
     // Lifecycles, LiveData and ViewModel
     implementation "android.arch.lifecycle:runtime:1.0.3"

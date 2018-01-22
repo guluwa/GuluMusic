@@ -70,7 +70,7 @@ public class PlayListAdapter extends RecyclerView.Adapter<PlayListAdapter.ViewHo
             super(mPlayListItemLayoutBinding.getRoot());
             this.mPlayListItemLayoutBinding = mPlayListItemLayoutBinding;
             mPlayListItemLayoutBinding.setClickListener(view -> {
-                listener.click(data.get(getAdapterPosition()));
+                listener.click(data.get(getAdapterPosition()),mPlayListItemLayoutBinding.ivSongPic);
             });
         }
     }

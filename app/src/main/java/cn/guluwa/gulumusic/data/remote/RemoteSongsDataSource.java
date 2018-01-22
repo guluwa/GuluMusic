@@ -6,6 +6,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import cn.guluwa.gulumusic.data.bean.SongPathBean;
+import cn.guluwa.gulumusic.data.bean.SongWordBean;
 import cn.guluwa.gulumusic.data.bean.TracksBean;
 import cn.guluwa.gulumusic.data.bean.ViewDataBean;
 import cn.guluwa.gulumusic.data.local.LocalSongsDataSource;
@@ -57,5 +59,16 @@ public class RemoteSongsDataSource implements SongDataSource {
                         })
                         .observeOn(AndroidSchedulers.mainThread())
         );
+    }
+
+    public ViewDataBean<SongPathBean> querySongPath(String id) {
+        Map<String, Object> map = new HashMap<>();
+        map.put("types", "url");
+        map.put("id", id);
+        map.put("source", "netease");
+    }
+
+    public ViewDataBean<SongWordBean> querySongWord(String id) {
+        return null;
     }
 }

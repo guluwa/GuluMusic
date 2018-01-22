@@ -13,10 +13,10 @@ import cn.guluwa.gulumusic.R;
 import cn.guluwa.gulumusic.utils.AppUtils;
 
 /**
- * Created by guluwa on 2018/1/19.
+ * Created by guluwa on 2018/1/22.
  */
 
-public class LastSongButton extends View {
+public class DownBackButton extends View {
 
     /**
      * 画笔
@@ -24,9 +24,14 @@ public class LastSongButton extends View {
     private Paint paint;
 
     /**
-     * view颜色
+     * view背景颜色
      */
-    private int color;
+    private int mBackColor;
+
+    /**
+     * 线条颜色
+     */
+    private int mLineColor;
 
     /**
      * view线条width
@@ -48,38 +53,40 @@ public class LastSongButton extends View {
      */
     private Path mViewPath;
 
-    public LastSongButton(Context context) {
+    /**
+     * 背景圆半径
+     */
+    private int mRadius;
+
+    public DownBackButton(Context context) {
         this(context, null);
     }
 
-    public LastSongButton(Context context, @Nullable AttributeSet attrs) {
+    public DownBackButton(Context context, @Nullable AttributeSet attrs) {
         this(context, attrs, 0);
     }
 
-    public LastSongButton(Context context, @Nullable AttributeSet attrs, int defStyleAttr) {
+    public DownBackButton(Context context, @Nullable AttributeSet attrs, int defStyleAttr) {
         super(context, attrs, defStyleAttr);
         initPaint();
     }
 
     private void initPaint() {
-        color = getResources().getColor(R.color.play_view_black);
+        mBackColor = getResources().getColor(R.color.black);
+        mLineColor = Color.WHITE;
         width = AppUtils.dp2px(getContext(), 2);
-        mViewWidth = mViewHeight = AppUtils.dp2px(getContext(), 20);
+        mViewWidth = mViewHeight = AppUtils.dp2px(getContext(), 24);
+        mRadius = AppUtils.dp2px(getContext(), 12);
 
         paint = new Paint(Paint.ANTI_ALIAS_FLAG);
-        paint.setStyle(Paint.Style.STROKE);
-        paint.setColor(color);
         paint.setStrokeWidth(width);
         paint.setStrokeCap(Paint.Cap.ROUND);
         paint.setStrokeJoin(Paint.Join.ROUND);
 
         mViewPath = new Path();
-        mViewPath.moveTo(width, width);
-        mViewPath.lineTo(width, mViewHeight - width);
-        mViewPath.moveTo(width, mViewHeight / 2);
-        mViewPath.lineTo(mViewWidth - width, width);
-        mViewPath.lineTo(mViewWidth - width, mViewHeight - width);
-        mViewPath.lineTo(width, mViewHeight / 2);
+        mViewPath.moveTo(AppUtils.dp2px(getContext(), 8), AppUtils.dp2px(getContext(), 12));
+        mViewPath.lineTo(AppUtils.dp2px(getContext(), 12), AppUtils.dp2px(getContext(), 15));
+        mViewPath.lineTo(AppUtils.dp2px(getContext(), 16), AppUtils.dp2px(getContext(), 12));
     }
 
     @Override
@@ -91,6 +98,11 @@ public class LastSongButton extends View {
     @Override
     protected void onDraw(Canvas canvas) {
         super.onDraw(canvas);
+        paint.setColor(mBackColor);
+        paint.setStyle(Paint.Style.FILL);
+        canvas.drawCircle(mViewWidth / 2, mViewHeight / 2, mRadius, paint);
+        paint.setColor(mLineColor);
+        paint.setStyle(Paint.Style.STROKE);
         canvas.drawPath(mViewPath, paint);
     }
 }

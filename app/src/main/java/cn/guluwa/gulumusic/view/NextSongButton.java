@@ -9,6 +9,7 @@ import android.support.annotation.Nullable;
 import android.util.AttributeSet;
 import android.view.View;
 
+import cn.guluwa.gulumusic.R;
 import cn.guluwa.gulumusic.utils.AppUtils;
 
 /**
@@ -61,8 +62,8 @@ public class NextSongButton extends View {
     }
 
     private void initPaint() {
-        color = Color.WHITE;
-        width = AppUtils.dp2px(getContext(), 1);
+        color = getResources().getColor(R.color.play_view_black);
+        width = AppUtils.dp2px(getContext(), 2);
         mViewWidth = mViewHeight = AppUtils.dp2px(getContext(), 20);
 
         paint = new Paint(Paint.ANTI_ALIAS_FLAG);
@@ -73,11 +74,12 @@ public class NextSongButton extends View {
         paint.setStrokeJoin(Paint.Join.ROUND);
 
         mViewPath = new Path();
-        mViewPath.lineTo(0, mViewHeight);
-        mViewPath.lineTo(mViewWidth, mViewHeight / 2);
-        mViewPath.lineTo(0, 0);
-        mViewPath.moveTo(mViewWidth, 0);
-        mViewPath.lineTo(mViewWidth, mViewHeight);
+        mViewPath.moveTo(width, width);
+        mViewPath.lineTo(width, mViewHeight - width);
+        mViewPath.lineTo(mViewWidth - width, mViewHeight / 2);
+        mViewPath.lineTo(width, width);
+        mViewPath.moveTo(mViewWidth - width, width);
+        mViewPath.lineTo(mViewWidth - width, mViewHeight - width);
     }
 
 
@@ -91,11 +93,5 @@ public class NextSongButton extends View {
     protected void onDraw(Canvas canvas) {
         super.onDraw(canvas);
         canvas.drawPath(mViewPath, paint);
-    }
-
-    public void setColor(int color) {
-        this.color = color;
-        paint.setColor(color);
-        invalidate();
     }
 }

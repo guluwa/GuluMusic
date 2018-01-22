@@ -47,6 +47,7 @@
                     android:layout_width="50dp"
                     android:layout_height="50dp"
                     android:scaleType="fitCenter"
+                    android:transitionName="songPic"
                     app:circleImageUrl="@{song.al.picUrl}"
                     app:layout_constraintBottom_toBottomOf="parent"
                     app:layout_constraintHorizontal_chainStyle="spread"
