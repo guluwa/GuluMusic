@@ -18,4 +18,8 @@ import cn.guluwa.gulumusic.data.bean.ViewDataBean;
 public interface SongDataSource {
 
     LiveData<ViewDataBean<List<TracksBean>>> queryNetCloudHotSong();
+
+    LiveData<ViewDataBean<SongPathBean>> querySongPath(String id);
+
+    LiveData<ViewDataBean<SongWordBean>> querySongWord(String id);
 }

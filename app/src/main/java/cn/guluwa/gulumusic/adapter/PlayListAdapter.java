@@ -15,7 +15,6 @@ import cn.guluwa.gulumusic.R;
 import cn.guluwa.gulumusic.data.bean.TracksBean;
 import cn.guluwa.gulumusic.databinding.PlayListItemLayoutBinding;
 import cn.guluwa.gulumusic.listener.OnClickListener;
-import cn.guluwa.gulumusic.ui.play.PlayActivity;
 
 /**
  * Created by guluwa on 2018/1/11.

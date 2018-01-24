@@ -2,6 +2,7 @@ package cn.guluwa.gulumusic.data.local;
 
 import android.arch.lifecycle.LiveData;
 import android.arch.lifecycle.MediatorLiveData;
+import android.view.View;
 
 import java.util.List;
 
@@ -30,7 +31,7 @@ public class LocalSongsDataSource implements SongDataSource {
 
     @Override
     public LiveData<ViewDataBean<List<TracksBean>>> queryNetCloudHotSong() {
-        final MediatorLiveData<ViewDataBean<List<TracksBean>>> data = new MediatorLiveData<>();
+        MediatorLiveData<ViewDataBean<List<TracksBean>>> data = new MediatorLiveData<>();
         data.setValue(ViewDataBean.loading());
 
         data.addSource(songsService.queryNetCloudHotSong(), tracksBeans -> {
@@ -43,7 +44,45 @@ public class LocalSongsDataSource implements SongDataSource {
         return data;
     }
 
+    @Override
+    public LiveData<ViewDataBean<SongPathBean>> querySongPath(String id) {
+        MediatorLiveData<ViewDataBean<SongPathBean>> data = new MediatorLiveData<>();
+        data.setValue(ViewDataBean.loading());
+
+        data.addSource(songsService.querySongPath(id), songPathBean -> {
+            if (songPathBean == null) {
+                data.setValue(ViewDataBean.empty());
+            } else {
+                data.setValue(ViewDataBean.content(songPathBean));
+            }
+        });
+        return data;
+    }
+
+    @Override
+    public LiveData<ViewDataBean<SongWordBean>> querySongWord(String id) {
+        MediatorLiveData<ViewDataBean<SongWordBean>> data = new MediatorLiveData<>();
+        data.setValue(ViewDataBean.loading());
+
+        data.addSource(songsService.querySongWord(id), songWordBean -> {
+            if (songWordBean == null) {
+                data.setValue(ViewDataBean.empty());
+            } else {
+                data.setValue(ViewDataBean.content(songWordBean));
+            }
+        });
+        return data;
+    }
+
     public void addSongs(List<TracksBean> songs) {
         songsService.addSongs(songs);
+    }
+
+    public void addSong(SongPathBean songPathBean) {
+        songsService.addSongPath(songPathBean);
+    }
+
+    public void addSong(SongWordBean songWordBean) {
+        songsService.addSongWord(songWordBean);
     }
 }

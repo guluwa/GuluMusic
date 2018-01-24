@@ -2,6 +2,7 @@ package cn.guluwa.gulumusic.data.remote;
 
 import android.arch.lifecycle.LiveData;
 
+import java.io.File;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -14,7 +15,9 @@ import cn.guluwa.gulumusic.data.local.LocalSongsDataSource;
 import cn.guluwa.gulumusic.data.remote.retrofit.ApiService;
 import cn.guluwa.gulumusic.data.remote.retrofit.RetrofitFactory;
 import cn.guluwa.gulumusic.data.total.SongDataSource;
+import cn.guluwa.gulumusic.listener.OnResultListener;
 import cn.guluwa.gulumusic.manage.Contacts;
+import cn.guluwa.gulumusic.utils.AppUtils;
 import io.reactivex.android.schedulers.AndroidSchedulers;
 import io.reactivex.schedulers.Schedulers;
 
@@ -61,14 +64,56 @@ public class RemoteSongsDataSource implements SongDataSource {
         );
     }
 
-    public ViewDataBean<SongPathBean> querySongPath(String id) {
+    @Override
+    public LiveData<ViewDataBean<SongPathBean>> querySongPath(String id) {
         Map<String, Object> map = new HashMap<>();
         map.put("types", "url");
         map.put("id", id);
         map.put("source", "netease");
+        return LiveDataObservableAdapter.fromObservableViewData(
+                RetrofitFactory.getRetrofit().createApi(ApiService.class)
+                        .obtainNetCloudHotSongPath(Contacts.NET_CLOUD_SONG_CALLBACK, map)
+                        .subscribeOn(Schedulers.io())
+                        .observeOn(Schedulers.io())
+                        .map(songPathBean -> {
+                            songPathBean.setId(Integer.valueOf(id));
+                            LocalSongsDataSource.getInstance().addSong(songPathBean);
+                            return songPathBean;
+                        })
+                        .observeOn(AndroidSchedulers.mainThread())
+        );
     }
 
-    public ViewDataBean<SongWordBean> querySongWord(String id) {
-        return null;
+    @Override
+    public LiveData<ViewDataBean<SongWordBean>> querySongWord(String id) {
+        Map<String, Object> map = new HashMap<>();
+        map.put("types", "lyric");
+        map.put("id", id);
+        map.put("source", "netease");
+        return LiveDataObservableAdapter.fromObservableViewData(
+                RetrofitFactory.getRetrofit().createApi(ApiService.class)
+                        .obtainNetCloudHotSongWord(Contacts.NET_CLOUD_SONG_CALLBACK, map)
+                        .subscribeOn(Schedulers.io())
+                        .observeOn(Schedulers.io())
+                        .map(songWordBean -> {
+                            songWordBean.setId(Integer.valueOf(id));
+                            LocalSongsDataSource.getInstance().addSong(songWordBean);
+                            return songWordBean;
+                        })
+                        .observeOn(AndroidSchedulers.mainThread())
+        );
+    }
+
+    public void downloadSongFile(String url, String songName, OnResultListener<File> listener) {
+        RetrofitFactory.getRetrofit().createApi(ApiService.class)
+                .downloadSongFile(url)
+                .subscribeOn(Schedulers.io())
+                .observeOn(Schedulers.io())
+                .map(responseBody -> AppUtils.writeSong2Disk(responseBody, songName))
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(listener::success, throwable -> {
+                    System.out.println(throwable.getMessage());
+                    listener.failed("歌曲下载失败");
+                });
     }
 }

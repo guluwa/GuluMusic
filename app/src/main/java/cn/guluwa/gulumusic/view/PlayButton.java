@@ -327,16 +327,4 @@ public class PlayButton extends View {
         isPlaying = playing;
         invalidate();
     }
-
-    public void setBtmColor(int mBtmColor) {
-        this.mBtmColor = mBtmColor;
-        mBtmCirclePaint.setColor(mBtmColor);
-        invalidate();
-    }
-
-    public void setTopColor(int mTopColor) {
-        this.mTopColor = mTopColor;
-        mTopCirclePaint.setColor(mTopColor);
-        invalidate();
-    }
 }

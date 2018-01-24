@@ -7,13 +7,21 @@ import android.graphics.Color;
 import android.graphics.drawable.BitmapDrawable;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
+import android.os.Environment;
 import android.support.v7.graphics.Palette;
 import android.util.DisplayMetrics;
-import android.view.View;
 import android.widget.ImageView;
+
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 
 import cn.guluwa.gulumusic.listener.OnColorListener;
 import cn.guluwa.gulumusic.manage.MyApplication;
+import okhttp3.ResponseBody;
 
 
 /**
@@ -146,5 +154,69 @@ public class AppUtils {
         DisplayMetrics metric = new DisplayMetrics();
         ((Activity) context).getWindowManager().getDefaultDisplay().getMetrics(metric);
         return metric;
+    }
+
+    //创建文件夹
+    private static File createFile(String filename, int type) {
+        File file;
+        File file1;
+        if (type == 1) {
+            file1 = new File(Environment.getExternalStorageDirectory().getAbsolutePath() + "/gulu_music/song");
+        } else {
+            file1 = new File(Environment.getExternalStorageDirectory().getAbsolutePath() + "/gulu_music/word");
+        }
+        if (!file1.exists())
+            file1.mkdirs();
+        file = new File(file1.getAbsolutePath() + "/" + filename);
+        return file;
+    }
+
+    //保存歌曲文件到本地
+    public static File writeSong2Disk(ResponseBody responseBody, String filename) {
+
+        File file = createFile(filename, 1);
+        OutputStream os = null;
+        InputStream is = responseBody.byteStream();
+
+        try {
+            os = new FileOutputStream(file);
+            int len;
+            byte[] buff = new byte[1024];
+            while ((len = is.read(buff)) != -1) {
+                os.write(buff, 0, len);
+            }
+            return file;
+        } catch (IOException e) {
+            e.printStackTrace();
+            return null;
+        } finally {
+            if (os != null) {
+                try {
+                    os.close();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+            if (is != null) {
+                try {
+                    is.close();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+    }
+
+    //保存歌词文本到本地
+    public static void writeWord2Disk(String str, String filename) {
+        try {
+            File file = createFile(filename, 2);
+            FileWriter fw = new FileWriter(file.getAbsolutePath());//SD卡中的路径
+            fw.flush();
+            fw.write(str);
+            fw.close();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 }

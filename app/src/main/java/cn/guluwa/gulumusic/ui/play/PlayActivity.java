@@ -1,5 +1,6 @@
 package cn.guluwa.gulumusic.ui.play;
 
+import android.arch.lifecycle.ViewModelProviders;
 import android.content.pm.ActivityInfo;
 import android.graphics.Bitmap;
 import android.graphics.Color;
@@ -16,10 +17,13 @@ import com.bumptech.glide.request.RequestListener;
 import com.bumptech.glide.request.RequestOptions;
 import com.bumptech.glide.request.target.Target;
 
+import java.io.File;
+
 import cn.guluwa.gulumusic.R;
 import cn.guluwa.gulumusic.base.BaseActivity;
 import cn.guluwa.gulumusic.data.bean.TracksBean;
 import cn.guluwa.gulumusic.databinding.ActivityPlayBinding;
+import cn.guluwa.gulumusic.listener.OnResultListener;
 import cn.guluwa.gulumusic.manage.MyApplication;
 import cn.guluwa.gulumusic.utils.AppUtils;
 import jp.wasabeef.glide.transformations.BlurTransformation;
@@ -28,6 +32,7 @@ public class PlayActivity extends BaseActivity {
 
     private TracksBean mSong;
     private ActivityPlayBinding mPlayBinding;
+    private PlayViewModel mViewModel;
 
     @Override
     public int getViewLayoutId() {
@@ -99,6 +104,61 @@ public class PlayActivity extends BaseActivity {
 
     @Override
     protected void initViewModel() {
+        mViewModel = ViewModelProviders.of(this).get(PlayViewModel.class);
+        mViewModel.querySongPath().observe(this, songPathBeanViewDataBean -> {
+            if (songPathBeanViewDataBean == null) {
+                showSnackBar("歌曲播放失败");
+            } else {
+                switch (songPathBeanViewDataBean.status) {
+                    case Content:
+                        System.out.println("path :" + songPathBeanViewDataBean.data.getUrl());
+                        mViewModel.downloadSongFile(songPathBeanViewDataBean.data.getUrl(),
+                                String.format("%s_%s.mp3", mSong.getName(), mSong.getId()),
+                                new OnResultListener<File>() {
+                                    @Override
+                                    public void success(File result) {
+                                        System.out.println(result.getAbsolutePath());
+                                    }
 
+                                    @Override
+                                    public void failed(String error) {
+                                        showSnackBar(error);
+                                    }
+                                });
+                        break;
+                    case Empty:
+                        showSnackBar("歌曲播放失败");
+                        break;
+                    case Error:
+                        showSnackBar("歌曲播放失败");
+                        break;
+                    case Loading:
+                        System.out.println("path loading");
+                        break;
+                }
+            }
+        });
+        mViewModel.querySongWord().observe(this, songWordBeanViewDataBean -> {
+            if (songWordBeanViewDataBean == null) {
+                System.out.println("word null");
+            } else {
+                switch (songWordBeanViewDataBean.status) {
+                    case Content:
+                        AppUtils.writeWord2Disk(songWordBeanViewDataBean.data.getLyric(),
+                                String.format("%s_%s.txt", mSong.getName(), mSong.getId()));
+                        break;
+                    case Empty:
+                        System.out.println("word empty");
+                        break;
+                    case Error:
+                        System.out.println("word error");
+                        break;
+                    case Loading:
+                        System.out.println("word loading");
+                        break;
+                }
+            }
+        });
+        mViewModel.refresh(mSong.getId());
     }
 }

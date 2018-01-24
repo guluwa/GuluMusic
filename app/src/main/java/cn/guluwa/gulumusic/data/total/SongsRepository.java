@@ -1,13 +1,20 @@
 package cn.guluwa.gulumusic.data.total;
 
 import android.arch.lifecycle.LiveData;
+import android.arch.lifecycle.MediatorLiveData;
+import android.view.View;
 
+import java.io.File;
 import java.util.List;
 
+import cn.guluwa.gulumusic.data.bean.PageStatus;
+import cn.guluwa.gulumusic.data.bean.SongPathBean;
+import cn.guluwa.gulumusic.data.bean.SongWordBean;
 import cn.guluwa.gulumusic.data.bean.TracksBean;
 import cn.guluwa.gulumusic.data.bean.ViewDataBean;
 import cn.guluwa.gulumusic.data.local.LocalSongsDataSource;
 import cn.guluwa.gulumusic.data.remote.RemoteSongsDataSource;
+import cn.guluwa.gulumusic.listener.OnResultListener;
 import cn.guluwa.gulumusic.utils.AppUtils;
 
 /**
@@ -16,9 +23,9 @@ import cn.guluwa.gulumusic.utils.AppUtils;
 
 public class SongsRepository {
 
-    private static final SongsRepository instance=new SongsRepository();
-    private RemoteSongsDataSource remoteProjectsDataSource=RemoteSongsDataSource.getInstance();
-    private LocalSongsDataSource localProjectsDataSource=LocalSongsDataSource.getInstance();
+    private static final SongsRepository instance = new SongsRepository();
+    private RemoteSongsDataSource remoteSongsDataSource = RemoteSongsDataSource.getInstance();
+    private LocalSongsDataSource localSongsDataSource = LocalSongsDataSource.getInstance();
 
     public static SongsRepository getInstance() {
         return instance;
@@ -29,9 +36,29 @@ public class SongsRepository {
 
     public LiveData<ViewDataBean<List<TracksBean>>> queryNetCloudHotSong() {
         if (AppUtils.isNetConnected()) {
-            return remoteProjectsDataSource.queryNetCloudHotSong();
+            return remoteSongsDataSource.queryNetCloudHotSong();
         } else {
-            return localProjectsDataSource.queryNetCloudHotSong();
+            return localSongsDataSource.queryNetCloudHotSong();
         }
+    }
+
+    public LiveData<ViewDataBean<SongPathBean>> querySongPath(String id) {
+        if (AppUtils.isNetConnected()) {
+            return remoteSongsDataSource.querySongPath(id);
+        } else {
+            return localSongsDataSource.querySongPath(id);
+        }
+    }
+
+    public LiveData<ViewDataBean<SongWordBean>> querySongWord(String id) {
+        if (AppUtils.isNetConnected()) {
+            return remoteSongsDataSource.querySongWord(id);
+        } else {
+            return localSongsDataSource.querySongWord(id);
+        }
+    }
+
+    public void downloadSongFile(String url, String songName,OnResultListener<File> listener) {
+        remoteSongsDataSource.downloadSongFile(url,songName,listener);
     }
 }

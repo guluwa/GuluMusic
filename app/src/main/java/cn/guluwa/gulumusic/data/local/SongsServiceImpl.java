@@ -4,6 +4,8 @@ import android.arch.lifecycle.LiveData;
 
 import java.util.List;
 
+import cn.guluwa.gulumusic.data.bean.SongPathBean;
+import cn.guluwa.gulumusic.data.bean.SongWordBean;
 import cn.guluwa.gulumusic.data.bean.TracksBean;
 import cn.guluwa.gulumusic.data.local.dao.SongsDao;
 import cn.guluwa.gulumusic.data.local.db.DBHelper;
@@ -20,7 +22,7 @@ public class SongsServiceImpl implements SongsService {
         return instance;
     }
 
-    private SongsDao songsDao =  DBHelper.getInstance().getGuluMusicDataBase().getSongsDao();
+    private SongsDao songsDao = DBHelper.getInstance().getGuluMusicDataBase().getSongsDao();
 
     public SongsServiceImpl() {
     }
@@ -33,5 +35,25 @@ public class SongsServiceImpl implements SongsService {
     @Override
     public LiveData<List<TracksBean>> queryNetCloudHotSong() {
         return songsDao.queryNetCloudHotSong();
+    }
+
+    @Override
+    public LiveData<SongPathBean> querySongPath(String id) {
+        return songsDao.querySongPath(id);
+    }
+
+    @Override
+    public LiveData<SongWordBean> querySongWord(String id) {
+        return songsDao.querySongWord(id);
+    }
+
+    @Override
+    public void addSongPath(SongPathBean songPathBean) {
+        songsDao.addSongPath(songPathBean);
+    }
+
+    @Override
+    public void addSongWord(SongWordBean songWordBean) {
+        songsDao.addSongWord(songWordBean);
     }
 }
