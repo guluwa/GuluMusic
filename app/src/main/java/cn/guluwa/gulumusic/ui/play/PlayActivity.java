@@ -18,6 +18,8 @@ import com.bumptech.glide.request.RequestOptions;
 import com.bumptech.glide.request.target.Target;
 
 import java.io.File;
+import java.io.IOException;
+import java.util.HashMap;
 
 import cn.guluwa.gulumusic.R;
 import cn.guluwa.gulumusic.base.BaseActivity;
@@ -26,6 +28,7 @@ import cn.guluwa.gulumusic.databinding.ActivityPlayBinding;
 import cn.guluwa.gulumusic.listener.OnResultListener;
 import cn.guluwa.gulumusic.manage.MyApplication;
 import cn.guluwa.gulumusic.utils.AppUtils;
+import cn.guluwa.gulumusic.utils.LrcParser;
 import jp.wasabeef.glide.transformations.BlurTransformation;
 
 public class PlayActivity extends BaseActivity {
@@ -33,6 +36,8 @@ public class PlayActivity extends BaseActivity {
     private TracksBean mSong;
     private ActivityPlayBinding mPlayBinding;
     private PlayViewModel mViewModel;
+    private boolean hasWord;
+    private HashMap<Long, String> mSongWordsMap;
 
     @Override
     public int getViewLayoutId() {
@@ -44,18 +49,25 @@ public class PlayActivity extends BaseActivity {
         mPlayBinding = (ActivityPlayBinding) mViewDataBinding;
         mSong = (TracksBean) getIntent().getSerializableExtra("song");
         mPlayBinding.setSong(mSong);
-        initStatus();
+        initSongPic();
         initStatusBar();
         mPlayBinding.setClickListener(view -> {
             switch (view.getId()) {
                 case R.id.mPlayBtn:
-                    mPlayBinding.mPlayBtn.startAnimation();
+                    if (mPlayBinding.mPlayBtn.getIsPlaying() == 1) {
+                        mPlayBinding.mPlayBtn.setPlaying(-1);
+                    } else if (mPlayBinding.mPlayBtn.getIsPlaying() == -1) {
+                        mPlayBinding.mPlayBtn.setPlaying(1);
+                    }
+                    break;
+                case R.id.ivDownBack:
+                    onBackPressed();
                     break;
             }
         });
     }
 
-    private void initStatus() {
+    private void initSongPic() {
         Glide.with(MyApplication.getContext()).asBitmap().apply(new RequestOptions().centerCrop())
                 .load(mSong.getAl().getPicUrl())
                 .apply(new RequestOptions().transform(new BlurTransformation(25)).override(100, 100))
@@ -73,8 +85,6 @@ public class PlayActivity extends BaseActivity {
                     public boolean onResourceReady(Bitmap resource, Object model, Target<Bitmap> target, DataSource dataSource, boolean isFirstResource) {
                         if (resource != null) {
                             mPlayBinding.ivBackGround.setImageBitmap(resource);
-                            mPlayBinding.mPlayBtn.setPlaying(true);
-                            mPlayBinding.mPlayBtn.startAnimation();
                             return true;
                         }
                         return false;
@@ -108,10 +118,12 @@ public class PlayActivity extends BaseActivity {
         mViewModel.querySongPath().observe(this, songPathBeanViewDataBean -> {
             if (songPathBeanViewDataBean == null) {
                 showSnackBar("歌曲播放失败");
+                mViewModel.refreshPath(mSong.getId(), false);
             } else {
                 switch (songPathBeanViewDataBean.status) {
                     case Content:
-                        System.out.println("path :" + songPathBeanViewDataBean.data.getUrl());
+                        mPlayBinding.mPlayBtn.setPlaying(1);
+                        mViewModel.refreshPath(mSong.getId(), false);
                         mViewModel.downloadSongFile(songPathBeanViewDataBean.data.getUrl(),
                                 String.format("%s_%s.mp3", mSong.getName(), mSong.getId()),
                                 new OnResultListener<File>() {
@@ -127,38 +139,86 @@ public class PlayActivity extends BaseActivity {
                                 });
                         break;
                     case Empty:
+                        mViewModel.refreshPath(mSong.getId(), false);
                         showSnackBar("歌曲播放失败");
                         break;
                     case Error:
+                        mViewModel.refreshPath(mSong.getId(), false);
                         showSnackBar("歌曲播放失败");
                         break;
                     case Loading:
-                        System.out.println("path loading");
+                        mPlayBinding.mPlayBtn.setPlaying(0);
                         break;
                 }
             }
         });
         mViewModel.querySongWord().observe(this, songWordBeanViewDataBean -> {
             if (songWordBeanViewDataBean == null) {
-                System.out.println("word null");
+                hasWord = false;
+                initWordViewFromRemote("");
+                mViewModel.refreshWord(mSong.getId(), false);
             } else {
                 switch (songWordBeanViewDataBean.status) {
                     case Content:
+                        hasWord = true;
+                        mViewModel.refreshWord(mSong.getId(), false);
+                        initWordViewFromRemote(songWordBeanViewDataBean.data.getLyric());
                         AppUtils.writeWord2Disk(songWordBeanViewDataBean.data.getLyric(),
                                 String.format("%s_%s.txt", mSong.getName(), mSong.getId()));
                         break;
                     case Empty:
-                        System.out.println("word empty");
+                        hasWord = false;
+                        mViewModel.refreshWord(mSong.getId(), false);
+                        initWordViewFromRemote("");
                         break;
                     case Error:
-                        System.out.println("word error");
+                        hasWord = false;
+                        mViewModel.refreshWord(mSong.getId(), false);
+                        initWordViewFromRemote("");
                         break;
                     case Loading:
-                        System.out.println("word loading");
+                        mPlayBinding.tvSongWord.setText("正在加载~~~");
                         break;
                 }
             }
         });
-        mViewModel.refresh(mSong.getId());
+        if (!AppUtils.isExistFile(String.format("%s_%s.mp3", mSong.getName(), mSong.getId()), 1)) {
+            mViewModel.refreshPath(mSong.getId(), true);
+        } else {
+            mPlayBinding.mPlayBtn.setPlaying(1);
+        }
+        if (!AppUtils.isExistFile(String.format("%s_%s.txt", mSong.getName(), mSong.getId()), 2)) {
+            mViewModel.refreshWord(mSong.getId(), true);
+        } else {
+            hasWord = true;
+            initWordViewFromLocal(String.format("%s_%s.txt", mSong.getName(), mSong.getId()));
+        }
     }
+
+    private void initWordViewFromLocal(String name) {
+        try {
+            mSongWordsMap = LrcParser.parserLocal(name);
+            if (hasWord) {
+                mPlayBinding.tvSongWord.setText(mSongWordsMap.get(0L));
+            } else {
+                mPlayBinding.tvSongWord.setText("暂无歌词");
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void initWordViewFromRemote(String word) {
+        try {
+            mSongWordsMap = LrcParser.parserRemote(word);
+            if (hasWord) {
+                mPlayBinding.tvSongWord.setText(mSongWordsMap.get(0L));
+            } else {
+                mPlayBinding.tvSongWord.setText("暂无歌词");
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
 }

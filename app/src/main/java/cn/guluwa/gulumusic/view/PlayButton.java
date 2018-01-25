@@ -1,17 +1,16 @@
 package cn.guluwa.gulumusic.view;
 
+import android.graphics.RectF;
 import android.view.View;;
 
 import android.animation.ValueAnimator;
 import android.content.Context;
 import android.graphics.Canvas;
-import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.Path;
 import android.graphics.PathMeasure;
 import android.support.annotation.Nullable;
 import android.util.AttributeSet;
-import android.view.View;
 
 import cn.guluwa.gulumusic.R;
 import cn.guluwa.gulumusic.utils.AppUtils;
@@ -123,9 +122,39 @@ public class PlayButton extends View {
     private Path mDstPath;
 
     /**
-     * 是否正在播放
+     * 是否正在播放 -1 暂停 0 加载 1播放
      */
-    private boolean isPlaying;
+    private int isPlaying;
+
+    /**
+     * 画弧线开始角度
+     */
+    private int startAngle = -90;
+
+    /**
+     * 弧线旋转角度
+     */
+    private int sweepAngle = 0;
+
+    /**
+     * 当前角度
+     */
+    private int curAngle = 0;
+
+    /**
+     * 标记当前弧度是增加还是减小
+     */
+    private boolean isGrow;
+
+    /**
+     * 加载圆弧外框
+     */
+    private RectF rectF;
+
+    /**
+     * 歌曲加载动画
+     */
+    private ValueAnimator mLoadAnimator;
 
     /**
      * 进入播放状态动画
@@ -169,6 +198,10 @@ public class PlayButton extends View {
         mViewWidth = mViewHeight = AppUtils.dp2px(getContext(), 64);
         mCircleX = mCircleY = 0;
         mTriangleWidth = AppUtils.dp2px(getContext(), 20);
+        isGrow = true;
+
+        //加载圆弧外框
+        rectF = new RectF(-mRadius, -mRadius, mRadius, mRadius);
 
         //顺时针三角形路径
         mShunTrianglePath = new Path();
@@ -257,74 +290,99 @@ public class PlayButton extends View {
         super.onDraw(canvas);
         canvas.translate(mViewWidth / 2, mViewHeight / 2);
         canvas.drawCircle(mCircleX, mCircleY, mRadius, mBtmCirclePaint);
-        if (isPlaying) {//播放--》暂停
-            if (mStopPlayAnimatorValue <= 0.2) {
-                canvas.rotate(180);
-                mPathMeasure.setPath(mLeftLinePath, false);
-                mDstPath.reset();
-                mPathMeasure.getSegment(mPathMeasure.getLength() * mStopPlayAnimatorValue * 5, mPathMeasure.getLength(), mDstPath, true);
-                canvas.drawPath(mDstPath, mTopCirclePaint);
-
-                mPathMeasure.setPath(mRightLinePath, false);
-                mDstPath.reset();
-                mPathMeasure.getSegment(mPathMeasure.getLength() * mStopPlayAnimatorValue * 5, mPathMeasure.getLength(), mDstPath, true);
-                canvas.drawPath(mDstPath, mTopCirclePaint);
-            } else {
-                canvas.rotate(90);
-                mPathMeasure.setPath(mNiCirclePath, false);
-                mDstPath.reset();
-                mPathMeasure.getSegment(0, (float) (mPathMeasure.getLength() * (mStopPlayAnimatorValue - 0.2) * 5 / 4), mDstPath, true);
-                canvas.drawPath(mDstPath, mTopCirclePaint);
-                if (mStopPlayAnimatorValue >= 0.8) {
-                    canvas.rotate(-90);
-                    mPathMeasure.setPath(mNiTrianglePath, false);
+        switch (isPlaying) {
+            case 1://暂停--》播放
+                if (mPlayAnimatorValue <= 0.2) {
+                    mPathMeasure.setPath(mShunTrianglePath, false);
                     mDstPath.reset();
-                    mPathMeasure.getSegment(0, (float) (mPathMeasure.getLength() * (mStopPlayAnimatorValue - 0.8) * 5), mDstPath, true);
+                    mPathMeasure.getSegment(mPathMeasure.getLength() * mPlayAnimatorValue * 5,
+                            mPathMeasure.getLength(), mDstPath, true);
                     canvas.drawPath(mDstPath, mTopCirclePaint);
+                } else {
+                    canvas.rotate(90);
+                    mPathMeasure.setPath(mShunCirclePath, false);
+                    mDstPath.reset();
+                    mPathMeasure.getSegment(0, (float) (mPathMeasure.getLength() * (mPlayAnimatorValue - 0.2) * 5 / 4), mDstPath, true);
+                    canvas.drawPath(mDstPath, mTopCirclePaint);
+                    if (mPlayAnimatorValue >= 0.8) {
+                        canvas.rotate(-90);
+                        mPathMeasure.setPath(mLeftLinePath, false);
+                        mDstPath.reset();
+                        mPathMeasure.getSegment(0, (float) (mPathMeasure.getLength() * (mPlayAnimatorValue - 0.8) * 5), mDstPath, true);
+                        canvas.drawPath(mDstPath, mTopCirclePaint);
+
+                        mPathMeasure.setPath(mRightLinePath, false);
+                        mDstPath.reset();
+                        mPathMeasure.getSegment(0, (float) (mPathMeasure.getLength() * (mPlayAnimatorValue - 0.8) * 5), mDstPath, true);
+                        canvas.drawPath(mDstPath, mTopCirclePaint);
+                    }
                 }
-            }
-        } else {//暂停--》播放
-            if (mPlayAnimatorValue <= 0.2) {
-                mPathMeasure.setPath(mShunTrianglePath, false);
-                mDstPath.reset();
-                mPathMeasure.getSegment(mPathMeasure.getLength() * mPlayAnimatorValue * 5,
-                        mPathMeasure.getLength(), mDstPath, true);
-                canvas.drawPath(mDstPath, mTopCirclePaint);
-            } else {
-                canvas.rotate(90);
-                mPathMeasure.setPath(mShunCirclePath, false);
-                mDstPath.reset();
-                mPathMeasure.getSegment(0, (float) (mPathMeasure.getLength() * (mPlayAnimatorValue - 0.2) * 5 / 4), mDstPath, true);
-                canvas.drawPath(mDstPath, mTopCirclePaint);
-                if (mPlayAnimatorValue >= 0.8) {
-                    canvas.rotate(-90);
+                break;
+            case 0://正在加载
+                canvas.drawPath(mShunTrianglePath,mTopCirclePaint);
+                if (isGrow) {//处于增加状态，增加角度
+                    sweepAngle += 6;
+                } else {//处于减少状态，减少角度，并通过减少起始角度，控制最终角度不变
+                    startAngle += 6;
+                    sweepAngle -= 6;
+                }
+                //旋转范围20~270
+                if (sweepAngle >= 270) {
+                    isGrow = false;
+                }
+                if (sweepAngle <= 20) {
+                    isGrow = true;
+                }
+                canvas.rotate(curAngle += 4, 0, 0);  //旋转的弧长为4
+                canvas.drawArc(rectF, startAngle, sweepAngle, false, mTopCirclePaint);
+                invalidate();
+                break;
+            case -1://播放--》暂停
+                if (mStopPlayAnimatorValue <= 0.2) {
+                    canvas.rotate(180);
                     mPathMeasure.setPath(mLeftLinePath, false);
                     mDstPath.reset();
-                    mPathMeasure.getSegment(0, (float) (mPathMeasure.getLength() * (mPlayAnimatorValue - 0.8) * 5), mDstPath, true);
+                    mPathMeasure.getSegment(mPathMeasure.getLength() * mStopPlayAnimatorValue * 5, mPathMeasure.getLength(), mDstPath, true);
                     canvas.drawPath(mDstPath, mTopCirclePaint);
 
                     mPathMeasure.setPath(mRightLinePath, false);
                     mDstPath.reset();
-                    mPathMeasure.getSegment(0, (float) (mPathMeasure.getLength() * (mPlayAnimatorValue - 0.8) * 5), mDstPath, true);
+                    mPathMeasure.getSegment(mPathMeasure.getLength() * mStopPlayAnimatorValue * 5, mPathMeasure.getLength(), mDstPath, true);
                     canvas.drawPath(mDstPath, mTopCirclePaint);
+                } else {
+                    canvas.rotate(90);
+                    mPathMeasure.setPath(mNiCirclePath, false);
+                    mDstPath.reset();
+                    mPathMeasure.getSegment(0, (float) (mPathMeasure.getLength() * (mStopPlayAnimatorValue - 0.2) * 5 / 4), mDstPath, true);
+                    canvas.drawPath(mDstPath, mTopCirclePaint);
+                    if (mStopPlayAnimatorValue >= 0.8) {
+                        canvas.rotate(-90);
+                        mPathMeasure.setPath(mNiTrianglePath, false);
+                        mDstPath.reset();
+                        mPathMeasure.getSegment(0, (float) (mPathMeasure.getLength() * (mStopPlayAnimatorValue - 0.8) * 5), mDstPath, true);
+                        canvas.drawPath(mDstPath, mTopCirclePaint);
+                    }
                 }
-            }
+                break;
         }
     }
 
-    public void startAnimation() {
-        isPlaying = !isPlaying;
-        if (isPlaying) {//播放--》暂停
-            mStopPlayAnimatorValue = 0f;
-            mStopPlayAnimator.start();
-        } else {//暂停--》播放
-            mPlayAnimatorValue = 0f;
-            mPlayAnimator.start();
-        }
-    }
-
-    public void setPlaying(boolean playing) {
+    public void setPlaying(int playing) {
         isPlaying = playing;
-        invalidate();
+        System.out.println(isPlaying);
+        switch (isPlaying) {
+            case 1://暂停--》播放
+                mPlayAnimatorValue = 0f;
+                mPlayAnimator.start();
+                break;
+            case -1://播放--》暂停
+                mStopPlayAnimatorValue = 0f;
+                mStopPlayAnimator.start();
+                break;
+        }
+    }
+
+    public int getIsPlaying() {
+        return isPlaying;
     }
 }

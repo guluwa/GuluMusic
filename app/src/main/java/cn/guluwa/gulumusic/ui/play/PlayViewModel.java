@@ -6,6 +6,7 @@ import android.arch.lifecycle.Transformations;
 import android.arch.lifecycle.ViewModel;
 
 import java.io.File;
+import java.io.StringReader;
 
 import cn.guluwa.gulumusic.data.bean.SongPathBean;
 import cn.guluwa.gulumusic.data.bean.SongWordBean;
@@ -20,33 +21,59 @@ import cn.guluwa.gulumusic.listener.OnResultListener;
 public class PlayViewModel extends ViewModel {
 
     private SongsRepository songsRepository = SongsRepository.getInstance();
-    private MutableLiveData<String> mId;
+    private MutableLiveData<FreshBean> mPathFresh, mWordFresh;
     private LiveData<ViewDataBean<SongPathBean>> mSongPath;
     private LiveData<ViewDataBean<SongWordBean>> mSongWord;
 
     public LiveData<ViewDataBean<SongPathBean>> querySongPath() {
         if (mSongPath == null) {
-            if (mId == null)
-                mId = new MutableLiveData<>();
-            mSongPath = Transformations.switchMap(mId, input -> songsRepository.querySongPath(input));
+            if (mPathFresh == null)
+                mPathFresh = new MutableLiveData<>();
+            mSongPath = Transformations.switchMap(mPathFresh, input -> {
+                if (input.isFresh) {
+                    return songsRepository.querySongPath(String.valueOf(input.id));
+                } else {
+                    return null;
+                }
+            });
         }
         return mSongPath;
     }
 
     public LiveData<ViewDataBean<SongWordBean>> querySongWord() {
         if (mSongWord == null) {
-            if (mId == null)
-                mId = new MutableLiveData<>();
-            mSongWord = Transformations.switchMap(mId, input -> songsRepository.querySongWord(input));
+            if (mWordFresh == null)
+                mWordFresh = new MutableLiveData<>();
+            mSongWord = Transformations.switchMap(mWordFresh, input -> {
+                if (input.isFresh) {
+                    return songsRepository.querySongWord(String.valueOf(input.id));
+                } else {
+                    return null;
+                }
+            });
         }
         return mSongWord;
     }
 
-    public void refresh(int id) {
-        mId.setValue(String.valueOf(id));
+    void refreshPath(int id, boolean fresh) {
+        mPathFresh.setValue(new FreshBean(id, fresh));
     }
 
-    public void downloadSongFile(String url, String songName, OnResultListener<File> listener) {
+    void refreshWord(int id, boolean fresh) {
+        mWordFresh.setValue(new FreshBean(id, fresh));
+    }
+
+    void downloadSongFile(String url, String songName, OnResultListener<File> listener) {
         songsRepository.downloadSongFile(url, songName, listener);
+    }
+
+    public class FreshBean {
+        int id;
+        boolean isFresh;
+
+        FreshBean(int id, boolean isFresh) {
+            this.id = id;
+            this.isFresh = isFresh;
+        }
     }
 }
