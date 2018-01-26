@@ -1,8 +1,11 @@
 package cn.guluwa.gulumusic.ui.main;
 
 import android.arch.lifecycle.ViewModelProviders;
+import android.content.ComponentName;
 import android.content.Intent;
+import android.content.ServiceConnection;
 import android.graphics.Color;
+import android.os.IBinder;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.ActivityOptionsCompat;
 import android.support.v4.view.MenuItemCompat;
@@ -11,6 +14,7 @@ import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.SearchView;
 import android.util.Log;
+import android.view.KeyEvent;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -25,6 +29,8 @@ import cn.guluwa.gulumusic.adapter.PlayListAdapter;
 import cn.guluwa.gulumusic.base.BaseActivity;
 import cn.guluwa.gulumusic.data.bean.TracksBean;
 import cn.guluwa.gulumusic.databinding.ActivityMainBinding;
+import cn.guluwa.gulumusic.manage.AppManager;
+import cn.guluwa.gulumusic.service.MusicAutoService;
 import cn.guluwa.gulumusic.ui.play.PlayActivity;
 import cn.guluwa.gulumusic.utils.AppUtils;
 
@@ -164,7 +170,7 @@ public class MainActivity extends BaseActivity {
             @Override
             public boolean onQueryTextSubmit(String query) {
                 //提交按钮的点击事件
-                Toast.makeText(MainActivity.this, query, Toast.LENGTH_SHORT).show();
+                showSnackBar(query);
                 return true;
             }
 
@@ -195,8 +201,45 @@ public class MainActivity extends BaseActivity {
         ((PlayListAdapter) mMainBinding.mRecyclerView.getAdapter()).setData(data);
     }
 
+    //  在Activity中调用 bindService 保持与 Service 的通信
+    public void bindServiceConnection() {
+        Intent intent = new Intent(MainActivity.this, MusicAutoService.class);
+        startService(intent);
+        bindService(intent, serviceConnection, this.BIND_AUTO_CREATE);
+    }
+
+    //  回调onServiceConnected 函数，通过IBinder 获取 Service对象，实现Activity与 Service的绑定
+    private ServiceConnection serviceConnection = new ServiceConnection() {
+        @Override
+        public void onServiceConnected(ComponentName name, IBinder service) {
+            MusicAutoService mMusicService = ((MusicAutoService.MyBinder) (service)).getService();
+            AppManager.get().setmMusicAutoService(mMusicService);
+            System.out.println("MusicAutoService 初始化完成");
+        }
+
+        @Override
+        public void onServiceDisconnected(ComponentName name) {
+        }
+    };
+
     @Override
-    protected void onPause() {
-        super.onPause();
+    protected void onDestroy() {
+        if (serviceConnection != null) {
+            unbindService(serviceConnection);
+        }
+        if (AppManager.get().getmMusicAutoService() != null) {
+            AppManager.get().getmMusicAutoService().quit();
+        }
+        super.onDestroy();
+    }
+
+    //  获取并设置返回键的点击事件
+    @Override
+    public boolean onKeyDown(int keyCode, KeyEvent event) {
+        if (keyCode == KeyEvent.KEYCODE_BACK) {
+            moveTaskToBack(false);
+            return true;
+        }
+        return super.onKeyDown(keyCode, event);
     }
 }

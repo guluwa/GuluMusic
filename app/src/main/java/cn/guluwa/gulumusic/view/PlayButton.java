@@ -369,7 +369,6 @@ public class PlayButton extends View {
 
     public void setPlaying(int playing) {
         isPlaying = playing;
-        System.out.println(isPlaying);
         switch (isPlaying) {
             case 1://暂停--》播放
                 mPlayAnimatorValue = 0f;

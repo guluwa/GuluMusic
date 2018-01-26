@@ -26,6 +26,11 @@
         <activity
             android:name=".ui.play.PlayActivity"
             android:screenOrientation="portrait" />
+
+        <service
+            android:name=".service.MusicAutoService"
+            android:enabled="true"
+            android:exported="true" />
     </application>
 
 </manifest>

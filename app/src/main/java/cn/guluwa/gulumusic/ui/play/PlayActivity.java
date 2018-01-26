@@ -1,11 +1,16 @@
 package cn.guluwa.gulumusic.ui.play;
 
 import android.arch.lifecycle.ViewModelProviders;
+import android.content.ComponentName;
+import android.content.Intent;
+import android.content.ServiceConnection;
 import android.content.pm.ActivityInfo;
 import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.os.Build;
+import android.os.IBinder;
 import android.support.annotation.Nullable;
+import android.util.Log;
 import android.view.View;
 import android.view.Window;
 import android.view.WindowManager;
@@ -19,6 +24,7 @@ import com.bumptech.glide.request.target.Target;
 
 import java.io.File;
 import java.io.IOException;
+import java.text.SimpleDateFormat;
 import java.util.HashMap;
 
 import cn.guluwa.gulumusic.R;
@@ -26,7 +32,10 @@ import cn.guluwa.gulumusic.base.BaseActivity;
 import cn.guluwa.gulumusic.data.bean.TracksBean;
 import cn.guluwa.gulumusic.databinding.ActivityPlayBinding;
 import cn.guluwa.gulumusic.listener.OnResultListener;
+import cn.guluwa.gulumusic.manage.AppManager;
 import cn.guluwa.gulumusic.manage.MyApplication;
+import cn.guluwa.gulumusic.service.MusicAutoService;
+import cn.guluwa.gulumusic.ui.main.MainActivity;
 import cn.guluwa.gulumusic.utils.AppUtils;
 import cn.guluwa.gulumusic.utils.LrcParser;
 import jp.wasabeef.glide.transformations.BlurTransformation;
@@ -38,6 +47,7 @@ public class PlayActivity extends BaseActivity {
     private PlayViewModel mViewModel;
     private boolean hasWord;
     private HashMap<Long, String> mSongWordsMap;
+    private SimpleDateFormat time;
 
     @Override
     public int getViewLayoutId() {
@@ -47,17 +57,24 @@ public class PlayActivity extends BaseActivity {
     @Override
     protected void initViews() {
         mPlayBinding = (ActivityPlayBinding) mViewDataBinding;
-        mSong = (TracksBean) getIntent().getSerializableExtra("song");
-        mPlayBinding.setSong(mSong);
+        initData();
         initSongPic();
         initStatusBar();
+        initClickListener();
+    }
+
+    private void initClickListener() {
         mPlayBinding.setClickListener(view -> {
             switch (view.getId()) {
                 case R.id.mPlayBtn:
-                    if (mPlayBinding.mPlayBtn.getIsPlaying() == 1) {
-                        mPlayBinding.mPlayBtn.setPlaying(-1);
-                    } else if (mPlayBinding.mPlayBtn.getIsPlaying() == -1) {
-                        mPlayBinding.mPlayBtn.setPlaying(1);
+                    if (AppManager.get().getmMusicAutoService() != null) {
+                        if (AppManager.get().getmMusicAutoService().isPlaying) {
+                            mPlayBinding.mPlayBtn.setPlaying(-1);
+                        } else {
+                            mPlayBinding.mPlayBtn.setPlaying(1);
+                        }
+                        AppManager.get().getmMusicAutoService().isPlaying = !AppManager.get().getmMusicAutoService().isPlaying;
+                        AppManager.get().getmMusicAutoService().playOrPause();
                     }
                     break;
                 case R.id.ivDownBack:
@@ -65,6 +82,12 @@ public class PlayActivity extends BaseActivity {
                     break;
             }
         });
+    }
+
+    private void initData() {
+        mSong = (TracksBean) getIntent().getSerializableExtra("song");
+        mPlayBinding.setSong(mSong);
+        time = new SimpleDateFormat("mm:ss");
     }
 
     private void initSongPic() {
@@ -130,6 +153,9 @@ public class PlayActivity extends BaseActivity {
                                     @Override
                                     public void success(File result) {
                                         System.out.println(result.getAbsolutePath());
+                                        AppManager.get().getmMusicAutoService().stop();
+                                        AppManager.get().getmMusicAutoService().playNewSong(result.getAbsolutePath());
+                                        mPlayBinding.mPlayBtn.setPlaying(1);
                                     }
 
                                     @Override
@@ -182,12 +208,16 @@ public class PlayActivity extends BaseActivity {
                 }
             }
         });
-        if (!AppUtils.isExistFile(String.format("%s_%s.mp3", mSong.getName(), mSong.getId()), 1)) {
+        String path;
+        if ("".equals(path = AppUtils.isExistFile(String.format("%s_%s.mp3", mSong.getName(), mSong.getId()), 1))) {
             mViewModel.refreshPath(mSong.getId(), true);
         } else {
+            System.out.println(path);
+            AppManager.get().getmMusicAutoService().stop();
+            AppManager.get().getmMusicAutoService().playNewSong(path);
             mPlayBinding.mPlayBtn.setPlaying(1);
         }
-        if (!AppUtils.isExistFile(String.format("%s_%s.txt", mSong.getName(), mSong.getId()), 2)) {
+        if ("".equals(AppUtils.isExistFile(String.format("%s_%s.txt", mSong.getName(), mSong.getId()), 2))) {
             mViewModel.refreshWord(mSong.getId(), true);
         } else {
             hasWord = true;
@@ -220,5 +250,4 @@ public class PlayActivity extends BaseActivity {
             e.printStackTrace();
         }
     }
-
 }

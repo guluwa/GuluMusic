@@ -221,13 +221,13 @@ public class AppUtils {
     }
 
     //检测文件是否存在
-    public static boolean isExistFile(String name, int type) {
+    public static String isExistFile(String name, int type) {
         File file;
         if (type == 1) {
             file = new File(Environment.getExternalStorageDirectory().getAbsolutePath() + "/gulu_music/song/" + name);
         } else {
             file = new File(Environment.getExternalStorageDirectory().getAbsolutePath() + "/gulu_music/word/" + name);
         }
-        return file.exists();
+        return file.exists() ? file.getAbsolutePath() : "";
     }
 }

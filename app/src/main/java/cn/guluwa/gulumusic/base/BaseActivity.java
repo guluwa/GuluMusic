@@ -40,7 +40,6 @@ public abstract class BaseActivity extends AppCompatActivity {
 
     public ViewDataBinding mViewDataBinding;
 
-
     // 需要进行检测的权限数组
     protected String[] needPermissions = {
             Manifest.permission.WRITE_EXTERNAL_STORAGE,
@@ -55,8 +54,13 @@ public abstract class BaseActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         mViewDataBinding = DataBindingUtil.setContentView(this, getViewLayoutId());
+        bindServiceConnection();
         initViews();
         initViewModel();
+    }
+
+    public void bindServiceConnection() {
+
     }
 
     @Override
