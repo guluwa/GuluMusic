@@ -8,6 +8,7 @@ import android.arch.lifecycle.ViewModel;
 import java.io.File;
 import java.io.StringReader;
 
+import cn.guluwa.gulumusic.data.bean.FreshBean;
 import cn.guluwa.gulumusic.data.bean.SongPathBean;
 import cn.guluwa.gulumusic.data.bean.SongWordBean;
 import cn.guluwa.gulumusic.data.bean.ViewDataBean;
@@ -65,15 +66,5 @@ public class PlayViewModel extends ViewModel {
 
     void downloadSongFile(String url, String songName, OnResultListener<File> listener) {
         songsRepository.downloadSongFile(url, songName, listener);
-    }
-
-    public class FreshBean {
-        int id;
-        boolean isFresh;
-
-        FreshBean(int id, boolean isFresh) {
-            this.id = id;
-            this.isFresh = isFresh;
-        }
     }
 }

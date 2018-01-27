@@ -13,7 +13,7 @@ import java.util.List;
  * Created by guluwa on 2018/1/12.
  */
 @Entity(tableName = "net_cloud_hot_songs")
-public class TracksBean implements Serializable{
+public class TracksBean implements Serializable {
 
     /**
      * name : 说散就散
@@ -35,9 +35,29 @@ public class TracksBean implements Serializable{
     private String tag;
 
     @Ignore
+    private int currentTime;
+    @Ignore
+    private int duration;
+    @Ignore
     private List<ArBean> ar;
     @Ignore
     private List<String> alia;
+
+    public int getDuration() {
+        return duration;
+    }
+
+    public void setDuration(int duration) {
+        this.duration = duration;
+    }
+
+    public int getCurrentTime() {
+        return currentTime;
+    }
+
+    public void setCurrentTime(int currentTime) {
+        this.currentTime = currentTime;
+    }
 
     public int getIndex() {
         return index;
@@ -103,7 +123,7 @@ public class TracksBean implements Serializable{
         this.alia = alia;
     }
 
-    public static class AlBean implements Serializable{
+    public static class AlBean implements Serializable {
 
         /**
          * id : 36957040
@@ -143,7 +163,7 @@ public class TracksBean implements Serializable{
         }
     }
 
-    public static class ArBean implements Serializable{
+    public static class ArBean implements Serializable {
 
         /**
          * id : 10473

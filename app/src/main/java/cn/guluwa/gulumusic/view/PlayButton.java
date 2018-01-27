@@ -1,5 +1,6 @@
 package cn.guluwa.gulumusic.view;
 
+import android.content.res.TypedArray;
 import android.graphics.RectF;
 import android.view.View;;
 
@@ -60,6 +61,16 @@ public class PlayButton extends View {
      * 圆心Y坐标
      */
     private int mCircleY;
+
+    /**
+     * 线条X偏移
+     */
+    private int mLineXOffset;
+
+    /**
+     * 线条Y偏移
+     */
+    private int mLineYOffset;
 
     /**
      * view宽度
@@ -186,6 +197,14 @@ public class PlayButton extends View {
 
     public PlayButton(Context context, @Nullable AttributeSet attrs, int defStyleAttr) {
         super(context, attrs, defStyleAttr);
+
+        TypedArray typedArray = context.getTheme().obtainStyledAttributes(attrs, R.styleable.PlayButton, defStyleAttr, 0);
+        mLineWidth = AppUtils.dp2px(getContext(), typedArray.getInt(R.styleable.PlayButton_lineWidth, 2));
+        mTriangleWidth = AppUtils.dp2px(getContext(), typedArray.getInt(R.styleable.PlayButton_triangleWidth, 20));
+        mLineXOffset = AppUtils.dp2px(getContext(), typedArray.getInt(R.styleable.PlayButton_lineXOffset, 8));
+        mLineYOffset = AppUtils.dp2px(getContext(), typedArray.getInt(R.styleable.PlayButton_lineYOffset, 12));
+        typedArray.recycle();
+
         initPaint();
         initAnimation();
     }
@@ -193,57 +212,7 @@ public class PlayButton extends View {
     private void initPaint() {
         mBtmColor = getResources().getColor(R.color.play_view_gray);
         mTopColor = getResources().getColor(R.color.play_view_black);
-        mLineWidth = AppUtils.dp2px(getContext(), 2);
-        mRadius = (AppUtils.dp2px(getContext(), 64) - 2 * mLineWidth) / 2;
-        mViewWidth = mViewHeight = AppUtils.dp2px(getContext(), 64);
-        mCircleX = mCircleY = 0;
-        mTriangleWidth = AppUtils.dp2px(getContext(), 20);
         isGrow = true;
-
-        //加载圆弧外框
-        rectF = new RectF(-mRadius, -mRadius, mRadius, mRadius);
-
-        //顺时针三角形路径
-        mShunTrianglePath = new Path();
-        mShunTrianglePath.moveTo(((float) (mCircleX - mTriangleWidth / Math.sqrt(3) / 2)), ((float) (mCircleY + mTriangleWidth / 2)));
-        mShunTrianglePath.lineTo(((float) (mCircleX + mTriangleWidth / Math.sqrt(3))), mCircleY);
-        mShunTrianglePath.lineTo(((float) (mCircleX - mTriangleWidth / Math.sqrt(3) / 2)), ((float) (mCircleY - mTriangleWidth / 2)));
-        mShunTrianglePath.lineTo(((float) (mCircleX - mTriangleWidth / Math.sqrt(3) / 2)), ((float) (mCircleY + mTriangleWidth / 2)));
-
-        //逆时针三角形路径
-        mNiTrianglePath = new Path();
-        mNiTrianglePath.moveTo(((float) (mCircleX - mTriangleWidth / Math.sqrt(3) / 2)), ((float) (mCircleY + mTriangleWidth / 2)));
-        mNiTrianglePath.lineTo(((float) (mCircleX - mTriangleWidth / Math.sqrt(3) / 2)), ((float) (mCircleY - mTriangleWidth / 2)));
-        mNiTrianglePath.lineTo(((float) (mCircleX + mTriangleWidth / Math.sqrt(3))), mCircleY);
-        mNiTrianglePath.lineTo(((float) (mCircleX - mTriangleWidth / Math.sqrt(3) / 2)), ((float) (mCircleY + mTriangleWidth / 2)));
-
-        //三角形到圆的连线path
-        mLinkLinePath = new Path();
-        mLinkLinePath.moveTo(((float) (mCircleX - mTriangleWidth / Math.sqrt(3) / 2)), ((float) (mCircleY + mTriangleWidth / 2)));
-        mLinkLinePath.lineTo(((float) (mCircleX - mTriangleWidth / Math.sqrt(3) / 2)), mCircleY + mRadius);
-
-        //顺时针圆形路径
-        mShunCirclePath = new Path();
-        mShunCirclePath.moveTo(((float) (mCircleX - mTriangleWidth / Math.sqrt(3) / 2)), mCircleY + mRadius);
-        mShunCirclePath.addCircle(mCircleX, mCircleY, mRadius, Path.Direction.CCW);
-
-        //逆时针圆形路径
-        mNiCirclePath = new Path();
-        mNiCirclePath.moveTo(((float) (mCircleX - mTriangleWidth / Math.sqrt(3) / 2)), mCircleY + mRadius);
-        mNiCirclePath.addCircle(mCircleX, mCircleY, mRadius, Path.Direction.CW);
-
-        //左边竖线路径
-        mLeftLinePath = new Path();
-        mLeftLinePath.moveTo(((float) (mCircleX - AppUtils.dp2px(getContext(), 8))), ((float) (mCircleY - AppUtils.dp2px(getContext(), 12))));
-        mLeftLinePath.lineTo(((float) (mCircleX - AppUtils.dp2px(getContext(), 8))), ((float) (mCircleY + AppUtils.dp2px(getContext(), 12))));
-
-        //右边竖线路径
-        mRightLinePath = new Path();
-        mRightLinePath.moveTo(((float) (mCircleX + AppUtils.dp2px(getContext(), 8))), ((float) (mCircleY - AppUtils.dp2px(getContext(), 12))));
-        mRightLinePath.lineTo(((float) (mCircleX + AppUtils.dp2px(getContext(), 8))), ((float) (mCircleY + AppUtils.dp2px(getContext(), 12))));
-
-        mPathMeasure = new PathMeasure();
-        mDstPath = new Path();
 
         //背景画笔
         mBtmCirclePaint = new Paint(Paint.ANTI_ALIAS_FLAG);
@@ -282,7 +251,59 @@ public class PlayButton extends View {
     @Override
     protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
         super.onMeasure(widthMeasureSpec, heightMeasureSpec);
+        mViewWidth = MeasureSpec.getSize(widthMeasureSpec);
+        mViewHeight = MeasureSpec.getSize(heightMeasureSpec);
+        mRadius = (mViewWidth - 2 * mLineWidth) / 2;
+        mCircleX = mCircleY = 0;
+        initPath();
         setMeasuredDimension(mViewWidth, mViewHeight);
+    }
+
+    private void initPath() {
+        //加载圆弧外框
+        rectF = new RectF(-mRadius, -mRadius, mRadius, mRadius);
+
+        //顺时针三角形路径
+        mShunTrianglePath = new Path();
+        mShunTrianglePath.moveTo(((float) (mCircleX - mTriangleWidth / Math.sqrt(3) / 2)), ((float) (mCircleY + mTriangleWidth / 2)));
+        mShunTrianglePath.lineTo(((float) (mCircleX + mTriangleWidth / Math.sqrt(3))), mCircleY);
+        mShunTrianglePath.lineTo(((float) (mCircleX - mTriangleWidth / Math.sqrt(3) / 2)), ((float) (mCircleY - mTriangleWidth / 2)));
+        mShunTrianglePath.lineTo(((float) (mCircleX - mTriangleWidth / Math.sqrt(3) / 2)), ((float) (mCircleY + mTriangleWidth / 2)));
+
+        //逆时针三角形路径
+        mNiTrianglePath = new Path();
+        mNiTrianglePath.moveTo(((float) (mCircleX - mTriangleWidth / Math.sqrt(3) / 2)), ((float) (mCircleY + mTriangleWidth / 2)));
+        mNiTrianglePath.lineTo(((float) (mCircleX - mTriangleWidth / Math.sqrt(3) / 2)), ((float) (mCircleY - mTriangleWidth / 2)));
+        mNiTrianglePath.lineTo(((float) (mCircleX + mTriangleWidth / Math.sqrt(3))), mCircleY);
+        mNiTrianglePath.lineTo(((float) (mCircleX - mTriangleWidth / Math.sqrt(3) / 2)), ((float) (mCircleY + mTriangleWidth / 2)));
+
+        //三角形到圆的连线path
+        mLinkLinePath = new Path();
+        mLinkLinePath.moveTo(((float) (mCircleX - mTriangleWidth / Math.sqrt(3) / 2)), ((float) (mCircleY + mTriangleWidth / 2)));
+        mLinkLinePath.lineTo(((float) (mCircleX - mTriangleWidth / Math.sqrt(3) / 2)), mCircleY + mRadius);
+
+        //顺时针圆形路径
+        mShunCirclePath = new Path();
+        mShunCirclePath.moveTo(((float) (mCircleX - mTriangleWidth / Math.sqrt(3) / 2)), mCircleY + mRadius);
+        mShunCirclePath.addCircle(mCircleX, mCircleY, mRadius, Path.Direction.CCW);
+
+        //逆时针圆形路径
+        mNiCirclePath = new Path();
+        mNiCirclePath.moveTo(((float) (mCircleX - mTriangleWidth / Math.sqrt(3) / 2)), mCircleY + mRadius);
+        mNiCirclePath.addCircle(mCircleX, mCircleY, mRadius, Path.Direction.CW);
+
+        //左边竖线路径
+        mLeftLinePath = new Path();
+        mLeftLinePath.moveTo(((float) (mCircleX - mLineXOffset)), ((float) (mCircleY - mLineYOffset)));
+        mLeftLinePath.lineTo(((float) (mCircleX - mLineXOffset)), ((float) (mCircleY + mLineYOffset)));
+
+        //右边竖线路径
+        mRightLinePath = new Path();
+        mRightLinePath.moveTo(((float) (mCircleX + mLineXOffset)), ((float) (mCircleY - mLineYOffset)));
+        mRightLinePath.lineTo(((float) (mCircleX + mLineXOffset)), ((float) (mCircleY + mLineYOffset)));
+
+        mPathMeasure = new PathMeasure();
+        mDstPath = new Path();
     }
 
     @Override
@@ -319,7 +340,7 @@ public class PlayButton extends View {
                 }
                 break;
             case 0://正在加载
-                canvas.drawPath(mShunTrianglePath,mTopCirclePaint);
+                canvas.drawPath(mShunTrianglePath, mTopCirclePaint);
                 if (isGrow) {//处于增加状态，增加角度
                     sweepAngle += 6;
                 } else {//处于减少状态，减少角度，并通过减少起始角度，控制最终角度不变
@@ -377,6 +398,9 @@ public class PlayButton extends View {
             case -1://播放--》暂停
                 mStopPlayAnimatorValue = 0f;
                 mStopPlayAnimator.start();
+                break;
+            case 0:
+                invalidate();
                 break;
         }
     }

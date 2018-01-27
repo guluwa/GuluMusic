@@ -12,7 +12,7 @@
         <variable
             name="song"
             type="cn.guluwa.gulumusic.data.bean.TracksBean" />
-        
+
         <variable
             name="clickListener"
             type="android.view.View.OnClickListener" />
@@ -47,7 +47,6 @@
                     android:layout_width="50dp"
                     android:layout_height="50dp"
                     android:scaleType="fitCenter"
-                    android:transitionName="songPic"
                     app:circleImageUrl="@{song.al.picUrl}"
                     app:layout_constraintBottom_toBottomOf="parent"
                     app:layout_constraintHorizontal_chainStyle="spread"
@@ -110,6 +109,7 @@
                     android:layout_height="25dp"
                     android:padding="5dp"
                     android:src="@drawable/more_icon"
+                    android:visibility="gone"
                     app:layout_constraintBottom_toBottomOf="parent"
                     app:layout_constraintEnd_toEndOf="parent"
                     app:layout_constraintTop_toTopOf="parent" />

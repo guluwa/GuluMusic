@@ -2,12 +2,14 @@ package cn.guluwa.gulumusic.utils;
 
 import android.app.Activity;
 import android.content.Context;
+import android.content.SharedPreferences;
 import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.graphics.drawable.BitmapDrawable;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.os.Environment;
+import android.preference.PreferenceManager;
 import android.support.v7.graphics.Palette;
 import android.util.DisplayMetrics;
 import android.widget.ImageView;
@@ -229,5 +231,19 @@ public class AppUtils {
             file = new File(Environment.getExternalStorageDirectory().getAbsolutePath() + "/gulu_music/word/" + name);
         }
         return file.exists() ? file.getAbsolutePath() : "";
+    }
+
+    //获取sharePreference String类型的值
+    public static String getString(String key, final String defaultValue) {
+        final SharedPreferences settings = PreferenceManager
+                .getDefaultSharedPreferences(MyApplication.getContext());
+        return settings.getString(key, defaultValue);
+    }
+
+    //设置sharePreference String类型的值
+    public static void setString(final String key, final String value) {
+        final SharedPreferences settings = PreferenceManager
+                .getDefaultSharedPreferences(MyApplication.getContext());
+        settings.edit().putString(key, value).apply();
     }
 }

@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <declare-styleable name="PlayButton">
+        <attr name="triangleWidth" format="integer" />
+        <attr name="lineWidth" format="integer" />
+        <attr name="lineXOffset" format="integer" />
+        <attr name="lineYOffset" format="integer" />
+    </declare-styleable>
+</resources>

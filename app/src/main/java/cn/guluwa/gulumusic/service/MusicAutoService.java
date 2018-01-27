@@ -4,13 +4,18 @@ import android.app.Service;
 import android.content.Intent;
 import android.media.MediaPlayer;
 import android.os.Binder;
+import android.os.Handler;
 import android.os.IBinder;
 import android.support.annotation.Nullable;
 import android.util.Log;
 
 import java.io.IOException;
+import java.util.concurrent.TimeUnit;
 
 import cn.guluwa.gulumusic.manage.AppManager;
+import io.reactivex.Observable;
+import io.reactivex.android.schedulers.AndroidSchedulers;
+import io.reactivex.functions.Consumer;
 
 /**
  * Created by guluwa on 2018/1/26.
@@ -52,14 +57,14 @@ public class MusicAutoService extends Service {
         }
     }
 
-    public void playNewSong(String path) {
+    public void playNewSong(String path, int currentTime) {
         if (mediaPlayer != null) {
             try {
                 mediaPlayer.reset();
                 mediaPlayer.setDataSource(path);
                 mediaPlayer.prepare();
                 mediaPlayer.setLooping(true);
-                mediaPlayer.seekTo(0);
+                mediaPlayer.seekTo(currentTime);
                 mediaPlayer.start();
             } catch (IOException e) {
                 e.printStackTrace();

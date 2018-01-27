@@ -14,4 +14,5 @@
     <color name="play_view_gray">#aab0b0b0</color>
     <color name="black_transparent">#aa000000</color>
     <color name="white_transparent">#ccffffff</color>
+    <color name="indicator_color">#eaeaea</color>
 </resources>
