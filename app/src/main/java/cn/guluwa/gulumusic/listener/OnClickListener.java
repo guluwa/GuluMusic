@@ -10,5 +10,5 @@ import cn.guluwa.gulumusic.data.bean.TracksBean;
 
 public interface OnClickListener {
 
-    void click(TracksBean song, ImageView imageView);
+    void click(TracksBean song);
 }

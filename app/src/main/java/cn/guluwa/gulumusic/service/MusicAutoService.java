@@ -9,10 +9,14 @@ import android.os.IBinder;
 import android.support.annotation.Nullable;
 import android.util.Log;
 
+import com.google.gson.Gson;
+
 import java.io.IOException;
 import java.util.concurrent.TimeUnit;
 
+import cn.guluwa.gulumusic.data.bean.TracksBean;
 import cn.guluwa.gulumusic.manage.AppManager;
+import cn.guluwa.gulumusic.utils.AppUtils;
 import io.reactivex.Observable;
 import io.reactivex.android.schedulers.AndroidSchedulers;
 import io.reactivex.functions.Consumer;
@@ -78,6 +82,29 @@ public class MusicAutoService extends Service {
     public class MyBinder extends Binder {
         public MusicAutoService getService() {
             return MusicAutoService.this;
+        }
+
+        //获取歌曲长度
+        public int getMusicDuration() {
+            if (mediaPlayer != null) {
+                return mediaPlayer.getDuration();
+            }
+            return 0;
+        }
+
+        //获取当前播放进度
+        public int getMusicCurrentPosition() {
+            if (mediaPlayer != null) {
+                return mediaPlayer.getCurrentPosition();
+            }
+            return 0;
+        }
+
+        //调整进度
+        public void seekTo(int position) {
+            if (mediaPlayer != null) {
+                mediaPlayer.seekTo(position);
+            }
         }
     }
 

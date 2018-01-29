@@ -1,5 +1,6 @@
 package cn.guluwa.gulumusic.ui.main;
 
+import android.animation.ObjectAnimator;
 import android.arch.lifecycle.ViewModelProviders;
 import android.content.ComponentName;
 import android.content.Intent;
@@ -18,6 +19,10 @@ import android.view.KeyEvent;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.animation.AccelerateInterpolator;
+import android.view.animation.Animation;
+import android.view.animation.LinearInterpolator;
+import android.view.animation.RotateAnimation;
 import android.widget.Toast;
 
 import com.bumptech.glide.Glide;
@@ -43,6 +48,8 @@ import cn.guluwa.gulumusic.utils.AppUtils;
 import cn.guluwa.gulumusic.utils.LrcParser;
 import io.reactivex.Observable;
 import io.reactivex.android.schedulers.AndroidSchedulers;
+import io.reactivex.disposables.Disposable;
+import io.reactivex.functions.Consumer;
 
 public class MainActivity extends BaseActivity {
 
@@ -53,6 +60,9 @@ public class MainActivity extends BaseActivity {
     private SimpleDateFormat time;
     private boolean isFirst;
     private String mSongPath;
+    private Disposable disposable;
+    private int mCurrentAnimationTime;
+    private ObjectAnimator mPicAnimator;
 
     @Override
     public int getViewLayoutId() {
@@ -70,14 +80,28 @@ public class MainActivity extends BaseActivity {
         initRecyclerView();
     }
 
+    private void startAnimation() {
+        if (mPicAnimator == null) {
+            mPicAnimator = ObjectAnimator.ofFloat(mMainBinding.ivCurrentSongPic, "rotation", 0f, 360f);
+            mPicAnimator.setDuration(5000); // 设置动画时间
+            mPicAnimator.setRepeatCount(Animation.INFINITE);
+            mPicAnimator.setInterpolator(new LinearInterpolator()); // 设置插入器
+            mPicAnimator.start();
+        } else {
+            mPicAnimator.resume();
+        }
+    }
+
     private void initData() {
         mCurrentSong = new Gson().fromJson(AppUtils.getString("mCurrentSong", ""), TracksBean.class);
+        time = new SimpleDateFormat("mm:ss");
         if (mCurrentSong != null) {
             mSongPath = AppUtils.isExistFile(String.format("%s_%s.mp3", mCurrentSong.getName(), mCurrentSong.getId()), 1);
             if (!"".equals(mSongPath)) {
                 isFirst = true;
                 mMainBinding.setSong(mCurrentSong);
                 mMainBinding.mPlayBtn.setPlaying(-1);
+                mMainBinding.tvCurrentSongProgress.setText(time.format(mCurrentSong.getCurrentTime()));
             }
         }
     }
@@ -86,6 +110,7 @@ public class MainActivity extends BaseActivity {
         mMainBinding.setClickListener(view -> {
             switch (view.getId()) {
                 case R.id.mBottomPlayInfo:
+                    mPicAnimator.pause();
                     Intent intent = new Intent(MainActivity.this, PlayActivity.class);
                     intent.putExtra("song", mCurrentSong);
                     ActivityOptionsCompat options = ActivityOptionsCompat.makeSceneTransitionAnimation(
@@ -96,13 +121,16 @@ public class MainActivity extends BaseActivity {
                     if (AppManager.get().getmMusicAutoService() != null) {
                         if (AppManager.get().getmMusicAutoService().isPlaying) {
                             mMainBinding.mPlayBtn.setPlaying(-1);
+                            mPicAnimator.pause();
                         } else {
                             mMainBinding.mPlayBtn.setPlaying(1);
+                            startAnimation();
                         }
                         AppManager.get().getmMusicAutoService().isPlaying = !AppManager.get().getmMusicAutoService().isPlaying;
                         if (isFirst) {
                             isFirst = false;
                             AppManager.get().getmMusicAutoService().playNewSong(mSongPath, mCurrentSong.getCurrentTime());
+                            bindProgressQuery();
                         } else {
                             AppManager.get().getmMusicAutoService().playOrPause();
                         }
@@ -148,7 +176,12 @@ public class MainActivity extends BaseActivity {
     }
 
     private void initRecyclerView() {
-        PlayListAdapter mAdapter = new PlayListAdapter((song, imageView) -> {
+        PlayListAdapter mAdapter = new PlayListAdapter((song) -> {
+            if (mCurrentSong != null) {
+                if (song.getId() == mCurrentSong.getId()) {
+                    return;
+                }
+            }
             AppManager.get().getmMusicAutoService().stop();
             mCurrentSong = song;
             mMainBinding.setSong(mCurrentSong);
@@ -186,6 +219,8 @@ public class MainActivity extends BaseActivity {
             AppManager.get().getmMusicAutoService().stop();
             AppManager.get().getmMusicAutoService().playNewSong(mSongPath, 0);
             mMainBinding.mPlayBtn.setPlaying(1);
+            startAnimation();
+            bindProgressQuery();
         }
         if ("".equals(AppUtils.isExistFile(String.format("%s_%s.txt", mCurrentSong.getName(), mCurrentSong.getId()), 2))) {
             mViewModel.refreshWord(mCurrentSong.getId(), true);
@@ -223,6 +258,8 @@ public class MainActivity extends BaseActivity {
                     if (mCurrentSong == null) {
                         mCurrentSong = listViewDataBean.data.get(0);
                         mMainBinding.setSong(mCurrentSong);
+                        mMainBinding.tvCurrentSongProgress.setText("00:00");
+                        mMainBinding.mPlayBtn.setPlaying(-1);
                     }
                     break;
             }
@@ -245,6 +282,8 @@ public class MainActivity extends BaseActivity {
                                         AppManager.get().getmMusicAutoService().stop();
                                         AppManager.get().getmMusicAutoService().playNewSong(result.getAbsolutePath(), 0);
                                         mMainBinding.mPlayBtn.setPlaying(1);
+                                        startAnimation();
+                                        bindProgressQuery();
                                     }
 
                                     @Override
@@ -291,12 +330,21 @@ public class MainActivity extends BaseActivity {
         });
     }
 
-    public void bindProgressListener() {
-        Observable.interval(0, 1000, TimeUnit.MILLISECONDS)
-                .observeOn(AndroidSchedulers.mainThread())
-                .subscribe(aLong -> {
+    public void bindProgressQuery() {
+        if (disposable == null) {
+            disposable = Observable.interval(0, 100, TimeUnit.MILLISECONDS)
+                    .observeOn(AndroidSchedulers.mainThread())
+                    .subscribe(aLong -> {
+                        if (AppManager.get().getmMusicAutoService() != null)
+                            mMainBinding.tvCurrentSongProgress.setText(time.format(AppManager.get().getmMusicAutoService().binder.getMusicCurrentPosition()));
+                    });
+        }
+    }
 
-                });
+    public void unbindProgressQuery() {
+        if (disposable != null && disposable.isDisposed()) {
+            disposable.dispose();
+        }
     }
 
     @Override
@@ -359,6 +407,10 @@ public class MainActivity extends BaseActivity {
             MusicAutoService mMusicService = ((MusicAutoService.MyBinder) (service)).getService();
             AppManager.get().setmMusicAutoService(mMusicService);
             System.out.println("MusicAutoService 初始化完成");
+            if (serviceConnection != null) {
+                unbindService(serviceConnection);
+                serviceConnection = null;
+            }
         }
 
         @Override
@@ -367,19 +419,34 @@ public class MainActivity extends BaseActivity {
     };
 
     @Override
-    protected void onDestroy() {
-        if (serviceConnection != null) {
-            unbindService(serviceConnection);
+    protected void onResume() {
+        if (AppManager.get().getmMusicAutoService() != null &&
+                AppManager.get().getmMusicAutoService().mediaPlayer != null &&
+                AppManager.get().getmMusicAutoService().mediaPlayer.isPlaying()) {
+            startAnimation();
         }
+        super.onResume();
+    }
+
+    @Override
+    protected void onStop() {
+        System.out.println(AppManager.get().getmMusicAutoService().mediaPlayer.getDuration());
+        System.out.println(AppManager.get().getmMusicAutoService().mediaPlayer.getCurrentPosition());
+        if (mCurrentSong != null) {
+            mCurrentSong.setDuration(AppManager.get().getmMusicAutoService().mediaPlayer.getDuration());
+            mCurrentSong.setCurrentTime(AppManager.get().getmMusicAutoService().mediaPlayer.getCurrentPosition());
+            AppUtils.setString("mCurrentSong", new Gson().toJson(mCurrentSong));
+            System.out.println("保存成功");
+        }
+        super.onStop();
+    }
+
+    @Override
+    protected void onDestroy() {
         if (AppManager.get().getmMusicAutoService() != null) {
-            System.out.println(AppManager.get().getmMusicAutoService().mediaPlayer.getDuration());
-            System.out.println(AppManager.get().getmMusicAutoService().mediaPlayer.getCurrentPosition());
-            if (mCurrentSong != null) {
-                mCurrentSong.setDuration(AppManager.get().getmMusicAutoService().mediaPlayer.getDuration());
-                mCurrentSong.setCurrentTime(AppManager.get().getmMusicAutoService().mediaPlayer.getCurrentPosition());
-                AppUtils.setString("mCurrentSong", new Gson().toJson(mCurrentSong));
-            }
+            unbindProgressQuery();
             AppManager.get().getmMusicAutoService().quit();
+            System.out.println("onDestroy");
         }
         super.onDestroy();
     }

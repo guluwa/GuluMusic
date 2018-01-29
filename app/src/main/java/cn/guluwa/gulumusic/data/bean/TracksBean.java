@@ -35,7 +35,7 @@ public class TracksBean implements Serializable {
     private String tag;
 
     @Ignore
-    private int currentTime;
+    private int currentTime = -1;
     @Ignore
     private int duration;
     @Ignore
