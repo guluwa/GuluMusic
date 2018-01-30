@@ -19,7 +19,7 @@ public interface SongDataSource {
 
     LiveData<ViewDataBean<List<TracksBean>>> queryNetCloudHotSong();
 
-    LiveData<ViewDataBean<SongPathBean>> querySongPath(String id);
+    LiveData<ViewDataBean<SongPathBean>> querySongPath(String id,String name);
 
-    LiveData<ViewDataBean<SongWordBean>> querySongWord(String id);
+    LiveData<ViewDataBean<SongWordBean>> querySongWord(String id,String name);
 }

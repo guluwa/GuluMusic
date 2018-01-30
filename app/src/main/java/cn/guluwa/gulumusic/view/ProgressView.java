@@ -9,6 +9,9 @@ import android.support.annotation.Nullable;
 import android.util.AttributeSet;
 import android.view.View;
 
+import java.sql.Time;
+import java.text.SimpleDateFormat;
+
 import cn.guluwa.gulumusic.R;
 import cn.guluwa.gulumusic.utils.AppUtils;
 
@@ -88,6 +91,16 @@ public class ProgressView extends View {
      */
     private int mIndicatorCircleBigRadius;
 
+    /**
+     * 进度
+     */
+    private float mProgress;
+
+    /**
+     * 时间转化
+     */
+    private SimpleDateFormat time;
+
     public ProgressView(Context context) {
         this(context, null);
     }
@@ -108,10 +121,12 @@ public class ProgressView extends View {
         mTextSize = AppUtils.sp2px(getContext(), 12);
         mSongPlayLength = "00:00";
         mSongTotalLength = "00:00";
+        mProgress = 0;
+        time = new SimpleDateFormat("mm:ss");
 
         mTopProgressPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
         mTopProgressPaint.setStrokeWidth(AppUtils.dp2px(getContext(), 2));
-        mTopProgressPaint.setStyle(Paint.Style.STROKE);
+        mTopProgressPaint.setStyle(Paint.Style.FILL_AND_STROKE);
         mTopProgressPaint.setColor(mProgressColor);
         mTopProgressPaint.setStrokeJoin(Paint.Join.ROUND);
         mTopProgressPaint.setStrokeCap(Paint.Cap.ROUND);
@@ -155,31 +170,25 @@ public class ProgressView extends View {
         canvas.drawLine(
                 mTextWidth,
                 mViewHeight / 2,
-                mTextWidth + (mViewWidth - 2 * mTextWidth) / 4,
+                mTextWidth + (mViewWidth - 2 * mTextWidth) * mProgress - mIndicatorCircleBigRadius * 2,
                 mViewHeight / 2,
                 mTopProgressPaint);
-        canvas.drawCircle(mTextWidth + (mViewWidth - 2 * mTextWidth) / 4 - mIndicatorCircleSmallRadius,
-                mViewHeight / 2,
-                mIndicatorCircleSmallRadius,
-                mTopProgressPaint);
-        canvas.drawCircle(mTextWidth + (mViewWidth - 2 * mTextWidth) / 4 - mIndicatorCircleSmallRadius,
+        canvas.drawCircle(mTextWidth + (mViewWidth - 2 * mTextWidth) * mProgress - mIndicatorCircleSmallRadius*2,
                 mViewHeight / 2,
                 mIndicatorCircleBigRadius,
-                mBtmProgressPaint);
+                mTopProgressPaint);
         canvas.drawText(mSongPlayLength, 0, mViewHeight / 2 + yOffset, mTextPaint);
         canvas.drawText(mSongTotalLength, mViewWidth - mTextSize * mSongTotalLength.length() / 2, mViewHeight / 2 + yOffset, mTextPaint);
     }
 
-    public void setmProgressColor(int mProgressColor) {
-        this.mProgressColor = mProgressColor;
-        mTopProgressPaint.setColor(mProgressColor);
-        mTextPaint.setColor(mProgressColor);
-        invalidate();
+    public void setProgress(float mProgress) {
+        this.mProgress = mProgress;
     }
 
-    public void setmIndicatorColor(int mIndicatorColor) {
-        this.mIndicatorColor = mIndicatorColor;
-        mBtmProgressPaint.setColor(mIndicatorColor);
+    public void setSongPlayLength(int playMillisecond, int totalMillisecond) {
+        this.mSongPlayLength = time.format(playMillisecond);
+        this.mSongTotalLength = time.format(totalMillisecond);
+        setProgress((float) (playMillisecond*1.0/totalMillisecond));
         invalidate();
     }
 }

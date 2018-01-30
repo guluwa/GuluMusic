@@ -246,4 +246,11 @@ public class AppUtils {
                 .getDefaultSharedPreferences(MyApplication.getContext());
         settings.edit().putString(key, value).apply();
     }
+
+    //分钟转化成秒
+    public static int getSeconds(String time){
+        String minute = time.substring(0,2);
+        String second=time.substring(3,5);
+        return Integer.valueOf(minute)*60+Integer.valueOf(second);
+    }
 }

@@ -42,23 +42,23 @@ public class SongsRepository {
         }
     }
 
-    public LiveData<ViewDataBean<SongPathBean>> querySongPath(String id) {
+    public LiveData<ViewDataBean<SongPathBean>> querySongPath(String id, String name) {
         if (AppUtils.isNetConnected()) {
-            return remoteSongsDataSource.querySongPath(id);
+            return remoteSongsDataSource.querySongPath(id, name);
         } else {
-            return localSongsDataSource.querySongPath(id);
+            return localSongsDataSource.querySongPath(id, name);
         }
     }
 
-    public LiveData<ViewDataBean<SongWordBean>> querySongWord(String id) {
+    public LiveData<ViewDataBean<SongWordBean>> querySongWord(String id, String name) {
         if (AppUtils.isNetConnected()) {
-            return remoteSongsDataSource.querySongWord(id);
+            return remoteSongsDataSource.querySongWord(id, name);
         } else {
-            return localSongsDataSource.querySongWord(id);
+            return localSongsDataSource.querySongWord(id, name);
         }
     }
 
-    public void downloadSongFile(String url, String songName,OnResultListener<File> listener) {
-        remoteSongsDataSource.downloadSongFile(url,songName,listener);
+    public void downloadSongFile(String url, String songName, OnResultListener<File> listener) {
+        remoteSongsDataSource.downloadSongFile(url, songName, listener);
     }
 }

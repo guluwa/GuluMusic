@@ -63,6 +63,8 @@ public class SongWordBean implements Serializable {
     private String lyric;
     @Ignore
     private String tlyric;
+    @Ignore
+    private String name;
 
     public int getId() {
         return id;
@@ -86,5 +88,13 @@ public class SongWordBean implements Serializable {
 
     public void setTlyric(String tlyric) {
         this.tlyric = tlyric;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
     }
 }

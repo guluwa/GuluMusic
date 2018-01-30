@@ -65,7 +65,7 @@ public class RemoteSongsDataSource implements SongDataSource {
     }
 
     @Override
-    public LiveData<ViewDataBean<SongPathBean>> querySongPath(String id) {
+    public LiveData<ViewDataBean<SongPathBean>> querySongPath(String id, String name) {
         Map<String, Object> map = new HashMap<>();
         map.put("types", "url");
         map.put("id", id);
@@ -76,6 +76,7 @@ public class RemoteSongsDataSource implements SongDataSource {
                         .subscribeOn(Schedulers.io())
                         .observeOn(Schedulers.io())
                         .map(songPathBean -> {
+                            songPathBean.setName(name);
                             songPathBean.setId(Integer.valueOf(id));
                             LocalSongsDataSource.getInstance().addSong(songPathBean);
                             return songPathBean;
@@ -85,7 +86,7 @@ public class RemoteSongsDataSource implements SongDataSource {
     }
 
     @Override
-    public LiveData<ViewDataBean<SongWordBean>> querySongWord(String id) {
+    public LiveData<ViewDataBean<SongWordBean>> querySongWord(String id, String name) {
         Map<String, Object> map = new HashMap<>();
         map.put("types", "lyric");
         map.put("id", id);
@@ -96,6 +97,7 @@ public class RemoteSongsDataSource implements SongDataSource {
                         .subscribeOn(Schedulers.io())
                         .observeOn(Schedulers.io())
                         .map(songWordBean -> {
+                            songWordBean.setName(name);
                             songWordBean.setId(Integer.valueOf(id));
                             LocalSongsDataSource.getInstance().addSong(songWordBean);
                             return songWordBean;

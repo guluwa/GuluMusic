@@ -6,6 +6,10 @@ package cn.guluwa.gulumusic.manage;
 
 public class Contacts {
 
+    public static final int REQUEST_CODE = 520;
+
+    public static final int RESULT_SONG_CODE = 502;
+
 //    http://lab.mkblog.cn/music/api.php?callback=jQuery111307766635099253183_1515637205052
 
     public static final String BASEURL = "http://lab.mkblog.cn/music_new/";

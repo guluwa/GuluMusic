@@ -45,7 +45,7 @@ public class LocalSongsDataSource implements SongDataSource {
     }
 
     @Override
-    public LiveData<ViewDataBean<SongPathBean>> querySongPath(String id) {
+    public LiveData<ViewDataBean<SongPathBean>> querySongPath(String id, String name) {
         MediatorLiveData<ViewDataBean<SongPathBean>> data = new MediatorLiveData<>();
         data.setValue(ViewDataBean.loading());
 
@@ -53,6 +53,7 @@ public class LocalSongsDataSource implements SongDataSource {
             if (songPathBean == null) {
                 data.setValue(ViewDataBean.empty());
             } else {
+                songPathBean.setName(name);
                 data.setValue(ViewDataBean.content(songPathBean));
             }
         });
@@ -60,7 +61,7 @@ public class LocalSongsDataSource implements SongDataSource {
     }
 
     @Override
-    public LiveData<ViewDataBean<SongWordBean>> querySongWord(String id) {
+    public LiveData<ViewDataBean<SongWordBean>> querySongWord(String id, String name) {
         MediatorLiveData<ViewDataBean<SongWordBean>> data = new MediatorLiveData<>();
         data.setValue(ViewDataBean.loading());
 
@@ -68,6 +69,7 @@ public class LocalSongsDataSource implements SongDataSource {
             if (songWordBean == null) {
                 data.setValue(ViewDataBean.empty());
             } else {
+                songWordBean.setName(name);
                 data.setValue(ViewDataBean.content(songWordBean));
             }
         });

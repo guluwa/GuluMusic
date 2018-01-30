@@ -32,7 +32,7 @@ public class PlayViewModel extends ViewModel {
                 mPathFresh = new MutableLiveData<>();
             mSongPath = Transformations.switchMap(mPathFresh, input -> {
                 if (input.isFresh) {
-                    return songsRepository.querySongPath(String.valueOf(input.id));
+                    return songsRepository.querySongPath(String.valueOf(input.id), input.name);
                 } else {
                     return null;
                 }
@@ -47,7 +47,7 @@ public class PlayViewModel extends ViewModel {
                 mWordFresh = new MutableLiveData<>();
             mSongWord = Transformations.switchMap(mWordFresh, input -> {
                 if (input.isFresh) {
-                    return songsRepository.querySongWord(String.valueOf(input.id));
+                    return songsRepository.querySongWord(String.valueOf(input.id), input.name);
                 } else {
                     return null;
                 }
@@ -56,12 +56,12 @@ public class PlayViewModel extends ViewModel {
         return mSongWord;
     }
 
-    void refreshPath(int id, boolean fresh) {
-        mPathFresh.setValue(new FreshBean(id, fresh));
+    void refreshPath(int id, String name, boolean fresh) {
+        mPathFresh.setValue(new FreshBean(id, name, fresh));
     }
 
-    void refreshWord(int id, boolean fresh) {
-        mWordFresh.setValue(new FreshBean(id, fresh));
+    void refreshWord(int id, String name, boolean fresh) {
+        mWordFresh.setValue(new FreshBean(id, name, fresh));
     }
 
     void downloadSongFile(String url, String songName, OnResultListener<File> listener) {

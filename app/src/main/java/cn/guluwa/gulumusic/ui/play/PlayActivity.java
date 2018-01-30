@@ -26,18 +26,25 @@ import java.io.File;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.HashMap;
+import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 import cn.guluwa.gulumusic.R;
 import cn.guluwa.gulumusic.base.BaseActivity;
+import cn.guluwa.gulumusic.data.bean.LrcBean;
 import cn.guluwa.gulumusic.data.bean.TracksBean;
 import cn.guluwa.gulumusic.databinding.ActivityPlayBinding;
 import cn.guluwa.gulumusic.listener.OnResultListener;
 import cn.guluwa.gulumusic.manage.AppManager;
+import cn.guluwa.gulumusic.manage.Contacts;
 import cn.guluwa.gulumusic.manage.MyApplication;
 import cn.guluwa.gulumusic.service.MusicAutoService;
 import cn.guluwa.gulumusic.ui.main.MainActivity;
 import cn.guluwa.gulumusic.utils.AppUtils;
 import cn.guluwa.gulumusic.utils.LrcParser;
+import io.reactivex.Observable;
+import io.reactivex.android.schedulers.AndroidSchedulers;
+import io.reactivex.disposables.Disposable;
 import jp.wasabeef.glide.transformations.BlurTransformation;
 
 public class PlayActivity extends BaseActivity {
@@ -46,8 +53,11 @@ public class PlayActivity extends BaseActivity {
     private ActivityPlayBinding mPlayBinding;
     private PlayViewModel mViewModel;
     private boolean hasWord;
-    private HashMap<Long, String> mSongWordsMap;
-    private SimpleDateFormat time;
+    private List<LrcBean> mLrcList;
+    private Disposable disposable;
+    private int mLrcPosition;
+    private boolean isFirst;
+    private String mSongPath;
 
     @Override
     public int getViewLayoutId() {
@@ -74,7 +84,13 @@ public class PlayActivity extends BaseActivity {
                             mPlayBinding.mPlayBtn.setPlaying(1);
                         }
                         AppManager.get().getmMusicAutoService().isPlaying = !AppManager.get().getmMusicAutoService().isPlaying;
-                        AppManager.get().getmMusicAutoService().playOrPause();
+                        if (isFirst) {
+                            isFirst = false;
+                            AppManager.get().getmMusicAutoService().playNewSong(mSongPath, mSong.getCurrentTime());
+                            bindProgressQuery();
+                        } else {
+                            AppManager.get().getmMusicAutoService().playOrPause();
+                        }
                     }
                     break;
                 case R.id.ivDownBack:
@@ -85,9 +101,22 @@ public class PlayActivity extends BaseActivity {
     }
 
     private void initData() {
+        mLrcPosition = -1;
         mSong = (TracksBean) getIntent().getSerializableExtra("song");
+        isFirst = true;
+        mSongPath = AppUtils.isExistFile(String.format("%s_%s.mp3", mSong.getName(), mSong.getId()), 1);
+        mPlayBinding.mPlayBtn.setPlaying(getIntent().getIntExtra("status", -1));
+        mPlayBinding.mProgressView.setSongPlayLength(mSong.getCurrentTime(), mSong.getDuration());
         mPlayBinding.setSong(mSong);
-        time = new SimpleDateFormat("mm:ss");
+        try {
+            mLrcList = LrcParser.parserLocal(String.format("%s_%s.txt", mSong.getName(), mSong.getId()));
+        } catch (Exception e) {
+            mLrcList = null;
+            mPlayBinding.tvSongWord.setText("暂无歌词");
+            e.printStackTrace();
+        }
+        if (getIntent().getIntExtra("status", -1) == 1)
+            bindProgressQuery();
     }
 
     private void initSongPic() {
@@ -138,5 +167,63 @@ public class PlayActivity extends BaseActivity {
     @Override
     protected void initViewModel() {
         mViewModel = ViewModelProviders.of(this).get(PlayViewModel.class);
+    }
+
+    @Override
+    public void onBackPressed() {
+        Intent intent = new Intent(this, MainActivity.class);
+        intent.putExtra("status", mPlayBinding.mPlayBtn.getIsPlaying());
+        setResult(Contacts.RESULT_SONG_CODE, intent);
+        super.onBackPressed();
+    }
+
+    public void bindProgressQuery() {
+        if (disposable == null) {
+            disposable = Observable.interval(0, 150, TimeUnit.MILLISECONDS)
+                    .observeOn(AndroidSchedulers.mainThread())
+                    .subscribe(aLong -> {
+                        if (AppManager.get().getmMusicAutoService() != null) {
+                            int musicCurrentPosition = AppManager.get().getmMusicAutoService().binder.getMusicCurrentPosition();
+                            if (musicCurrentPosition < 1000 && mLrcPosition != -1) {
+                                mLrcPosition = -1;
+                            }
+                            if (mLrcList != null) {
+                                if (mLrcPosition == -1) {//说明是第一次
+                                    for (int i = 0; i < mLrcList.size(); i++) {
+                                        if (mLrcList.get(i).getTime() > musicCurrentPosition) {
+                                            mLrcPosition = i;
+                                            mPlayBinding.tvSongWord.setText(mLrcList.get(mLrcPosition).getWord());
+                                            System.out.println(musicCurrentPosition + ";" + mLrcList.get(mLrcPosition).getWord());
+                                            break;
+                                        }
+                                    }
+                                } else {
+                                    if (mLrcList.size() > mLrcPosition + 1) {
+                                        if (mLrcList.get(mLrcPosition + 1).getTime() < musicCurrentPosition) {
+                                            mLrcPosition++;
+                                            if (mLrcList.size() > mLrcPosition) {
+                                                mPlayBinding.tvSongWord.setText(mLrcList.get(mLrcPosition).getWord());
+                                                System.out.println(musicCurrentPosition + ";" + mLrcList.get(mLrcPosition).getWord());
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                            mPlayBinding.mProgressView.setSongPlayLength(musicCurrentPosition, AppManager.get().getmMusicAutoService().mediaPlayer.getDuration());
+                        }
+                    });
+        }
+    }
+
+    public void unbindProgressQuery() {
+        if (disposable != null && disposable.isDisposed()) {
+            disposable.dispose();
+        }
+    }
+
+    @Override
+    protected void onDestroy() {
+        unbindProgressQuery();
+        super.onDestroy();
     }
 }
