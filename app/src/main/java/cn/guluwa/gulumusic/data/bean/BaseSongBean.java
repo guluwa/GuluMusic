@@ -3,7 +3,6 @@ package cn.guluwa.gulumusic.data.bean;
 import android.arch.persistence.room.ColumnInfo;
 import android.arch.persistence.room.Embedded;
 import android.arch.persistence.room.Ignore;
-import android.arch.persistence.room.PrimaryKey;
 
 import java.io.Serializable;
 import java.util.List;
@@ -16,8 +15,6 @@ public class BaseSongBean implements Serializable{
 
     private static final long serialVersionUID = -3436929448594928827L;
     private String name;
-    private int index;
-    private int id;
     @Embedded
     private TracksBean.AlBean al;
     @Embedded
@@ -32,22 +29,6 @@ public class BaseSongBean implements Serializable{
     private List<TracksBean.ArBean> ar;
     @Ignore
     private List<String> alia;
-
-    public int getIndex() {
-        return index;
-    }
-
-    public void setIndex(int index) {
-        this.index = index;
-    }
-
-    public int getId() {
-        return id;
-    }
-
-    public void setId(int id) {
-        this.id = id;
-    }
 
     public int getDuration() {
         return duration;

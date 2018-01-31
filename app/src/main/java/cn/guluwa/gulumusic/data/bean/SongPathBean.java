@@ -1,6 +1,5 @@
 package cn.guluwa.gulumusic.data.bean;
 
-import android.arch.persistence.room.Embedded;
 import android.arch.persistence.room.Entity;
 import android.arch.persistence.room.Ignore;
 import android.arch.persistence.room.PrimaryKey;
@@ -26,7 +25,7 @@ public class SongPathBean implements Serializable {
     @Ignore
     private int br;
     @Ignore
-    private BaseSongBean song;
+    private TracksBean song;
 
     public int getId() {
         return id;
@@ -52,11 +51,11 @@ public class SongPathBean implements Serializable {
         this.br = br;
     }
 
-    public BaseSongBean getSong() {
+    public TracksBean getSong() {
         return song;
     }
 
-    public void setSong(BaseSongBean song) {
+    public void setSong(TracksBean song) {
         this.song = song;
     }
 }

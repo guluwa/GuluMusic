@@ -5,9 +5,9 @@ package cn.guluwa.gulumusic.data.bean;
  */
 public class FreshBean {
     public boolean isFresh;
-    public BaseSongBean song ;
+    public TracksBean song ;
 
-    public FreshBean(BaseSongBean song, boolean isFresh) {
+    public FreshBean(TracksBean song, boolean isFresh) {
         this.song= song;
         this.isFresh = isFresh;
     }
