@@ -64,7 +64,7 @@ public class SongWordBean implements Serializable {
     @Ignore
     private String tlyric;
     @Ignore
-    private String name;
+    private BaseSongBean song;
 
     public int getId() {
         return id;
@@ -90,11 +90,11 @@ public class SongWordBean implements Serializable {
         this.tlyric = tlyric;
     }
 
-    public String getName() {
-        return name;
+    public BaseSongBean getSong() {
+        return song;
     }
 
-    public void setName(String name) {
-        this.name = name;
+    public void setSong(BaseSongBean song) {
+        this.song = song;
     }
 }

@@ -3,6 +3,8 @@
 
     <data>
 
+        <import type="cn.guluwa.gulumusic.utils.ImageViewAttrAdapter" />
+
         <variable
             name="song"
             type="cn.guluwa.gulumusic.data.bean.TracksBean" />
@@ -70,8 +72,8 @@
                 android:layout_height="wrap_content"
                 android:layout_marginStart="20dp"
                 android:layout_marginTop="30dp"
-                android:padding="5dp"
                 android:onClick="@{ClickListener}"
+                android:padding="5dp"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toTopOf="parent" />
 
@@ -88,7 +90,8 @@
                 android:id="@+id/ivSongPic"
                 android:layout_width="250dp"
                 android:layout_height="250dp"
-                android:transitionName="songPic"
+                app:imageUrl="@{song.al.picUrl}"
+                android:transitionName="songImage"
                 app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent" />

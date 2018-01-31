@@ -2,6 +2,7 @@ package cn.guluwa.gulumusic.listener;
 
 import android.widget.ImageView;
 
+import cn.guluwa.gulumusic.data.bean.BaseSongBean;
 import cn.guluwa.gulumusic.data.bean.TracksBean;
 
 /**
@@ -10,5 +11,5 @@ import cn.guluwa.gulumusic.data.bean.TracksBean;
 
 public interface OnClickListener {
 
-    void click(TracksBean song);
+    void click(BaseSongBean song);
 }

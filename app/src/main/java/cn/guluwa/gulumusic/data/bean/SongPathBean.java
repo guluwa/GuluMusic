@@ -26,7 +26,7 @@ public class SongPathBean implements Serializable {
     @Ignore
     private int br;
     @Ignore
-    private String name;
+    private BaseSongBean song;
 
     public int getId() {
         return id;
@@ -52,11 +52,11 @@ public class SongPathBean implements Serializable {
         this.br = br;
     }
 
-    public String getName() {
-        return name;
+    public BaseSongBean getSong() {
+        return song;
     }
 
-    public void setName(String name) {
-        this.name = name;
+    public void setSong(BaseSongBean song) {
+        this.song = song;
     }
 }

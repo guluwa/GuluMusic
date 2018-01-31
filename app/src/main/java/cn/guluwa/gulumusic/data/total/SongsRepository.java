@@ -7,6 +7,8 @@ import android.view.View;
 import java.io.File;
 import java.util.List;
 
+import cn.guluwa.gulumusic.data.bean.BaseSongBean;
+import cn.guluwa.gulumusic.data.bean.LocalSongBean;
 import cn.guluwa.gulumusic.data.bean.PageStatus;
 import cn.guluwa.gulumusic.data.bean.SongPathBean;
 import cn.guluwa.gulumusic.data.bean.SongWordBean;
@@ -42,23 +44,31 @@ public class SongsRepository {
         }
     }
 
-    public LiveData<ViewDataBean<SongPathBean>> querySongPath(String id, String name) {
+    public LiveData<ViewDataBean<List<LocalSongBean>>> queryLocalSong() {
+        return localSongsDataSource.queryLocalSong();
+    }
+
+    public void addLocalSong(LocalSongBean localSongBean){
+        localSongsDataSource.addLocalSong(localSongBean);
+    }
+
+    public LiveData<ViewDataBean<SongPathBean>> querySongPath(BaseSongBean song) {
         if (AppUtils.isNetConnected()) {
-            return remoteSongsDataSource.querySongPath(id, name);
+            return remoteSongsDataSource.querySongPath(song);
         } else {
-            return localSongsDataSource.querySongPath(id, name);
+            return localSongsDataSource.querySongPath(song);
         }
     }
 
-    public LiveData<ViewDataBean<SongWordBean>> querySongWord(String id, String name) {
+    public LiveData<ViewDataBean<SongWordBean>> querySongWord(BaseSongBean song) {
         if (AppUtils.isNetConnected()) {
-            return remoteSongsDataSource.querySongWord(id, name);
+            return remoteSongsDataSource.querySongWord(song);
         } else {
-            return localSongsDataSource.querySongWord(id, name);
+            return localSongsDataSource.querySongWord(song);
         }
     }
 
-    public void downloadSongFile(String url, String songName, OnResultListener<File> listener) {
-        remoteSongsDataSource.downloadSongFile(url, songName, listener);
+    public void downloadSongFile(SongPathBean songPathBean, String songName, OnResultListener<File> listener) {
+        remoteSongsDataSource.downloadSongFile(songPathBean, songName, listener);
     }
 }

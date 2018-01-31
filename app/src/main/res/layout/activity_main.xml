@@ -7,7 +7,7 @@
 
         <variable
             name="song"
-            type="cn.guluwa.gulumusic.data.bean.TracksBean" />
+            type="cn.guluwa.gulumusic.data.bean.BaseSongBean" />
 
         <variable
             name="clickListener"
@@ -67,7 +67,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="50dp"
                 android:layout_gravity="bottom"
-                android:background="@color/white"
+                android:background="@drawable/touch_ripple_bg"
                 android:onClick="@{clickListener}"
                 app:layout_constraintBottom_toBottomOf="parent">
 
@@ -82,7 +82,7 @@
                     android:layout_height="40dp"
                     android:layout_marginStart="25dp"
                     android:src="@mipmap/ic_launcher"
-                    android:transitionName="songPic"
+                    android:transitionName="songImage"
                     app:circleImageUrl="@{song.al.picUrl}"
                     app:layout_constraintBottom_toBottomOf="parent"
                     app:layout_constraintLeft_toLeftOf="parent"
@@ -94,7 +94,7 @@
                     android:layout_height="wrap_content"
                     android:layout_marginStart="25dp"
                     android:text="@{song.name}"
-                    android:textColor="@color/black"
+                    android:textColor="@color/play_view_black"
                     android:textSize="13sp"
                     app:layout_constraintBottom_toBottomOf="parent"
                     app:layout_constraintLeft_toRightOf="@+id/ivCurrentSongPic"
@@ -130,14 +130,113 @@
         <android.support.constraint.ConstraintLayout
             android:layout_width="match_parent"
             android:layout_height="match_parent"
+            android:clickable="true"
             android:layout_gravity="start"
             android:background="@color/white">
 
+            <ImageView
+                android:id="@+id/ivUserImage"
+                android:layout_width="100dp"
+                android:layout_height="100dp"
+                android:layout_marginTop="40dp"
+                android:src="@mipmap/ic_launcher_round"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent" />
+
             <TextView
+                android:id="@+id/tvUserName"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="20dp"
+                android:text="HELLO 咕噜音乐"
+                android:textColor="@color/black"
+                android:textSize="20sp"
+                android:textStyle="bold"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@+id/ivUserImage" />
+
+            <FrameLayout
+                android:id="@+id/flNetCloudSongs"
                 android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:gravity="center"
-                android:text="@string/app_name" />
+                android:layout_height="wrap_content"
+                android:layout_marginTop="40dp"
+                android:onClick="@{clickListener}"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@+id/tvUserName">
+
+                <ImageView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center_vertical"
+                    android:layout_marginStart="20dp"
+                    android:src="@drawable/ic_hot_music" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center_vertical"
+                    android:layout_marginStart="80dp"
+                    android:text="热门"
+                    android:textColor="@color/black"
+                    android:textSize="18sp" />
+            </FrameLayout>
+
+            <FrameLayout
+                android:id="@+id/flLocalSongs"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="35dp"
+                android:onClick="@{clickListener}"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@+id/flNetCloudSongs">
+
+                <ImageView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center_vertical"
+                    android:layout_marginStart="20dp"
+                    android:src="@drawable/ic_local_music" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center_vertical"
+                    android:layout_marginStart="80dp"
+                    android:text="本地"
+                    android:textColor="@color/black"
+                    android:textSize="18sp" />
+            </FrameLayout>
+
+            <FrameLayout
+                android:id="@+id/flAppSetting"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="35dp"
+                android:onClick="@{clickListener}"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@+id/flLocalSongs">
+
+                <ImageView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center_vertical"
+                    android:layout_marginStart="20dp"
+                    android:src="@drawable/ic_settings" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center_vertical"
+                    android:layout_marginStart="80dp"
+                    android:text="设置"
+                    android:textColor="@color/black"
+                    android:textSize="18sp" />
+            </FrameLayout>
         </android.support.constraint.ConstraintLayout>
     </android.support.v4.widget.DrawerLayout>
 </layout>

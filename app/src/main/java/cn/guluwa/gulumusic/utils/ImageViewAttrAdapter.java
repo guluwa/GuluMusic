@@ -41,6 +41,14 @@ public class ImageViewAttrAdapter {
                 .into(imageView);
     }
 
+    @BindingAdapter({"imageUrl"})
+    public static void loadImage(ImageView imageView, String url) {
+        Glide.with(imageView.getContext())
+                .load(url)
+                .apply(new RequestOptions().centerCrop())
+                .into(imageView);
+    }
+
     @BindingAdapter({"bigImageUrl"})
     public static void loadBigImage(ImageView imageView, String url) {
         Glide.with(imageView.getContext())

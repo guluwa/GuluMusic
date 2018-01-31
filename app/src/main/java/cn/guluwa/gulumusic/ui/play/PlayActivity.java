@@ -103,9 +103,13 @@ public class PlayActivity extends BaseActivity {
     private void initData() {
         mLrcPosition = -1;
         mSong = (TracksBean) getIntent().getSerializableExtra("song");
-        isFirst = true;
         mSongPath = AppUtils.isExistFile(String.format("%s_%s.mp3", mSong.getName(), mSong.getId()), 1);
         mPlayBinding.mPlayBtn.setPlaying(getIntent().getIntExtra("status", -1));
+        if (mPlayBinding.mPlayBtn.getIsPlaying() == -1) {
+            isFirst = true;
+        } else if (mPlayBinding.mPlayBtn.getIsPlaying() == 1) {
+            bindProgressQuery();
+        }
         mPlayBinding.mProgressView.setSongPlayLength(mSong.getCurrentTime(), mSong.getDuration());
         mPlayBinding.setSong(mSong);
         try {
@@ -115,8 +119,6 @@ public class PlayActivity extends BaseActivity {
             mPlayBinding.tvSongWord.setText("暂无歌词");
             e.printStackTrace();
         }
-        if (getIntent().getIntExtra("status", -1) == 1)
-            bindProgressQuery();
     }
 
     private void initSongPic() {
@@ -143,12 +145,6 @@ public class PlayActivity extends BaseActivity {
                     }
                 })
                 .into(mPlayBinding.ivBackGround);
-
-        Glide.with(MyApplication.getContext())
-                .asBitmap()
-                .apply(new RequestOptions().centerCrop())
-                .load(mSong.getAl().getPicUrl())
-                .into(mPlayBinding.ivSongPic);
     }
 
     private void initStatusBar() {
@@ -191,9 +187,8 @@ public class PlayActivity extends BaseActivity {
                                 if (mLrcPosition == -1) {//说明是第一次
                                     for (int i = 0; i < mLrcList.size(); i++) {
                                         if (mLrcList.get(i).getTime() > musicCurrentPosition) {
-                                            mLrcPosition = i;
+                                            mLrcPosition = i-1;
                                             mPlayBinding.tvSongWord.setText(mLrcList.get(mLrcPosition).getWord());
-                                            System.out.println(musicCurrentPosition + ";" + mLrcList.get(mLrcPosition).getWord());
                                             break;
                                         }
                                     }
@@ -203,7 +198,6 @@ public class PlayActivity extends BaseActivity {
                                             mLrcPosition++;
                                             if (mLrcList.size() > mLrcPosition) {
                                                 mPlayBinding.tvSongWord.setText(mLrcList.get(mLrcPosition).getWord());
-                                                System.out.println(musicCurrentPosition + ";" + mLrcList.get(mLrcPosition).getWord());
                                             }
                                         }
                                     }
@@ -216,8 +210,9 @@ public class PlayActivity extends BaseActivity {
     }
 
     public void unbindProgressQuery() {
-        if (disposable != null && disposable.isDisposed()) {
+        if (disposable != null && !disposable.isDisposed()) {
             disposable.dispose();
+            disposable = null;
         }
     }
 

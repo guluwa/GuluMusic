@@ -4,6 +4,7 @@ import android.arch.lifecycle.LiveData;
 
 import java.util.List;
 
+import cn.guluwa.gulumusic.data.bean.LocalSongBean;
 import cn.guluwa.gulumusic.data.bean.SongPathBean;
 import cn.guluwa.gulumusic.data.bean.SongWordBean;
 import cn.guluwa.gulumusic.data.bean.TracksBean;
@@ -33,8 +34,18 @@ public class SongsServiceImpl implements SongsService {
     }
 
     @Override
+    public void addLocalSong(LocalSongBean localSongBean) {
+        songsDao.addLocalSong(localSongBean);
+    }
+
+    @Override
     public LiveData<List<TracksBean>> queryNetCloudHotSong() {
         return songsDao.queryNetCloudHotSong();
+    }
+
+    @Override
+    public LiveData<List<LocalSongBean>> queryLocalSong() {
+        return songsDao.queryLocalSong();
     }
 
     @Override

@@ -8,6 +8,7 @@ import android.arch.persistence.room.Query;
 
 import java.util.List;
 
+import cn.guluwa.gulumusic.data.bean.LocalSongBean;
 import cn.guluwa.gulumusic.data.bean.SongPathBean;
 import cn.guluwa.gulumusic.data.bean.SongWordBean;
 import cn.guluwa.gulumusic.data.bean.TracksBean;
@@ -23,6 +24,9 @@ public interface SongsDao {
     void addSongs(List<TracksBean> songs);
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
+    void addLocalSong(LocalSongBean songBean);
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
     void addSongPath(SongPathBean songPathBean);
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
@@ -30,6 +34,9 @@ public interface SongsDao {
 
     @Query("select * from net_cloud_hot_songs order by `index`")
     LiveData<List<TracksBean>> queryNetCloudHotSong();
+
+    @Query("select * from local_songs order by `index`")
+    LiveData<List<LocalSongBean>> queryLocalSong();
 
     @Query("select * from songs_path where id=:id")
     LiveData<SongPathBean> querySongPath(String id);

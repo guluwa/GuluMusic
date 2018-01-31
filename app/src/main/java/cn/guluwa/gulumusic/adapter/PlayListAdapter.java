@@ -12,6 +12,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import cn.guluwa.gulumusic.R;
+import cn.guluwa.gulumusic.data.bean.BaseSongBean;
 import cn.guluwa.gulumusic.data.bean.TracksBean;
 import cn.guluwa.gulumusic.databinding.PlayListItemLayoutBinding;
 import cn.guluwa.gulumusic.listener.OnClickListener;
@@ -24,13 +25,13 @@ public class PlayListAdapter extends RecyclerView.Adapter<PlayListAdapter.ViewHo
 
     private OnClickListener listener;
 
-    private List<TracksBean> data = new ArrayList<>();
+    private List<? extends BaseSongBean> data = new ArrayList<>();
 
     public PlayListAdapter(OnClickListener listener) {
         this.listener = listener;
     }
 
-    public void setData(List<TracksBean> data) {
+    public void setData(List<? extends BaseSongBean> data) {
         this.data = data;
         notifyDataSetChanged();
     }

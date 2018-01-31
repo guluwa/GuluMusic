@@ -117,7 +117,6 @@ public class LrcParser {
             }
             // 设置时间点和内容的映射
             lrcBeans.add(new LrcBean(currentTime, currentContent));
-            System.out.println("time:" + currentTime + ";word:" + currentContent);
         }
         // 如果存在匹配项，则执行以下操作
         while (matcher2.find()) {
@@ -144,7 +143,6 @@ public class LrcParser {
             }
             // 设置时间点和内容的映射
             lrcBeans.add(new LrcBean(currentTime, currentContent));
-            System.out.println("time:" + currentTime + ";word:" + currentContent);
         }
     }
 

@@ -8,9 +8,11 @@ import android.arch.lifecycle.ViewModel;
 import java.io.File;
 import java.io.StringReader;
 
+import cn.guluwa.gulumusic.data.bean.BaseSongBean;
 import cn.guluwa.gulumusic.data.bean.FreshBean;
 import cn.guluwa.gulumusic.data.bean.SongPathBean;
 import cn.guluwa.gulumusic.data.bean.SongWordBean;
+import cn.guluwa.gulumusic.data.bean.TracksBean;
 import cn.guluwa.gulumusic.data.bean.ViewDataBean;
 import cn.guluwa.gulumusic.data.total.SongsRepository;
 import cn.guluwa.gulumusic.listener.OnResultListener;
@@ -32,7 +34,7 @@ public class PlayViewModel extends ViewModel {
                 mPathFresh = new MutableLiveData<>();
             mSongPath = Transformations.switchMap(mPathFresh, input -> {
                 if (input.isFresh) {
-                    return songsRepository.querySongPath(String.valueOf(input.id), input.name);
+                    return songsRepository.querySongPath(input.song);
                 } else {
                     return null;
                 }
@@ -47,7 +49,7 @@ public class PlayViewModel extends ViewModel {
                 mWordFresh = new MutableLiveData<>();
             mSongWord = Transformations.switchMap(mWordFresh, input -> {
                 if (input.isFresh) {
-                    return songsRepository.querySongWord(String.valueOf(input.id), input.name);
+                    return songsRepository.querySongWord(input.song);
                 } else {
                     return null;
                 }
@@ -56,15 +58,15 @@ public class PlayViewModel extends ViewModel {
         return mSongWord;
     }
 
-    void refreshPath(int id, String name, boolean fresh) {
-        mPathFresh.setValue(new FreshBean(id, name, fresh));
+    void refreshPath(BaseSongBean song, boolean fresh) {
+        mPathFresh.setValue(new FreshBean(song, fresh));
     }
 
-    void refreshWord(int id, String name, boolean fresh) {
-        mWordFresh.setValue(new FreshBean(id, name, fresh));
+    void refreshWord(BaseSongBean song, boolean fresh) {
+        mWordFresh.setValue(new FreshBean(song, fresh));
     }
 
-    void downloadSongFile(String url, String songName, OnResultListener<File> listener) {
-        songsRepository.downloadSongFile(url, songName, listener);
+    void downloadSongFile(SongPathBean songPathBean, String songName, OnResultListener<File> listener) {
+        songsRepository.downloadSongFile(songPathBean, songName, listener);
     }
 }

@@ -7,6 +7,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import cn.guluwa.gulumusic.data.bean.BaseSongBean;
+import cn.guluwa.gulumusic.data.bean.LocalSongBean;
 import cn.guluwa.gulumusic.data.bean.SongPathBean;
 import cn.guluwa.gulumusic.data.bean.SongWordBean;
 import cn.guluwa.gulumusic.data.bean.TracksBean;
@@ -19,7 +21,9 @@ import cn.guluwa.gulumusic.listener.OnResultListener;
 import cn.guluwa.gulumusic.manage.Contacts;
 import cn.guluwa.gulumusic.utils.AppUtils;
 import io.reactivex.android.schedulers.AndroidSchedulers;
+import io.reactivex.functions.Function;
 import io.reactivex.schedulers.Schedulers;
+import okhttp3.ResponseBody;
 
 /**
  * Created by guluwa on 2018/1/12.
@@ -65,10 +69,10 @@ public class RemoteSongsDataSource implements SongDataSource {
     }
 
     @Override
-    public LiveData<ViewDataBean<SongPathBean>> querySongPath(String id, String name) {
+    public LiveData<ViewDataBean<SongPathBean>> querySongPath(TracksBean song) {
         Map<String, Object> map = new HashMap<>();
         map.put("types", "url");
-        map.put("id", id);
+        map.put("id", song.getId());
         map.put("source", "netease");
         return LiveDataObservableAdapter.fromObservableViewData(
                 RetrofitFactory.getRetrofit().createApi(ApiService.class)
@@ -76,8 +80,8 @@ public class RemoteSongsDataSource implements SongDataSource {
                         .subscribeOn(Schedulers.io())
                         .observeOn(Schedulers.io())
                         .map(songPathBean -> {
-                            songPathBean.setName(name);
-                            songPathBean.setId(Integer.valueOf(id));
+                            songPathBean.setSong(song);
+                            songPathBean.setId(Integer.valueOf(song.getId()));
                             LocalSongsDataSource.getInstance().addSong(songPathBean);
                             return songPathBean;
                         })
@@ -86,10 +90,10 @@ public class RemoteSongsDataSource implements SongDataSource {
     }
 
     @Override
-    public LiveData<ViewDataBean<SongWordBean>> querySongWord(String id, String name) {
+    public LiveData<ViewDataBean<SongWordBean>> querySongWord(BaseSongBean song) {
         Map<String, Object> map = new HashMap<>();
         map.put("types", "lyric");
-        map.put("id", id);
+        map.put("id", song.getId());
         map.put("source", "netease");
         return LiveDataObservableAdapter.fromObservableViewData(
                 RetrofitFactory.getRetrofit().createApi(ApiService.class)
@@ -97,8 +101,8 @@ public class RemoteSongsDataSource implements SongDataSource {
                         .subscribeOn(Schedulers.io())
                         .observeOn(Schedulers.io())
                         .map(songWordBean -> {
-                            songWordBean.setName(name);
-                            songWordBean.setId(Integer.valueOf(id));
+                            songWordBean.setSong(song);
+                            songWordBean.setId(Integer.valueOf(song.getId()));
                             LocalSongsDataSource.getInstance().addSong(songWordBean);
                             return songWordBean;
                         })
@@ -106,10 +110,21 @@ public class RemoteSongsDataSource implements SongDataSource {
         );
     }
 
-    public void downloadSongFile(String url, String songName, OnResultListener<File> listener) {
+    public void downloadSongFile(SongPathBean songPathBean, String songName, OnResultListener<File> listener) {
         RetrofitFactory.getRetrofit().createApi(ApiService.class)
-                .downloadSongFile(url)
+                .downloadSongFile(songPathBean.getUrl())
                 .subscribeOn(Schedulers.io())
+                .observeOn(Schedulers.io())
+                .map(responseBody -> {
+                    LocalSongBean localSongBean = new LocalSongBean();
+                    localSongBean.setId(songPathBean.getSong().getId());
+                    localSongBean.setName(songPathBean.getSong().getName());
+                    localSongBean.setAl(songPathBean.getSong().getAl());
+                    localSongBean.setSinger(songPathBean.getSong().getSinger());
+                    localSongBean.setTag(songPathBean.getSong().getTag());
+                    LocalSongsDataSource.getInstance().addLocalSong(localSongBean);
+                    return responseBody;
+                })
                 .observeOn(Schedulers.io())
                 .map(responseBody -> AppUtils.writeSong2Disk(responseBody, songName))
                 .observeOn(AndroidSchedulers.mainThread())
