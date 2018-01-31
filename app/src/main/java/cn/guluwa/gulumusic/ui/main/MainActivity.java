@@ -8,6 +8,7 @@ import android.graphics.Color;
 import android.os.IBinder;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.ActivityOptionsCompat;
+import android.support.v4.util.Pair;
 import android.support.v4.view.MenuItemCompat;
 import android.support.v7.app.ActionBarDrawerToggle;
 import android.support.v7.widget.LinearLayoutManager;
@@ -99,8 +100,7 @@ public class MainActivity extends BaseActivity {
                     Intent intent = new Intent(MainActivity.this, PlayActivity.class);
                     intent.putExtra("song", mCurrentSong);
                     intent.putExtra("status", mMainBinding.mPlayBtn.getIsPlaying());
-                    ActivityOptionsCompat options = ActivityOptionsCompat.makeSceneTransitionAnimation(
-                            this, mMainBinding.ivCurrentSongPic, "songImage");
+                    ActivityOptionsCompat options = ActivityOptionsCompat.makeSceneTransitionAnimation(this, new Pair<>(mMainBinding.ivCurrentSongPic, "songImage"));
                     ActivityCompat.startActivityForResult(this, intent, Contacts.REQUEST_CODE, options.toBundle());
 
                     break;
