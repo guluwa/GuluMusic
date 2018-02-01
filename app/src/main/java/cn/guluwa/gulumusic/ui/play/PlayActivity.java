@@ -133,10 +133,22 @@ public class PlayActivity extends BaseActivity {
 
                     break;
                 case R.id.mLastSongBtn:
-
+                    AppManager.getInstance().getMusicAutoService().stop();
+                    mCurrentSong = AppManager.getInstance().getMusicAutoService().getLastSong(mCurrentSong);
+                    mPlayBinding.tvSongWord.setText("");
+                    mPlayBinding.mProgressView.setSongPlayLength(0, 0);
+                    mPlayBinding.setSong(mCurrentSong);
+                    initSongPic();
+                    playCurrentSong(0);
                     break;
                 case R.id.mNextSongBtn:
-
+                    AppManager.getInstance().getMusicAutoService().stop();
+                    mCurrentSong = AppManager.getInstance().getMusicAutoService().getNextSong(mCurrentSong);
+                    mPlayBinding.tvSongWord.setText("");
+                    mPlayBinding.mProgressView.setSongPlayLength(0, 0);
+                    mPlayBinding.setSong(mCurrentSong);
+                    initSongPic();
+                    playCurrentSong(0);
                     break;
             }
         });
@@ -376,7 +388,6 @@ public class PlayActivity extends BaseActivity {
     protected void onDestroy() {
         unbindProgressQuery();
         AppManager.getInstance().getMusicAutoService().unBindSongFinishListener(listener);
-        System.out.println("移出监听");
         super.onDestroy();
     }
 }

@@ -55,23 +55,10 @@ public class MusicAutoService extends Service {
                 case 0://单曲循环
                     break;
                 case 1://顺序播放
-                    int index = mCurrentSong.getIndex();
-                    if (mSongList.get(index + 1) instanceof TracksBean) {
-                        mCurrentSong = (TracksBean) mSongList.get(index + 1);
-                    } else {
-                        mCurrentSong = AppUtils.getSongBean((LocalSongBean) mSongList.get(index + 1));
-                    }
+                    getNextSong(mCurrentSong);
                     break;
                 case 2://随机播放
-                    if (mRandomPicker == null) {
-                        mRandomPicker = new RandomPicker(mSongList.size());
-                    }
-                    index = mRandomPicker.next();
-                    if (mSongList.get(index) instanceof TracksBean) {
-                        mCurrentSong = (TracksBean) mSongList.get(index);
-                    } else {
-                        mCurrentSong = AppUtils.getSongBean((LocalSongBean) mSongList.get(index));
-                    }
+                    getNextSong(mCurrentSong);
                     break;
             }
             if (listeners.size() != 0) {
@@ -140,6 +127,80 @@ public class MusicAutoService extends Service {
                 e.printStackTrace();
             }
         }
+    }
+
+    /**
+     * 获取下一首歌
+     *
+     * @return
+     */
+    public TracksBean getNextSong(TracksBean mCurrentSong) {
+        this.mCurrentSong=mCurrentSong;
+        int index = mCurrentSong.getIndex();
+        if (AppManager.getInstance().getPlayMode() == 0 ||
+                AppManager.getInstance().getPlayMode() == 1) {
+            if (index + 1 >= mSongList.size()) {
+                index = 0;
+            } else {
+                index++;
+            }
+            if (mSongList.get(index) instanceof TracksBean) {
+                mCurrentSong = (TracksBean) mSongList.get(index);
+            } else {
+                mCurrentSong = AppUtils.getSongBean((LocalSongBean) mSongList.get(index));
+            }
+        } else {
+            if (mRandomPicker == null) {
+                mRandomPicker = new RandomPicker(mSongList.size());
+            }
+            index = mRandomPicker.next();
+            if (index >= mSongList.size()) {
+                index = 0;
+            }
+            if (mSongList.get(index) instanceof TracksBean) {
+                mCurrentSong = (TracksBean) mSongList.get(index);
+            } else {
+                mCurrentSong = AppUtils.getSongBean((LocalSongBean) mSongList.get(index));
+            }
+        }
+        return mCurrentSong;
+    }
+
+    /**
+     * 获取上一首歌
+     *
+     * @return
+     */
+    public TracksBean getLastSong(TracksBean mCurrentSong) {
+        this.mCurrentSong=mCurrentSong;
+        int index = mCurrentSong.getIndex();
+        if (AppManager.getInstance().getPlayMode() == 0 ||
+                AppManager.getInstance().getPlayMode() == 1) {
+            if (index - 1 < 0) {
+                index = mSongList.size() - 1;
+            } else {
+                index--;
+            }
+            if (mSongList.get(index) instanceof TracksBean) {
+                mCurrentSong = (TracksBean) mSongList.get(index);
+            } else {
+                mCurrentSong = AppUtils.getSongBean((LocalSongBean) mSongList.get(index));
+            }
+        } else {
+            if (mRandomPicker == null) {
+                mRandomPicker = new RandomPicker(mSongList.size());
+            }
+            index = mRandomPicker.next();
+            if (index >= mSongList.size()) {
+                index = 0;
+            }
+            if (mSongList.get(index) instanceof TracksBean) {
+                mCurrentSong = (TracksBean) mSongList.get(index);
+            } else {
+                mCurrentSong = AppUtils.getSongBean((LocalSongBean) mSongList.get(index));
+            }
+        }
+        return mCurrentSong;
     }
 
     //  通过 Binder 来保持 Activity 和 Service 的通信
