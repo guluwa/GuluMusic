@@ -5,13 +5,11 @@ import android.content.Intent;
 import android.media.MediaPlayer;
 import android.os.Binder;
 import android.os.IBinder;
-import android.os.Trace;
 import android.util.Log;
 
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.TreeMap;
 
 import cn.guluwa.gulumusic.data.bean.BaseSongBean;
 import cn.guluwa.gulumusic.data.bean.LocalSongBean;
@@ -19,6 +17,7 @@ import cn.guluwa.gulumusic.data.bean.TracksBean;
 import cn.guluwa.gulumusic.listener.OnSongFinishListener;
 import cn.guluwa.gulumusic.manage.AppManager;
 import cn.guluwa.gulumusic.utils.AppUtils;
+import cn.guluwa.gulumusic.utils.RandomPicker;
 
 /**
  * Created by guluwa on 2018/1/26.
@@ -45,14 +44,15 @@ public class MusicAutoService extends Service {
     /**
      * 播放结束通知接口
      */
-    private OnSongFinishListener listener;
+    private List<OnSongFinishListener> listeners;
+
+    private RandomPicker mRandomPicker;
 
     public MusicAutoService() {
         mediaPlayer = new MediaPlayer();
         mediaPlayer.setOnCompletionListener(mediaPlayer -> {
             switch (AppManager.getInstance().getPlayMode()) {
                 case 0://单曲循环
-
                     break;
                 case 1://顺序播放
                     int index = mCurrentSong.getIndex();
@@ -61,36 +61,46 @@ public class MusicAutoService extends Service {
                     } else {
                         mCurrentSong = AppUtils.getSongBean((LocalSongBean) mSongList.get(index + 1));
                     }
-                    if (listener != null) {
-                        listener.finish(mCurrentSong);
-                    }
                     break;
                 case 2://随机播放
-
+                    if (mRandomPicker == null) {
+                        mRandomPicker = new RandomPicker(mSongList.size());
+                    }
+                    index = mRandomPicker.next();
+                    if (mSongList.get(index) instanceof TracksBean) {
+                        mCurrentSong = (TracksBean) mSongList.get(index);
+                    } else {
+                        mCurrentSong = AppUtils.getSongBean((LocalSongBean) mSongList.get(index));
+                    }
                     break;
+            }
+            if (listeners.size() != 0) {
+                listeners.get(listeners.size() - 1).finish(mCurrentSong);
             }
         });
         mSongList = new ArrayList<>();
+        listeners = new ArrayList<>();
     }
 
+    /**
+     * 绑定播放结束监听
+     *
+     * @param listener
+     */
     public void bindSongFinishListener(OnSongFinishListener listener) {
-        this.listener = listener;
+        listeners.add(listener);
     }
 
-    public void unBindSongFinishListener() {
-        listener = null;
+    /**
+     * 移除播放结束监听
+     */
+    public void unBindSongFinishListener(OnSongFinishListener listener) {
+        listeners.remove(listener);
     }
 
-    @Override
-    public boolean onUnbind(Intent intent) {
-        return super.onUnbind(intent);
-    }
-
-    @Override
-    public IBinder onBind(Intent intent) {
-        return binder;
-    }
-
+    /**
+     * 暂停（继续）播放（同一首歌）
+     */
     public void playOrPause() {
         if (mediaPlayer != null) {
             if (mediaPlayer.isPlaying()) {
@@ -101,12 +111,22 @@ public class MusicAutoService extends Service {
         }
     }
 
+    /**
+     * 结束播放（开始下一首）
+     */
     public void stop() {
         if (mediaPlayer != null) {
             mediaPlayer.stop();
         }
     }
 
+    /**
+     * 开始播放新一首歌
+     *
+     * @param path
+     * @param currentTime
+     * @param mCurrentSong
+     */
     public void playNewSong(String path, int currentTime, TracksBean mCurrentSong) {
         if (mediaPlayer != null) {
             try {
@@ -122,12 +142,6 @@ public class MusicAutoService extends Service {
         }
     }
 
-    public void setIsLoopPlaying(boolean isLoopPlaying) {
-        if (mediaPlayer != null) {
-            mediaPlayer.setLooping(isLoopPlaying);
-        }
-    }
-
     //  通过 Binder 来保持 Activity 和 Service 的通信
     public MyBinder binder = new MyBinder();
 
@@ -135,6 +149,16 @@ public class MusicAutoService extends Service {
         public MusicAutoService getService() {
             return MusicAutoService.this;
         }
+    }
+
+    @Override
+    public boolean onUnbind(Intent intent) {
+        return super.onUnbind(intent);
+    }
+
+    @Override
+    public IBinder onBind(Intent intent) {
+        return binder;
     }
 
     @Override
@@ -153,6 +177,9 @@ public class MusicAutoService extends Service {
         Log.w(TAG, "MusicAutoService in onDestroy");
     }
 
+    /**
+     * 主动结束服务
+     */
     public void quit() {
         stopSelf();
     }
@@ -163,6 +190,8 @@ public class MusicAutoService extends Service {
 
     public void setSongList(List<? extends BaseSongBean> mSongList) {
         this.mSongList = mSongList;
+        mRandomPicker = null;
+        mRandomPicker = new RandomPicker(mSongList.size());
     }
 
     public TracksBean getCurrentSong() {

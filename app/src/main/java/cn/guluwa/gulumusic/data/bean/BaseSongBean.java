@@ -9,11 +9,11 @@ import java.util.List;
 
 /**
  * 歌曲基础类
- *
+ * <p>
  * Created by guluwa on 2018/1/31.
  */
 
-public class BaseSongBean implements Serializable{
+public class BaseSongBean implements Serializable {
 
     private static final long serialVersionUID = -3436929448594928827L;
     private String name;

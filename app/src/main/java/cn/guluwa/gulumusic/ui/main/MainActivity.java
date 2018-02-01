@@ -437,8 +437,10 @@ public class MainActivity extends BaseActivity {
                     .observeOn(AndroidSchedulers.mainThread())
                     .subscribe(aLong -> {
                         if (AppManager.getInstance().getMusicAutoService() != null) {
-                            mMainBinding.tvCurrentSongProgress.setText(
-                                    time.format(AppManager.getInstance().getMusicAutoService().mediaPlayer.getCurrentPosition()));
+                            if (mMainBinding.mPlayBtn.getIsPlaying() != 0) {
+                                mMainBinding.tvCurrentSongProgress.setText(
+                                        time.format(AppManager.getInstance().getMusicAutoService().mediaPlayer.getCurrentPosition()));
+                            }
                         }
                     });
         }
@@ -537,6 +539,7 @@ public class MainActivity extends BaseActivity {
         if (requestCode == Contacts.REQUEST_CODE && resultCode == Contacts.RESULT_SONG_CODE) {
             mCurrentSong = (TracksBean) data.getSerializableExtra("song");
             mMainBinding.setSong(mCurrentSong);
+            AppManager.getInstance().getMusicAutoService().bindSongFinishListener(listener);
             int status;
             if (mMainBinding.mPlayBtn.getIsPlaying() != (status = data.getIntExtra("status", -1))) {
                 mMainBinding.mPlayBtn.setPlaying(status);
@@ -567,7 +570,7 @@ public class MainActivity extends BaseActivity {
     protected void onDestroy() {
         if (AppManager.getInstance().getMusicAutoService() != null) {
             unbindProgressQuery();
-            AppManager.getInstance().getMusicAutoService().unBindSongFinishListener();
+            AppManager.getInstance().getMusicAutoService().unBindSongFinishListener(listener);
             AppManager.getInstance().getMusicAutoService().quit();
             System.out.println("onDestroy");
         }

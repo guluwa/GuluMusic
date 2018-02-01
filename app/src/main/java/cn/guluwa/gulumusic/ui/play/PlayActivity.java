@@ -169,6 +169,7 @@ public class PlayActivity extends BaseActivity {
 
         listener = tracksBean -> {
             mCurrentSong = tracksBean;
+            mPlayBinding.tvSongWord.setText("");
             mPlayBinding.mProgressView.setSongPlayLength(0, 0);
             mPlayBinding.setSong(mCurrentSong);
             initSongPic();
@@ -356,7 +357,9 @@ public class PlayActivity extends BaseActivity {
                                     }
                                 }
                             }
-                            mPlayBinding.mProgressView.setSongPlayLength(musicCurrentPosition, AppManager.getInstance().getMusicAutoService().mediaPlayer.getDuration());
+                            if (mPlayBinding.mPlayBtn.getIsPlaying() != 0) {
+                                mPlayBinding.mProgressView.setSongPlayLength(musicCurrentPosition, AppManager.getInstance().getMusicAutoService().mediaPlayer.getDuration());
+                            }
                         }
                     });
         }
@@ -372,7 +375,8 @@ public class PlayActivity extends BaseActivity {
     @Override
     protected void onDestroy() {
         unbindProgressQuery();
-        AppManager.getInstance().getMusicAutoService().unBindSongFinishListener();
+        AppManager.getInstance().getMusicAutoService().unBindSongFinishListener(listener);
+        System.out.println("移出监听");
         super.onDestroy();
     }
 }
