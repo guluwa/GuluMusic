@@ -44,6 +44,7 @@ import cn.guluwa.gulumusic.manage.AppManager;
 import cn.guluwa.gulumusic.manage.Contacts;
 import cn.guluwa.gulumusic.service.MusicAutoService;
 import cn.guluwa.gulumusic.ui.play.PlayActivity;
+import cn.guluwa.gulumusic.ui.setting.SettingsActivity;
 import cn.guluwa.gulumusic.utils.AppUtils;
 import io.reactivex.Observable;
 import io.reactivex.android.schedulers.AndroidSchedulers;
@@ -141,6 +142,7 @@ public class MainActivity extends BaseActivity {
                     break;
                 case R.id.flAppSetting:
                     showSnackBar("设置");
+                    startActivity(new Intent(MainActivity.this, SettingsActivity.class));
                     mMainBinding.mDrawerLayout.closeDrawer(Gravity.START);
                     break;
             }

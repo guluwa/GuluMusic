@@ -31,6 +31,10 @@
             android:name=".service.MusicAutoService"
             android:enabled="true"
             android:exported="true" />
+
+        <activity
+            android:name=".ui.setting.SettingsActivity"
+            android:label="@string/title_activity_settings"></activity>
     </application>
 
 </manifest>
