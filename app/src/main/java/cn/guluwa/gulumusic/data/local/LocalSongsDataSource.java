@@ -25,11 +25,19 @@ public class LocalSongsDataSource implements SongDataSource {
         return instance;
     }
 
+    /**
+     * 本地数据库服务
+     */
     private SongsService songsService = SongsServiceImpl.getInstance();
 
     public LocalSongsDataSource() {
     }
 
+    /**
+     * 查询热门歌曲
+     *
+     * @return
+     */
     @Override
     public LiveData<ViewDataBean<List<TracksBean>>> queryNetCloudHotSong() {
         MediatorLiveData<ViewDataBean<List<TracksBean>>> data = new MediatorLiveData<>();
@@ -45,6 +53,12 @@ public class LocalSongsDataSource implements SongDataSource {
         return data;
     }
 
+    /**
+     * 查询歌曲路径
+     *
+     * @param song
+     * @return
+     */
     @Override
     public LiveData<ViewDataBean<SongPathBean>> querySongPath(TracksBean song) {
         MediatorLiveData<ViewDataBean<SongPathBean>> data = new MediatorLiveData<>();
@@ -61,6 +75,12 @@ public class LocalSongsDataSource implements SongDataSource {
         return data;
     }
 
+    /**
+     * 查询歌曲歌词
+     *
+     * @param song
+     * @return
+     */
     @Override
     public LiveData<ViewDataBean<SongWordBean>> querySongWord(TracksBean song) {
         MediatorLiveData<ViewDataBean<SongWordBean>> data = new MediatorLiveData<>();
@@ -77,6 +97,11 @@ public class LocalSongsDataSource implements SongDataSource {
         return data;
     }
 
+    /**
+     * 查询本地歌曲
+     *
+     * @return
+     */
     public LiveData<ViewDataBean<List<LocalSongBean>>> queryLocalSong() {
         MediatorLiveData<ViewDataBean<List<LocalSongBean>>> data = new MediatorLiveData<>();
         data.setValue(ViewDataBean.loading());
@@ -91,18 +116,49 @@ public class LocalSongsDataSource implements SongDataSource {
         return data;
     }
 
+    /**
+     * 查询本地歌曲（单曲）
+     *
+     * @param id
+     * @param name
+     * @return
+     */
+    public LocalSongBean queryLocalSong(int id, String name) {
+        return songsService.queryLocalSong(id, name);
+    }
+
+    /**
+     * 添加歌曲到热门歌曲表
+     *
+     * @param songs
+     */
     public void addSongs(List<TracksBean> songs) {
         songsService.addSongs(songs);
     }
 
-    public void addSong(SongPathBean songPathBean) {
+    /**
+     * 添加歌曲路径
+     *
+     * @param songPathBean
+     */
+    public void addSongPath(SongPathBean songPathBean) {
         songsService.addSongPath(songPathBean);
     }
 
-    public void addSong(SongWordBean songWordBean) {
+    /**
+     * 添加歌曲歌词
+     *
+     * @param songWordBean
+     */
+    public void addSongWord(SongWordBean songWordBean) {
         songsService.addSongWord(songWordBean);
     }
 
+    /**
+     * 添加歌曲到本地歌曲表
+     *
+     * @param localSongBean
+     */
     public void addLocalSong(LocalSongBean localSongBean) {
         songsService.addLocalSong(localSongBean);
     }

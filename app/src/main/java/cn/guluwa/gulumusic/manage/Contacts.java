@@ -10,8 +10,32 @@ public class Contacts {
 
     public static final int RESULT_SONG_CODE = 502;
 
-//    http://lab.mkblog.cn/music/api.php?callback=jQuery111307766635099253183_1515637205052
+    /**
+     * 播放方式
+     * 0：单曲循环（默认）
+     * 1：列表循环
+     * 2：随机播放
+     */
+    public static final String PLAY_MODE = "play_mode";
 
+    /**
+     * 播放列表（热门、本地）
+     */
+    public static final String PLAY_STATUS = "play_status";
+
+    /**
+     * 屏幕是否圆角
+     */
+    public static final String IS_CIRCLE_CORNER = "is_circle_corner";
+
+    /**
+     * 流量环境是否可以下载歌曲
+     */
+    public static final String CAN_DOWNLOAD_WITHOUT_WIFI = "can_download_without_wifi";
+
+    /**
+     * 服务器baseUrl
+     */
     public static final String BASEURL = "http://lab.mkblog.cn/music_new/";
 
     /**

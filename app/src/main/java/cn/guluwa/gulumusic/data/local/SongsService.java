@@ -15,19 +15,70 @@ import cn.guluwa.gulumusic.data.bean.TracksBean;
 
 public interface SongsService {
 
-    void addSongs(List<TracksBean> songs);
-
-    void addLocalSong(LocalSongBean localSongBean);
-
+    /**
+     * 查询热门歌曲
+     *
+     * @return
+     */
     LiveData<List<TracksBean>> queryNetCloudHotSong();
 
+    /**
+     * 查询本地歌曲
+     *
+     * @return
+     */
     LiveData<List<LocalSongBean>> queryLocalSong();
 
+    /**
+     * 查询本地歌曲（单曲）
+     *
+     * @param id
+     * @param name
+     * @return
+     */
+    LocalSongBean queryLocalSong(int id, String name);
+
+    /**
+     * 查询歌曲路径
+     *
+     * @param id
+     * @return
+     */
     LiveData<SongPathBean> querySongPath(String id);
 
+    /**
+     * 查询歌曲歌词
+     *
+     * @param id
+     * @return
+     */
     LiveData<SongWordBean> querySongWord(String id);
 
+    /**
+     * 添加歌曲到热门歌曲表
+     *
+     * @param songs
+     */
+    void addSongs(List<TracksBean> songs);
+
+    /**
+     * 添加歌曲到本地歌曲表
+     *
+     * @param localSongBean
+     */
+    void addLocalSong(LocalSongBean localSongBean);
+
+    /**
+     * 添加歌曲路径
+     *
+     * @param songPathBean
+     */
     void addSongPath(SongPathBean songPathBean);
 
+    /**
+     * 添加歌曲歌词
+     *
+     * @param songWordBean
+     */
     void addSongWord(SongWordBean songWordBean);
 }

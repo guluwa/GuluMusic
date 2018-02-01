@@ -19,6 +19,11 @@ public class DBHelper {
 
     private GuluMusicDataBase GuluMusicDataBase;
 
+    /**
+     * 数据库初始化
+     *
+     * @param context
+     */
     public void initDataBase(Context context) {
         GuluMusicDataBase = Room.databaseBuilder(context, GuluMusicDataBase.class, DATABASE_NAME).build();
     }

@@ -4,17 +4,17 @@
 
     <header
         android:fragment="cn.guluwa.gulumusic.ui.setting.SettingsActivity$GeneralPreferenceFragment"
-        android:icon="@drawable/ic_info_black_24dp"
+        android:icon="@drawable/ic_list_circle"
         android:title="@string/pref_header_general" />
 
     <header
         android:fragment="cn.guluwa.gulumusic.ui.setting.SettingsActivity$NotificationPreferenceFragment"
-        android:icon="@drawable/ic_notifications_black_24dp"
+        android:icon="@drawable/ic_single_circle"
         android:title="@string/pref_header_notifications" />
 
     <header
         android:fragment="cn.guluwa.gulumusic.ui.setting.SettingsActivity$DataSyncPreferenceFragment"
-        android:icon="@drawable/ic_sync_black_24dp"
+        android:icon="@drawable/ic_list_random"
         android:title="@string/pref_header_data_sync" />
 
 </preference-headers>

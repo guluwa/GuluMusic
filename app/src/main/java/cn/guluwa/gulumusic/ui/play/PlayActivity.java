@@ -1,16 +1,12 @@
 package cn.guluwa.gulumusic.ui.play;
 
 import android.arch.lifecycle.ViewModelProviders;
-import android.content.ComponentName;
 import android.content.Intent;
-import android.content.ServiceConnection;
 import android.content.pm.ActivityInfo;
 import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.os.Build;
-import android.os.IBinder;
 import android.support.annotation.Nullable;
-import android.util.Log;
 import android.view.View;
 import android.view.Window;
 import android.view.WindowManager;
@@ -23,9 +19,6 @@ import com.bumptech.glide.request.RequestOptions;
 import com.bumptech.glide.request.target.Target;
 
 import java.io.File;
-import java.io.IOException;
-import java.text.SimpleDateFormat;
-import java.util.HashMap;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
@@ -35,10 +28,10 @@ import cn.guluwa.gulumusic.data.bean.LrcBean;
 import cn.guluwa.gulumusic.data.bean.TracksBean;
 import cn.guluwa.gulumusic.databinding.ActivityPlayBinding;
 import cn.guluwa.gulumusic.listener.OnResultListener;
+import cn.guluwa.gulumusic.listener.OnSongFinishListener;
 import cn.guluwa.gulumusic.manage.AppManager;
 import cn.guluwa.gulumusic.manage.Contacts;
 import cn.guluwa.gulumusic.manage.MyApplication;
-import cn.guluwa.gulumusic.service.MusicAutoService;
 import cn.guluwa.gulumusic.ui.main.MainActivity;
 import cn.guluwa.gulumusic.utils.AppUtils;
 import cn.guluwa.gulumusic.utils.LrcParser;
@@ -49,15 +42,50 @@ import jp.wasabeef.glide.transformations.BlurTransformation;
 
 public class PlayActivity extends BaseActivity {
 
-    private TracksBean mSong;
+    /**
+     * 当前播放歌曲
+     */
+    private TracksBean mCurrentSong;
+
+    /**
+     * ViewBinder
+     */
     private ActivityPlayBinding mPlayBinding;
+
+    /**
+     * ViewModel
+     */
     private PlayViewModel mViewModel;
-    private boolean hasWord;
+
+    /**
+     * 歌词list
+     */
     private List<LrcBean> mLrcList;
+
+    /**
+     * 歌曲进度轮询
+     */
     private Disposable disposable;
+
+    /**
+     * 歌曲当前位置
+     */
     private int mLrcPosition;
+
+    /**
+     * 是否第一首歌
+     */
     private boolean isFirst;
+
+    /**
+     * 歌曲下载链接
+     */
     private String mSongPath;
+
+    /**
+     * 歌曲播放结束回调
+     */
+    private OnSongFinishListener listener;
 
     @Override
     public int getViewLayoutId() {
@@ -77,43 +105,98 @@ public class PlayActivity extends BaseActivity {
         mPlayBinding.setClickListener(view -> {
             switch (view.getId()) {
                 case R.id.mPlayBtn:
-                    if (AppManager.get().getmMusicAutoService() != null) {
-                        if (AppManager.get().getmMusicAutoService().isPlaying) {
+                    if (AppManager.getInstance().getMusicAutoService() != null &&
+                            AppManager.getInstance().getMusicAutoService().mediaPlayer != null) {
+                        if (AppManager.getInstance().getMusicAutoService().mediaPlayer.isPlaying()) {
                             mPlayBinding.mPlayBtn.setPlaying(-1);
                         } else {
                             mPlayBinding.mPlayBtn.setPlaying(1);
                         }
-                        AppManager.get().getmMusicAutoService().isPlaying = !AppManager.get().getmMusicAutoService().isPlaying;
                         if (isFirst) {
                             isFirst = false;
-                            AppManager.get().getmMusicAutoService().playNewSong(mSongPath, mSong.getCurrentTime());
+                            AppManager.getInstance().getMusicAutoService().playNewSong(mSongPath, mCurrentSong.getCurrentTime(), mCurrentSong);
                             bindProgressQuery();
                         } else {
-                            AppManager.get().getmMusicAutoService().playOrPause();
+                            AppManager.getInstance().getMusicAutoService().playOrPause();
                         }
                     }
                     break;
                 case R.id.ivDownBack:
                     onBackPressed();
                     break;
+                case R.id.ivPlayMode:
+                    int mode = AppUtils.getPlayMode(AppManager.getInstance().getPlayMode());
+                    AppManager.getInstance().setPlayMode(mode);
+                    showPlayModeImg(mode);
+                    break;
+                case R.id.ivPlayMenu:
+
+                    break;
+                case R.id.mLastSongBtn:
+
+                    break;
+                case R.id.mNextSongBtn:
+
+                    break;
             }
         });
     }
 
+    private void showPlayModeImg(int mode) {
+        if (mode == 0) {
+            mPlayBinding.ivPlayMode.setImageResource(R.drawable.ic_single_circle);
+        } else if (mode == 1) {
+            mPlayBinding.ivPlayMode.setImageResource(R.drawable.ic_list_circle);
+        } else {
+            mPlayBinding.ivPlayMode.setImageResource(R.drawable.ic_list_random);
+        }
+    }
+
     private void initData() {
         mLrcPosition = -1;
-        mSong = (TracksBean) getIntent().getSerializableExtra("song");
-        mSongPath = AppUtils.isExistFile(String.format("%s_%s.mp3", mSong.getName(), mSong.getId()), 1);
+        mCurrentSong = (TracksBean) getIntent().getSerializableExtra("song");
+        mSongPath = AppUtils.isExistFile(String.format("%s_%s.mp3", mCurrentSong.getName(), mCurrentSong.getId()), 1);
         mPlayBinding.mPlayBtn.setPlaying(getIntent().getIntExtra("status", -1));
         if (mPlayBinding.mPlayBtn.getIsPlaying() == -1) {
             isFirst = true;
         } else if (mPlayBinding.mPlayBtn.getIsPlaying() == 1) {
             bindProgressQuery();
         }
-        mPlayBinding.mProgressView.setSongPlayLength(mSong.getCurrentTime(), mSong.getDuration());
-        mPlayBinding.setSong(mSong);
+        mPlayBinding.mProgressView.setSongPlayLength(mCurrentSong.getCurrentTime(), mCurrentSong.getDuration());
+        mPlayBinding.setSong(mCurrentSong);
+        showPlayModeImg(AppManager.getInstance().getPlayMode());
+        initSongLrc();
+
+        listener = tracksBean -> {
+            mCurrentSong = tracksBean;
+            mPlayBinding.mProgressView.setSongPlayLength(0, 0);
+            mPlayBinding.setSong(mCurrentSong);
+            initSongPic();
+            playCurrentSong(0);
+        };
+        AppManager.getInstance().getMusicAutoService().bindSongFinishListener(listener);
+    }
+
+    private void playCurrentSong(int mCurrentTime) {
+        if ("".equals(mSongPath = AppUtils.isExistFile(String.format("%s_%s.mp3", mCurrentSong.getName(), mCurrentSong.getId()), 1))) {
+            mViewModel.refreshPath(mCurrentSong, true);
+            mPlayBinding.mPlayBtn.setPlaying(0);
+        } else {
+            AppManager.getInstance().getMusicAutoService().stop();
+            AppManager.getInstance().getMusicAutoService().playNewSong(mSongPath, mCurrentTime, mCurrentSong);
+            mPlayBinding.mPlayBtn.setPlaying(1);
+            bindProgressQuery();
+        }
+        if ("".equals(AppUtils.isExistFile(String.format("%s_%s.txt", mCurrentSong.getName(), mCurrentSong.getId()), 2))) {
+            mViewModel.refreshWord(mCurrentSong, true);
+        } else {
+            initSongLrc();
+        }
+    }
+
+    private void initSongLrc() {
         try {
-            mLrcList = LrcParser.parserLocal(String.format("%s_%s.txt", mSong.getName(), mSong.getId()));
+            mLrcList = LrcParser.parserLocal(String.format("%s_%s.txt", mCurrentSong.getName(), mCurrentSong.getId()));
         } catch (Exception e) {
             mLrcList = null;
             mPlayBinding.tvSongWord.setText("暂无歌词");
@@ -123,7 +206,7 @@ public class PlayActivity extends BaseActivity {
 
     private void initSongPic() {
         Glide.with(MyApplication.getContext()).asBitmap().apply(new RequestOptions().centerCrop())
-                .load(mSong.getAl().getPicUrl())
+                .load(mCurrentSong.getAl().getPicUrl())
                 .apply(new RequestOptions().transform(new BlurTransformation(25)).override(100, 100))
                 .listener(new RequestListener<Bitmap>() {
                     @Override
@@ -163,12 +246,82 @@ public class PlayActivity extends BaseActivity {
     @Override
     protected void initViewModel() {
         mViewModel = ViewModelProviders.of(this).get(PlayViewModel.class);
+        mViewModel.querySongPath().observe(this, songPathBeanViewDataBean -> {
+            if (songPathBeanViewDataBean == null) {
+                showSnackBar("歌曲播放失败");
+                mViewModel.refreshPath(mCurrentSong, false);
+            } else {
+                switch (songPathBeanViewDataBean.status) {
+                    case Content:
+                        mViewModel.refreshPath(mCurrentSong, false);
+                        mViewModel.downloadSongFile(songPathBeanViewDataBean.data,
+                                String.format("%s_%s.mp3",
+                                        songPathBeanViewDataBean.data.getSong().getName(),
+                                        songPathBeanViewDataBean.data.getSong().getId()),
+                                new OnResultListener<File>() {
+                                    @Override
+                                    public void success(File result) {
+                                        System.out.println(result.getAbsolutePath());
+                                        if (songPathBeanViewDataBean.data.getId() == mCurrentSong.getId()) {//下载完成的歌曲和当前播放歌曲是同一首
+                                            AppManager.getInstance().getMusicAutoService().stop();
+                                            AppManager.getInstance().getMusicAutoService().playNewSong(result.getAbsolutePath(), 0, mCurrentSong);
+                                            mPlayBinding.mPlayBtn.setPlaying(1);
+                                            bindProgressQuery();
+                                        }
+                                    }
+
+                                    @Override
+                                    public void failed(String error) {
+                                        showSnackBar(error);
+                                    }
+                                });
+                        break;
+                    case Empty:
+                        mViewModel.refreshPath(mCurrentSong, false);
+                        showSnackBar("歌曲播放失败");
+                        break;
+                    case Error:
+                        mViewModel.refreshPath(mCurrentSong, false);
+                        showSnackBar("歌曲播放失败");
+                        break;
+                    case Loading:
+                        mPlayBinding.mPlayBtn.setPlaying(0);
+                        break;
+                }
+            }
+        });
+        mViewModel.querySongWord().observe(this, songWordBeanViewDataBean -> {
+            if (songWordBeanViewDataBean == null) {
+                mViewModel.refreshWord(mCurrentSong, false);
+            } else {
+                switch (songWordBeanViewDataBean.status) {
+                    case Content:
+                        mViewModel.refreshWord(mCurrentSong, false);
+                        AppUtils.writeWord2Disk(songWordBeanViewDataBean.data.getLyric(),
+                                String.format("%s_%s.txt",
+                                        songWordBeanViewDataBean.data.getSong().getName(),
+                                        songWordBeanViewDataBean.data.getSong().getId()));
+                        initSongLrc();
+                        break;
+                    case Empty:
+                        mViewModel.refreshWord(mCurrentSong, false);
+                        break;
+                    case Error:
+                        mViewModel.refreshWord(mCurrentSong, false);
+                        break;
+                    case Loading:
+                        System.out.println("歌词正在加载~~~");
+                        break;
+                }
+            }
+        });
     }
 
     @Override
     public void onBackPressed() {
         Intent intent = new Intent(this, MainActivity.class);
         intent.putExtra("status", mPlayBinding.mPlayBtn.getIsPlaying());
+        intent.putExtra("song", mCurrentSong);
         setResult(Contacts.RESULT_SONG_CODE, intent);
         super.onBackPressed();
     }
@@ -178,8 +331,8 @@ public class PlayActivity extends BaseActivity {
             disposable = Observable.interval(0, 150, TimeUnit.MILLISECONDS)
                     .observeOn(AndroidSchedulers.mainThread())
                     .subscribe(aLong -> {
-                        if (AppManager.get().getmMusicAutoService() != null) {
-                            int musicCurrentPosition = AppManager.get().getmMusicAutoService().binder.getMusicCurrentPosition();
+                        if (AppManager.getInstance().getMusicAutoService() != null) {
+                            int musicCurrentPosition = AppManager.getInstance().getMusicAutoService().mediaPlayer.getCurrentPosition();
                             if (musicCurrentPosition < 1000 && mLrcPosition != -1) {
                                 mLrcPosition = -1;
                             }
@@ -187,7 +340,7 @@ public class PlayActivity extends BaseActivity {
                                 if (mLrcPosition == -1) {//说明是第一次
                                     for (int i = 0; i < mLrcList.size(); i++) {
                                         if (mLrcList.get(i).getTime() > musicCurrentPosition) {
-                                            mLrcPosition = i-1;
+                                            mLrcPosition = i - 1;
                                             mPlayBinding.tvSongWord.setText(mLrcList.get(mLrcPosition).getWord());
                                             break;
                                         }
@@ -203,7 +356,7 @@ public class PlayActivity extends BaseActivity {
                                     }
                                 }
                             }
-                            mPlayBinding.mProgressView.setSongPlayLength(musicCurrentPosition, AppManager.get().getmMusicAutoService().mediaPlayer.getDuration());
+                            mPlayBinding.mProgressView.setSongPlayLength(musicCurrentPosition, AppManager.getInstance().getMusicAutoService().mediaPlayer.getDuration());
                         }
                     });
         }
@@ -219,6 +372,7 @@ public class PlayActivity extends BaseActivity {
     @Override
     protected void onDestroy() {
         unbindProgressQuery();
+        AppManager.getInstance().getMusicAutoService().unBindSongFinishListener();
         super.onDestroy();
     }
 }

@@ -8,6 +8,8 @@ import java.io.Serializable;
 import java.util.List;
 
 /**
+ * 歌曲基础类
+ *
  * Created by guluwa on 2018/1/31.
  */
 

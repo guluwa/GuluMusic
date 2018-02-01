@@ -7,6 +7,8 @@ import android.arch.persistence.room.PrimaryKey;
 import java.io.Serializable;
 
 /**
+ * 歌词类
+ *
  * Created by guluwa on 2018/1/19.
  */
 

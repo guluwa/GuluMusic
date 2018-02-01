@@ -6,6 +6,8 @@ import android.arch.persistence.room.PrimaryKey;
 import java.io.Serializable;
 
 /**
+ * 本地歌曲类
+ *
  * Created by guluwa on 2018/1/31.
  */
 

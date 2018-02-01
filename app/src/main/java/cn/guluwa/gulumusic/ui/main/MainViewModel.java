@@ -24,16 +24,23 @@ import cn.guluwa.gulumusic.listener.OnResultListener;
 public class MainViewModel extends ViewModel {
 
     private SongsRepository songsRepository = SongsRepository.getInstance();
-    //热门
-    private MutableLiveData<Boolean> mHotSongListFresh;
+
+    //热门歌曲刷新
+    private MutableLiveData<FreshBean> mHotSongListFresh;
+    //热门歌曲
     private LiveData<ViewDataBean<List<TracksBean>>> mHotSongs;
 
+    /**
+     * 查询热门歌曲
+     *
+     * @return
+     */
     public LiveData<ViewDataBean<List<TracksBean>>> queryNetCloudHotSong() {
         if (mHotSongs == null) {
             mHotSongListFresh = new MutableLiveData<>();
             mHotSongs = Transformations.switchMap(mHotSongListFresh, input -> {
-                if (input) {
-                    return songsRepository.queryNetCloudHotSong();
+                if (input.isFresh) {
+                    return songsRepository.queryNetCloudHotSong(input.isFirstComing);
                 } else {
                     return null;
                 }
@@ -42,14 +49,26 @@ public class MainViewModel extends ViewModel {
         return mHotSongs;
     }
 
-    public void refreshHot(boolean isFresh) {
-        mHotSongListFresh.setValue(isFresh);
+    /**
+     * 刷新热门歌曲
+     *
+     * @param isFresh
+     * @param isFirstComing
+     */
+    public void refreshHot(boolean isFresh, boolean isFirstComing) {
+        mHotSongListFresh.setValue(new FreshBean(isFresh, isFirstComing));
     }
 
-    //本地
+    //本地歌曲刷新
     private MutableLiveData<Boolean> mLocalSongListFresh;
+    //本地歌曲
     private LiveData<ViewDataBean<List<LocalSongBean>>> mLocalSongs;
 
+    /**
+     * 查询本地歌曲
+     *
+     * @return
+     */
     public LiveData<ViewDataBean<List<LocalSongBean>>> queryLocalSong() {
         if (mLocalSongs == null) {
             mLocalSongListFresh = new MutableLiveData<>();
@@ -64,15 +83,27 @@ public class MainViewModel extends ViewModel {
         return mLocalSongs;
     }
 
+    /**
+     * 刷新本地歌曲
+     *
+     * @param isFresh
+     */
     public void refreshLocal(boolean isFresh) {
         mLocalSongListFresh.setValue(isFresh);
     }
 
-    //单曲信息
+    //歌曲链接刷新、歌曲歌词刷新
     private MutableLiveData<FreshBean> mPathFresh, mWordFresh;
+    //单曲链接刷新
     private LiveData<ViewDataBean<SongPathBean>> mSongPath;
+    //单曲歌词刷新
     private LiveData<ViewDataBean<SongWordBean>> mSongWord;
 
+    /**
+     * 查询歌曲链接
+     *
+     * @return
+     */
     public LiveData<ViewDataBean<SongPathBean>> querySongPath() {
         if (mSongPath == null) {
             if (mPathFresh == null) {
@@ -89,6 +120,11 @@ public class MainViewModel extends ViewModel {
         return mSongPath;
     }
 
+    /**
+     * 查询歌曲歌词
+     *
+     * @return
+     */
     public LiveData<ViewDataBean<SongWordBean>> querySongWord() {
         if (mSongWord == null) {
             if (mWordFresh == null) {
@@ -105,14 +141,33 @@ public class MainViewModel extends ViewModel {
         return mSongWord;
     }
 
+    /**
+     * 歌曲链接刷新
+     *
+     * @param song
+     * @param fresh
+     */
     void refreshPath(TracksBean song, boolean fresh) {
         mPathFresh.setValue(new FreshBean(song, fresh));
     }
 
+    /**
+     * 歌曲歌词刷新
+     *
+     * @param song
+     * @param fresh
+     */
     void refreshWord(TracksBean song, boolean fresh) {
         mWordFresh.setValue(new FreshBean(song, fresh));
     }
 
+    /**
+     * 歌曲下载
+     *
+     * @param songPathBean
+     * @param songName
+     * @param listener
+     */
     void downloadSongFile(SongPathBean songPathBean, String songName, OnResultListener<File> listener) {
         songsRepository.downloadSongFile(songPathBean, songName, listener);
     }

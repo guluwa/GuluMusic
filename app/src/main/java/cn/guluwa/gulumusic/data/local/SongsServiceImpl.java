@@ -23,46 +23,103 @@ public class SongsServiceImpl implements SongsService {
         return instance;
     }
 
+    /**
+     * 本地数据库操作
+     */
     private SongsDao songsDao = DBHelper.getInstance().getGuluMusicDataBase().getSongsDao();
 
     public SongsServiceImpl() {
     }
 
-    @Override
-    public void addSongs(List<TracksBean> songs) {
-        songsDao.addSongs(songs);
-    }
-
-    @Override
-    public void addLocalSong(LocalSongBean localSongBean) {
-        songsDao.addLocalSong(localSongBean);
-    }
-
+    /**
+     * 查询热门歌曲
+     *
+     * @return
+     */
     @Override
     public LiveData<List<TracksBean>> queryNetCloudHotSong() {
         return songsDao.queryNetCloudHotSong();
     }
 
+    /**
+     * 查询本地歌曲
+     *
+     * @return
+     */
     @Override
     public LiveData<List<LocalSongBean>> queryLocalSong() {
         return songsDao.queryLocalSong();
     }
 
+    /**
+     * 查询本地歌曲（单曲）
+     *
+     * @param id
+     * @param name
+     * @return
+     */
+    @Override
+    public LocalSongBean queryLocalSong(int id, String name) {
+        return songsDao.queryLocalSong(id, name);
+    }
+
+    /**
+     * 查询歌曲路径
+     *
+     * @param id
+     * @return
+     */
     @Override
     public LiveData<SongPathBean> querySongPath(String id) {
         return songsDao.querySongPath(id);
     }
 
+    /**
+     * 查询歌曲歌词
+     *
+     * @param id
+     * @return
+     */
     @Override
     public LiveData<SongWordBean> querySongWord(String id) {
         return songsDao.querySongWord(id);
     }
 
+    /**
+     * 添加歌曲到热门歌曲表
+     *
+     * @param songs
+     */
+    @Override
+    public void addSongs(List<TracksBean> songs) {
+        songsDao.addSongs(songs);
+    }
+
+    /**
+     * 添加歌曲到本地歌曲表
+     *
+     * @param localSongBean
+     */
+    @Override
+    public void addLocalSong(LocalSongBean localSongBean) {
+        songsDao.addLocalSong(localSongBean);
+    }
+
+    /**
+     * 添加歌曲路径
+     *
+     * @param songPathBean
+     */
     @Override
     public void addSongPath(SongPathBean songPathBean) {
         songsDao.addSongPath(songPathBean);
     }
 
+    /**
+     * 添加歌曲歌词
+     *
+     * @param songWordBean
+     */
     @Override
     public void addSongWord(SongWordBean songWordBean) {
         songsDao.addSongWord(songWordBean);

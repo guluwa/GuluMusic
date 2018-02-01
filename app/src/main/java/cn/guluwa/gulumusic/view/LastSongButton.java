@@ -74,18 +74,20 @@ public class LastSongButton extends View {
         paint.setStrokeJoin(Paint.Join.ROUND);
 
         mViewPath = new Path();
-        mViewPath.moveTo(width, width);
-        mViewPath.lineTo(width, mViewHeight - width);
-        mViewPath.moveTo(width, mViewHeight / 2);
-        mViewPath.lineTo(mViewWidth - width, width);
-        mViewPath.lineTo(mViewWidth - width, mViewHeight - width);
-        mViewPath.lineTo(width, mViewHeight / 2);
+        mViewPath.moveTo(width + getPaddingLeft(), width + getPaddingTop());
+        mViewPath.lineTo(width + getPaddingLeft(), mViewHeight - width + getPaddingTop());
+        mViewPath.moveTo(width + getPaddingLeft(), mViewHeight / 2 + getPaddingTop());
+        mViewPath.lineTo(mViewWidth - width + getPaddingLeft(), width + getPaddingTop());
+        mViewPath.lineTo(mViewWidth - width + getPaddingLeft(), mViewHeight - width + getPaddingTop());
+        mViewPath.lineTo(width + getPaddingLeft(), mViewHeight / 2 + getPaddingTop());
     }
 
     @Override
     protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
         super.onMeasure(widthMeasureSpec, heightMeasureSpec);
-        setMeasuredDimension(mViewWidth, mViewHeight);
+        setMeasuredDimension(
+                mViewWidth + getPaddingLeft() + getPaddingRight(),
+                mViewHeight + getPaddingTop() + getPaddingBottom());
     }
 
     @Override

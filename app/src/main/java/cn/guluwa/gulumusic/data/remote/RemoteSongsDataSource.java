@@ -7,7 +7,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import cn.guluwa.gulumusic.data.bean.LocalSongBean;
 import cn.guluwa.gulumusic.data.bean.SongPathBean;
 import cn.guluwa.gulumusic.data.bean.SongWordBean;
 import cn.guluwa.gulumusic.data.bean.TracksBean;
@@ -37,6 +36,11 @@ public class RemoteSongsDataSource implements SongDataSource {
     public RemoteSongsDataSource() {
     }
 
+    /**
+     * 查询热门歌曲
+     *
+     * @return
+     */
     @Override
     public LiveData<ViewDataBean<List<TracksBean>>> queryNetCloudHotSong() {
         Map<String, Object> map = new HashMap<>();
@@ -65,6 +69,12 @@ public class RemoteSongsDataSource implements SongDataSource {
         );
     }
 
+    /**
+     * 查询歌曲路径
+     *
+     * @param song
+     * @return
+     */
     @Override
     public LiveData<ViewDataBean<SongPathBean>> querySongPath(TracksBean song) {
         Map<String, Object> map = new HashMap<>();
@@ -79,13 +89,19 @@ public class RemoteSongsDataSource implements SongDataSource {
                         .map(songPathBean -> {
                             songPathBean.setSong(song);
                             songPathBean.setId(Integer.valueOf(song.getId()));
-                            LocalSongsDataSource.getInstance().addSong(songPathBean);
+                            LocalSongsDataSource.getInstance().addSongPath(songPathBean);
                             return songPathBean;
                         })
                         .observeOn(AndroidSchedulers.mainThread())
         );
     }
 
+    /**
+     * 查询歌曲歌词
+     *
+     * @param song
+     * @return
+     */
     @Override
     public LiveData<ViewDataBean<SongWordBean>> querySongWord(TracksBean song) {
         Map<String, Object> map = new HashMap<>();
@@ -100,26 +116,31 @@ public class RemoteSongsDataSource implements SongDataSource {
                         .map(songWordBean -> {
                             songWordBean.setSong(song);
                             songWordBean.setId(Integer.valueOf(song.getId()));
-                            LocalSongsDataSource.getInstance().addSong(songWordBean);
+                            LocalSongsDataSource.getInstance().addSongWord(songWordBean);
                             return songWordBean;
                         })
                         .observeOn(AndroidSchedulers.mainThread())
         );
     }
 
+    /**
+     * 歌曲下载
+     *
+     * @param songPathBean
+     * @param songName
+     * @param listener
+     */
     public void downloadSongFile(SongPathBean songPathBean, String songName, OnResultListener<File> listener) {
         RetrofitFactory.getRetrofit().createApi(ApiService.class)
                 .downloadSongFile(songPathBean.getUrl())
                 .subscribeOn(Schedulers.io())
                 .observeOn(Schedulers.io())
                 .map(responseBody -> {
-                    LocalSongBean localSongBean = new LocalSongBean();
-                    localSongBean.setId(songPathBean.getSong().getId());
-                    localSongBean.setName(songPathBean.getSong().getName());
-                    localSongBean.setAl(songPathBean.getSong().getAl());
-                    localSongBean.setSinger(songPathBean.getSong().getSinger());
-                    localSongBean.setTag(songPathBean.getSong().getTag());
-                    LocalSongsDataSource.getInstance().addLocalSong(localSongBean);
+                    if (LocalSongsDataSource.getInstance().queryLocalSong(songPathBean.getId(), songPathBean.getSong().getName()) == null) {
+                        LocalSongsDataSource.getInstance().addLocalSong(AppUtils.getLocalSongBean(songPathBean.getSong()));
+                    } else {
+                        System.out.println("歌曲已存在");
+                    }
                     return responseBody;
                 })
                 .observeOn(Schedulers.io())

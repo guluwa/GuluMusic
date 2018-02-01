@@ -10,7 +10,20 @@ import cn.guluwa.gulumusic.service.MusicAutoService;
 
 public class AppManager {
 
+    /**
+     * 歌曲播放服务
+     */
     private MusicAutoService mMusicAutoService;
+
+    /**
+     * 播放模式
+     */
+    private int mPlayMode;
+
+    /**
+     * 播放列表（热门、本地）
+     */
+    private String mPlayStatus;
 
     private AppManager() {
     }
@@ -19,19 +32,31 @@ public class AppManager {
         private static AppManager instance = new AppManager();
     }
 
-    public static AppManager get() {
+    public static AppManager getInstance() {
         return SingletonHolder.instance;
     }
 
-    public void init(Context context) {
-
-    }
-
-    public MusicAutoService getmMusicAutoService() {
+    public MusicAutoService getMusicAutoService() {
         return mMusicAutoService;
     }
 
-    public void setmMusicAutoService(MusicAutoService mMusicAutoService) {
+    public void setMusicAutoService(MusicAutoService mMusicAutoService) {
         this.mMusicAutoService = mMusicAutoService;
+    }
+
+    public int getPlayMode() {
+        return mPlayMode;
+    }
+
+    public void setPlayMode(int mPlayMode) {
+        this.mPlayMode = mPlayMode;
+    }
+
+    public String getPlayStatus() {
+        return mPlayStatus;
+    }
+
+    public void setPlayStatus(String mPlayStatus) {
+        this.mPlayStatus = mPlayStatus;
     }
 }

@@ -22,7 +22,15 @@ import cn.guluwa.gulumusic.utils.AppUtils;
 public class SongsRepository {
 
     private static final SongsRepository instance = new SongsRepository();
+
+    /**
+     * 服务器数据
+     */
     private RemoteSongsDataSource remoteSongsDataSource = RemoteSongsDataSource.getInstance();
+
+    /**
+     * 本地数据
+     */
     private LocalSongsDataSource localSongsDataSource = LocalSongsDataSource.getInstance();
 
     public static SongsRepository getInstance() {
@@ -32,7 +40,16 @@ public class SongsRepository {
     public SongsRepository() {
     }
 
-    public LiveData<ViewDataBean<List<TracksBean>>> queryNetCloudHotSong() {
+    /**
+     * 查询热门歌曲
+     *
+     * @param isFirstComing
+     * @return
+     */
+    public LiveData<ViewDataBean<List<TracksBean>>> queryNetCloudHotSong(boolean isFirstComing) {
+        if (!isFirstComing) {
+            return localSongsDataSource.queryNetCloudHotSong();
+        }
         if (AppUtils.isNetConnected()) {
             return remoteSongsDataSource.queryNetCloudHotSong();
         } else {
@@ -40,14 +57,21 @@ public class SongsRepository {
         }
     }
 
+    /**
+     * 查询本地歌曲
+     *
+     * @return
+     */
     public LiveData<ViewDataBean<List<LocalSongBean>>> queryLocalSong() {
         return localSongsDataSource.queryLocalSong();
     }
 
-    public void addLocalSong(LocalSongBean localSongBean){
-        localSongsDataSource.addLocalSong(localSongBean);
-    }
-
+    /**
+     * 查询歌曲路径
+     *
+     * @param song
+     * @return
+     */
     public LiveData<ViewDataBean<SongPathBean>> querySongPath(TracksBean song) {
         if (AppUtils.isNetConnected()) {
             return remoteSongsDataSource.querySongPath(song);
@@ -56,6 +80,12 @@ public class SongsRepository {
         }
     }
 
+    /**
+     * 查询歌曲歌词
+     *
+     * @param song
+     * @return
+     */
     public LiveData<ViewDataBean<SongWordBean>> querySongWord(TracksBean song) {
         if (AppUtils.isNetConnected()) {
             return remoteSongsDataSource.querySongWord(song);
@@ -64,6 +94,13 @@ public class SongsRepository {
         }
     }
 
+    /**
+     * 歌曲下载
+     *
+     * @param songPathBean
+     * @param songName
+     * @param listener
+     */
     public void downloadSongFile(SongPathBean songPathBean, String songName, OnResultListener<File> listener) {
         remoteSongsDataSource.downloadSongFile(songPathBean, songName, listener);
     }

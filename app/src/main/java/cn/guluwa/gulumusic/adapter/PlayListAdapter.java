@@ -15,6 +15,7 @@ import cn.guluwa.gulumusic.data.bean.LocalSongBean;
 import cn.guluwa.gulumusic.data.bean.TracksBean;
 import cn.guluwa.gulumusic.databinding.PlayListItemLayoutBinding;
 import cn.guluwa.gulumusic.listener.OnClickListener;
+import cn.guluwa.gulumusic.utils.AppUtils;
 
 /**
  * Created by guluwa on 2018/1/11.
@@ -35,6 +36,10 @@ public class PlayListAdapter extends RecyclerView.Adapter<PlayListAdapter.ViewHo
         notifyDataSetChanged();
     }
 
+    public List<? extends BaseSongBean> getData() {
+        return data;
+    }
+
     @Override
     public PlayListAdapter.ViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
         ViewDataBinding mDataBinding = DataBindingUtil.inflate(
@@ -44,8 +49,8 @@ public class PlayListAdapter extends RecyclerView.Adapter<PlayListAdapter.ViewHo
 
     @Override
     public void onBindViewHolder(PlayListAdapter.ViewHolder holder, int position) {
-        holder.getmPlayListItemLayoutBinding().setSong(data.get(position));
-        holder.getmPlayListItemLayoutBinding().setIndex(position + 1);
+        holder.getPlayListItemLayoutBinding().setSong(data.get(position));
+        holder.getPlayListItemLayoutBinding().setIndex(position + 1);
     }
 
     @Override
@@ -57,11 +62,11 @@ public class PlayListAdapter extends RecyclerView.Adapter<PlayListAdapter.ViewHo
 
         PlayListItemLayoutBinding mPlayListItemLayoutBinding;
 
-        public PlayListItemLayoutBinding getmPlayListItemLayoutBinding() {
+        public PlayListItemLayoutBinding getPlayListItemLayoutBinding() {
             return mPlayListItemLayoutBinding;
         }
 
-        public void setmPlayListItemLayoutBinding(PlayListItemLayoutBinding mPlayListItemLayoutBinding) {
+        public void setPlayListItemLayoutBinding(PlayListItemLayoutBinding mPlayListItemLayoutBinding) {
             this.mPlayListItemLayoutBinding = mPlayListItemLayoutBinding;
         }
 
@@ -72,14 +77,7 @@ public class PlayListAdapter extends RecyclerView.Adapter<PlayListAdapter.ViewHo
                 if (data.get(getAdapterPosition()) instanceof TracksBean) {
                     listener.click((TracksBean) data.get(getAdapterPosition()));
                 } else {
-                    TracksBean tracksBean = new TracksBean();
-                    LocalSongBean localSongBean = (LocalSongBean) data.get(getAdapterPosition());
-                    tracksBean.setId(localSongBean.getId());
-                    tracksBean.setName(localSongBean.getName());
-                    tracksBean.setAl(localSongBean.getAl());
-                    tracksBean.setSinger(localSongBean.getSinger());
-                    tracksBean.setTag(localSongBean.getTag());
-                    listener.click(tracksBean);
+                    listener.click(AppUtils.getSongBean((LocalSongBean) data.get(getAdapterPosition())));
                 }
             });
         }

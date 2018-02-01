@@ -6,6 +6,8 @@ import android.arch.persistence.room.PrimaryKey;
 import java.io.Serializable;
 
 /**
+ * 单曲信息类
+ *
  * Created by guluwa on 2018/1/12.
  */
 @Entity(tableName = "net_cloud_hot_songs")

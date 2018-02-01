@@ -21,6 +21,9 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 
+import cn.guluwa.gulumusic.data.bean.LocalSongBean;
+import cn.guluwa.gulumusic.data.bean.TracksBean;
+import cn.guluwa.gulumusic.data.local.LocalSongsDataSource;
 import cn.guluwa.gulumusic.listener.OnColorListener;
 import cn.guluwa.gulumusic.manage.MyApplication;
 import okhttp3.ResponseBody;
@@ -233,6 +236,20 @@ public class AppUtils {
         return file.exists() ? file.getAbsolutePath() : "";
     }
 
+    //获取sharePreference Integer类型的值
+    public static int getInteger(String key, final int defaultValue) {
+        final SharedPreferences settings = PreferenceManager
+                .getDefaultSharedPreferences(MyApplication.getContext());
+        return settings.getInt(key, defaultValue);
+    }
+
+    //设置sharePreference Integer类型的值
+    public static void setInteger(final String key, final int value) {
+        final SharedPreferences settings = PreferenceManager
+                .getDefaultSharedPreferences(MyApplication.getContext());
+        settings.edit().putInt(key, value).apply();
+    }
+
     //获取sharePreference String类型的值
     public static String getString(String key, final String defaultValue) {
         final SharedPreferences settings = PreferenceManager
@@ -247,10 +264,41 @@ public class AppUtils {
         settings.edit().putString(key, value).apply();
     }
 
+
     //分钟转化成秒
-    public static int getSeconds(String time){
-        String minute = time.substring(0,2);
-        String second=time.substring(3,5);
-        return Integer.valueOf(minute)*60+Integer.valueOf(second);
+    public static int getSeconds(String time) {
+        String minute = time.substring(0, 2);
+        String second = time.substring(3, 5);
+        return Integer.valueOf(minute) * 60 + Integer.valueOf(second);
+    }
+
+    //本地歌曲转热门歌曲
+    public static TracksBean getSongBean(LocalSongBean localSongBean) {
+        TracksBean tracksBean = new TracksBean();
+        tracksBean.setId(localSongBean.getId());
+        tracksBean.setName(localSongBean.getName());
+        tracksBean.setAl(localSongBean.getAl());
+        tracksBean.setSinger(localSongBean.getSinger());
+        tracksBean.setTag(localSongBean.getTag());
+        return tracksBean;
+    }
+
+    //热门歌曲转本地歌曲
+    public static LocalSongBean getLocalSongBean(TracksBean tracksBean) {
+        LocalSongBean localSongBean = new LocalSongBean();
+        localSongBean.setId(tracksBean.getId());
+        localSongBean.setName(tracksBean.getName());
+        localSongBean.setAl(tracksBean.getAl());
+        localSongBean.setSinger(tracksBean.getSinger());
+        localSongBean.setTag(tracksBean.getTag());
+        return localSongBean;
+    }
+
+    public static int getPlayMode(int mode) {
+        if (mode < 2) {
+            return ++mode;
+        } else {
+            return 0;
+        }
     }
 }

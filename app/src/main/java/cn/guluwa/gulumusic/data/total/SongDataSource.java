@@ -17,9 +17,26 @@ import cn.guluwa.gulumusic.data.bean.ViewDataBean;
 
 public interface SongDataSource {
 
+    /**
+     * 查询热门歌曲
+     *
+     * @return
+     */
     LiveData<ViewDataBean<List<TracksBean>>> queryNetCloudHotSong();
 
+    /**
+     * 查询歌曲路径
+     *
+     * @param song
+     * @return
+     */
     LiveData<ViewDataBean<SongPathBean>> querySongPath(TracksBean song);
 
+    /**
+     * 查询歌曲歌词
+     *
+     * @param song
+     * @return
+     */
     LiveData<ViewDataBean<SongWordBean>> querySongWord(TracksBean song);
 }

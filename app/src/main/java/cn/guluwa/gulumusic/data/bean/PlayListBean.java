@@ -3,6 +3,8 @@ package cn.guluwa.gulumusic.data.bean;
 import java.util.List;
 
 /**
+ * 热门歌曲集合类
+ *
  * Created by guluwa on 2018/1/11.
  */
 
