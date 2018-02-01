@@ -1,15 +1,11 @@
 package cn.guluwa.gulumusic.data.total;
 
 import android.arch.lifecycle.LiveData;
-import android.arch.lifecycle.MediatorLiveData;
-import android.view.View;
 
 import java.io.File;
 import java.util.List;
 
-import cn.guluwa.gulumusic.data.bean.BaseSongBean;
 import cn.guluwa.gulumusic.data.bean.LocalSongBean;
-import cn.guluwa.gulumusic.data.bean.PageStatus;
 import cn.guluwa.gulumusic.data.bean.SongPathBean;
 import cn.guluwa.gulumusic.data.bean.SongWordBean;
 import cn.guluwa.gulumusic.data.bean.TracksBean;
@@ -52,7 +48,7 @@ public class SongsRepository {
         localSongsDataSource.addLocalSong(localSongBean);
     }
 
-    public LiveData<ViewDataBean<SongPathBean>> querySongPath(BaseSongBean song) {
+    public LiveData<ViewDataBean<SongPathBean>> querySongPath(TracksBean song) {
         if (AppUtils.isNetConnected()) {
             return remoteSongsDataSource.querySongPath(song);
         } else {
@@ -60,7 +56,7 @@ public class SongsRepository {
         }
     }
 
-    public LiveData<ViewDataBean<SongWordBean>> querySongWord(BaseSongBean song) {
+    public LiveData<ViewDataBean<SongWordBean>> querySongWord(TracksBean song) {
         if (AppUtils.isNetConnected()) {
             return remoteSongsDataSource.querySongWord(song);
         } else {

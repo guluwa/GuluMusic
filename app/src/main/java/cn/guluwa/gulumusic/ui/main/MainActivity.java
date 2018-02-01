@@ -1,15 +1,14 @@
 package cn.guluwa.gulumusic.ui.main;
 
-import android.arch.lifecycle.Observer;
 import android.arch.lifecycle.ViewModelProviders;
 import android.content.ComponentName;
 import android.content.Intent;
 import android.content.ServiceConnection;
 import android.graphics.Color;
 import android.os.IBinder;
-import android.support.annotation.Nullable;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.ActivityOptionsCompat;
+import android.support.v4.util.Pair;
 import android.support.v4.view.MenuItemCompat;
 import android.support.v7.app.ActionBarDrawerToggle;
 import android.support.v7.widget.LinearLayoutManager;
@@ -35,9 +34,7 @@ import cn.guluwa.gulumusic.R;
 import cn.guluwa.gulumusic.adapter.PlayListAdapter;
 import cn.guluwa.gulumusic.base.BaseActivity;
 import cn.guluwa.gulumusic.data.bean.BaseSongBean;
-import cn.guluwa.gulumusic.data.bean.LocalSongBean;
 import cn.guluwa.gulumusic.data.bean.TracksBean;
-import cn.guluwa.gulumusic.data.bean.ViewDataBean;
 import cn.guluwa.gulumusic.databinding.ActivityMainBinding;
 import cn.guluwa.gulumusic.listener.OnResultListener;
 import cn.guluwa.gulumusic.manage.AppManager;
@@ -55,7 +52,7 @@ public class MainActivity extends BaseActivity {
     private ActivityMainBinding mMainBinding;
     private boolean sIsScrolling;
     private MainViewModel mViewModel;
-    private BaseSongBean mCurrentSong;
+    private TracksBean mCurrentSong;
     private SimpleDateFormat time;
     private boolean isFirst;
     private String mSongPath;
@@ -104,8 +101,7 @@ public class MainActivity extends BaseActivity {
                     Intent intent = new Intent(MainActivity.this, PlayActivity.class);
                     intent.putExtra("song", mCurrentSong);
                     intent.putExtra("status", mMainBinding.mPlayBtn.getIsPlaying());
-                    ActivityOptionsCompat options = ActivityOptionsCompat.makeSceneTransitionAnimation(
-                            this, mMainBinding.ivCurrentSongPic, "songImage");
+                    ActivityOptionsCompat options = ActivityOptionsCompat.makeSceneTransitionAnimation(this, new Pair<>(mMainBinding.ivCurrentSongPic, "songImage"));
                     ActivityCompat.startActivityForResult(this, intent, Contacts.REQUEST_CODE, options.toBundle());
 
                     break;
@@ -127,18 +123,22 @@ public class MainActivity extends BaseActivity {
                     }
                     break;
                 case R.id.flNetCloudSongs:
-                    showSnackBar("热门");
-                    if ("hot".equals(status)) return;
-                    status = "hot";
-                    mViewModel.refreshHot(true);
                     mMainBinding.mDrawerLayout.closeDrawer(Gravity.START);
+                    if ("hot".equals(status)) {
+                        return;
+                    }
+                    status = "hot";
+                    showSnackBar("热门");
+                    mViewModel.refreshHot(true);
                     break;
                 case R.id.flLocalSongs:
-                    showSnackBar("本地");
-                    if ("local".equals(status)) return;
-                    status = "local";
-                    mViewModel.refreshLocal(true);
                     mMainBinding.mDrawerLayout.closeDrawer(Gravity.START);
+                    if ("local".equals(status)) {
+                        return;
+                    }
+                    status = "local";
+                    showSnackBar("本地");
+                    mViewModel.refreshLocal(true);
                     break;
                 case R.id.flAppSetting:
                     showSnackBar("设置");
@@ -291,6 +291,7 @@ public class MainActivity extends BaseActivity {
                 case Empty:
                     mViewModel.refreshLocal(false);
                     System.out.println("empty");
+                    showSnackBar("没有本地歌曲");
                     mMainBinding.mSwipeRefreshLayout.setRefreshing(false);
                     break;
                 case Content:
@@ -386,8 +387,9 @@ public class MainActivity extends BaseActivity {
             disposable = Observable.interval(0, 1000, TimeUnit.MILLISECONDS)
                     .observeOn(AndroidSchedulers.mainThread())
                     .subscribe(aLong -> {
-                        if (AppManager.get().getmMusicAutoService() != null)
+                        if (AppManager.get().getmMusicAutoService() != null) {
                             mMainBinding.tvCurrentSongProgress.setText(time.format(AppManager.get().getmMusicAutoService().binder.getMusicCurrentPosition()));
+                        }
                     });
         }
     }
@@ -446,10 +448,11 @@ public class MainActivity extends BaseActivity {
     }
 
     //  在Activity中调用 bindService 保持与 Service 的通信
+    @Override
     public void bindServiceConnection() {
         Intent intent = new Intent(MainActivity.this, MusicAutoService.class);
         startService(intent);
-        bindService(intent, serviceConnection, this.BIND_AUTO_CREATE);
+        bindService(intent, serviceConnection, BIND_AUTO_CREATE);
     }
 
     //  回调onServiceConnected 函数，通过IBinder 获取 Service对象，实现Activity与 Service的绑定

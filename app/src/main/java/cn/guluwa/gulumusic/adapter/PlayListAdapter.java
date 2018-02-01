@@ -1,11 +1,9 @@
 package cn.guluwa.gulumusic.adapter;
 
-import android.content.Intent;
 import android.databinding.DataBindingUtil;
 import android.databinding.ViewDataBinding;
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
-import android.view.View;
 import android.view.ViewGroup;
 
 import java.util.ArrayList;
@@ -13,6 +11,7 @@ import java.util.List;
 
 import cn.guluwa.gulumusic.R;
 import cn.guluwa.gulumusic.data.bean.BaseSongBean;
+import cn.guluwa.gulumusic.data.bean.LocalSongBean;
 import cn.guluwa.gulumusic.data.bean.TracksBean;
 import cn.guluwa.gulumusic.databinding.PlayListItemLayoutBinding;
 import cn.guluwa.gulumusic.listener.OnClickListener;
@@ -70,7 +69,18 @@ public class PlayListAdapter extends RecyclerView.Adapter<PlayListAdapter.ViewHo
             super(mPlayListItemLayoutBinding.getRoot());
             this.mPlayListItemLayoutBinding = mPlayListItemLayoutBinding;
             mPlayListItemLayoutBinding.setClickListener(view -> {
-                listener.click(data.get(getAdapterPosition()));
+                if (data.get(getAdapterPosition()) instanceof TracksBean) {
+                    listener.click((TracksBean) data.get(getAdapterPosition()));
+                } else {
+                    TracksBean tracksBean = new TracksBean();
+                    LocalSongBean localSongBean = (LocalSongBean) data.get(getAdapterPosition());
+                    tracksBean.setId(localSongBean.getId());
+                    tracksBean.setName(localSongBean.getName());
+                    tracksBean.setAl(localSongBean.getAl());
+                    tracksBean.setSinger(localSongBean.getSinger());
+                    tracksBean.setTag(localSongBean.getTag());
+                    listener.click(tracksBean);
+                }
             });
         }
     }

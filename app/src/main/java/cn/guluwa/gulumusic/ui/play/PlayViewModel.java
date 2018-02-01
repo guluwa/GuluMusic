@@ -6,9 +6,7 @@ import android.arch.lifecycle.Transformations;
 import android.arch.lifecycle.ViewModel;
 
 import java.io.File;
-import java.io.StringReader;
 
-import cn.guluwa.gulumusic.data.bean.BaseSongBean;
 import cn.guluwa.gulumusic.data.bean.FreshBean;
 import cn.guluwa.gulumusic.data.bean.SongPathBean;
 import cn.guluwa.gulumusic.data.bean.SongWordBean;
@@ -30,8 +28,8 @@ public class PlayViewModel extends ViewModel {
 
     public LiveData<ViewDataBean<SongPathBean>> querySongPath() {
         if (mSongPath == null) {
-            if (mPathFresh == null)
-                mPathFresh = new MutableLiveData<>();
+            if (mPathFresh == null){
+                mPathFresh = new MutableLiveData<>();}
             mSongPath = Transformations.switchMap(mPathFresh, input -> {
                 if (input.isFresh) {
                     return songsRepository.querySongPath(input.song);
@@ -45,8 +43,8 @@ public class PlayViewModel extends ViewModel {
 
     public LiveData<ViewDataBean<SongWordBean>> querySongWord() {
         if (mSongWord == null) {
-            if (mWordFresh == null)
-                mWordFresh = new MutableLiveData<>();
+            if (mWordFresh == null){
+                mWordFresh = new MutableLiveData<>();}
             mSongWord = Transformations.switchMap(mWordFresh, input -> {
                 if (input.isFresh) {
                     return songsRepository.querySongWord(input.song);
@@ -58,11 +56,11 @@ public class PlayViewModel extends ViewModel {
         return mSongWord;
     }
 
-    void refreshPath(BaseSongBean song, boolean fresh) {
+    void refreshPath(TracksBean song, boolean fresh) {
         mPathFresh.setValue(new FreshBean(song, fresh));
     }
 
-    void refreshWord(BaseSongBean song, boolean fresh) {
+    void refreshWord(TracksBean song, boolean fresh) {
         mWordFresh.setValue(new FreshBean(song, fresh));
     }
 

@@ -7,7 +7,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import cn.guluwa.gulumusic.data.bean.BaseSongBean;
 import cn.guluwa.gulumusic.data.bean.LocalSongBean;
 import cn.guluwa.gulumusic.data.bean.SongPathBean;
 import cn.guluwa.gulumusic.data.bean.SongWordBean;
@@ -21,9 +20,7 @@ import cn.guluwa.gulumusic.listener.OnResultListener;
 import cn.guluwa.gulumusic.manage.Contacts;
 import cn.guluwa.gulumusic.utils.AppUtils;
 import io.reactivex.android.schedulers.AndroidSchedulers;
-import io.reactivex.functions.Function;
 import io.reactivex.schedulers.Schedulers;
-import okhttp3.ResponseBody;
 
 /**
  * Created by guluwa on 2018/1/12.
@@ -90,7 +87,7 @@ public class RemoteSongsDataSource implements SongDataSource {
     }
 
     @Override
-    public LiveData<ViewDataBean<SongWordBean>> querySongWord(BaseSongBean song) {
+    public LiveData<ViewDataBean<SongWordBean>> querySongWord(TracksBean song) {
         Map<String, Object> map = new HashMap<>();
         map.put("types", "lyric");
         map.put("id", song.getId());

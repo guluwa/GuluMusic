@@ -8,7 +8,6 @@ import android.arch.lifecycle.ViewModel;
 import java.io.File;
 import java.util.List;
 
-import cn.guluwa.gulumusic.data.bean.BaseSongBean;
 import cn.guluwa.gulumusic.data.bean.FreshBean;
 import cn.guluwa.gulumusic.data.bean.LocalSongBean;
 import cn.guluwa.gulumusic.data.bean.SongPathBean;
@@ -35,8 +34,9 @@ public class MainViewModel extends ViewModel {
             mHotSongs = Transformations.switchMap(mHotSongListFresh, input -> {
                 if (input) {
                     return songsRepository.queryNetCloudHotSong();
-                } else
+                } else {
                     return null;
+                }
             });
         }
         return mHotSongs;
@@ -56,8 +56,9 @@ public class MainViewModel extends ViewModel {
             mLocalSongs = Transformations.switchMap(mLocalSongListFresh, input -> {
                 if (input) {
                     return songsRepository.queryLocalSong();
-                } else
+                } else {
                     return null;
+                }
             });
         }
         return mLocalSongs;
@@ -74,8 +75,9 @@ public class MainViewModel extends ViewModel {
 
     public LiveData<ViewDataBean<SongPathBean>> querySongPath() {
         if (mSongPath == null) {
-            if (mPathFresh == null)
+            if (mPathFresh == null) {
                 mPathFresh = new MutableLiveData<>();
+            }
             mSongPath = Transformations.switchMap(mPathFresh, input -> {
                 if (input.isFresh) {
                     return songsRepository.querySongPath(input.song);
@@ -89,8 +91,9 @@ public class MainViewModel extends ViewModel {
 
     public LiveData<ViewDataBean<SongWordBean>> querySongWord() {
         if (mSongWord == null) {
-            if (mWordFresh == null)
+            if (mWordFresh == null) {
                 mWordFresh = new MutableLiveData<>();
+            }
             mSongWord = Transformations.switchMap(mWordFresh, input -> {
                 if (input.isFresh) {
                     return songsRepository.querySongWord(input.song);
@@ -102,15 +105,15 @@ public class MainViewModel extends ViewModel {
         return mSongWord;
     }
 
-    void refreshPath(BaseSongBean song, boolean fresh) {
+    void refreshPath(TracksBean song, boolean fresh) {
         mPathFresh.setValue(new FreshBean(song, fresh));
     }
 
-    void refreshWord(BaseSongBean song, boolean fresh) {
+    void refreshWord(TracksBean song, boolean fresh) {
         mWordFresh.setValue(new FreshBean(song, fresh));
     }
 
-    void downloadSongFile(SongPathBean songPathBean , String songName, OnResultListener<File> listener) {
+    void downloadSongFile(SongPathBean songPathBean, String songName, OnResultListener<File> listener) {
         songsRepository.downloadSongFile(songPathBean, songName, listener);
     }
 }

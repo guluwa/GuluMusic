@@ -1,9 +1,6 @@
 package cn.guluwa.gulumusic.data.bean;
 
-import android.arch.persistence.room.ColumnInfo;
-import android.arch.persistence.room.Embedded;
 import android.arch.persistence.room.Entity;
-import android.arch.persistence.room.Ignore;
 import android.arch.persistence.room.PrimaryKey;
 
 import java.io.Serializable;
@@ -19,4 +16,22 @@ public class LocalSongBean extends BaseSongBean implements Serializable {
 
     @PrimaryKey(autoGenerate = true)
     private int index;
+
+    private int id;
+
+    public int getIndex() {
+        return index;
+    }
+
+    public void setIndex(int index) {
+        this.index = index;
+    }
+
+    public int getId() {
+        return id;
+    }
+
+    public void setId(int id) {
+        this.id = id;
+    }
 }
