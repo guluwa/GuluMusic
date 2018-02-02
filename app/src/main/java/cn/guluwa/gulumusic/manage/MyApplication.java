@@ -23,7 +23,7 @@ public class MyApplication extends Application {
 
         CalligraphyConfig.initDefault(new CalligraphyConfig.Builder().
                 setDefaultFontPath("fonts/Roboto-Monospace-Regular.ttf").setFontAttrId(R.attr.fontPath).build());
-        AppManager.getInstance().setPlayMode(AppUtils.getInteger(Contacts.PLAY_MODE, 0));
+        AppManager.getInstance().setPlayMode(AppUtils.getInteger(Contacts.PLAY_MODE, 2));
         AppManager.getInstance().setPlayStatus(AppUtils.getString(Contacts.PLAY_STATUS, "hot"));
         initDataBase();
     }

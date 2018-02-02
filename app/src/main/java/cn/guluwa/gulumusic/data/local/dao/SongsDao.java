@@ -12,6 +12,8 @@ import cn.guluwa.gulumusic.data.bean.LocalSongBean;
 import cn.guluwa.gulumusic.data.bean.SongPathBean;
 import cn.guluwa.gulumusic.data.bean.SongWordBean;
 import cn.guluwa.gulumusic.data.bean.TracksBean;
+import io.reactivex.Flowable;
+import io.reactivex.Maybe;
 
 /**
  * Created by guluwa on 2018/1/12.
@@ -43,7 +45,7 @@ public interface SongsDao {
      * @return
      */
     @Query("select * from songs_path where id=:id")
-    LiveData<SongPathBean> querySongPath(String id);
+    Flowable<List<SongPathBean>> querySongPath(String id);
 
     /**
      * 查询歌曲歌词
@@ -52,7 +54,7 @@ public interface SongsDao {
      * @return
      */
     @Query("select * from songs_words where id=:id")
-    LiveData<SongWordBean> querySongWord(String id);
+    Flowable<List<SongWordBean>> querySongWord(String id);
 
     /**
      * 查询本地歌曲（单曲）

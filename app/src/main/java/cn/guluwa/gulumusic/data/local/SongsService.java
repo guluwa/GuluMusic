@@ -8,6 +8,8 @@ import cn.guluwa.gulumusic.data.bean.LocalSongBean;
 import cn.guluwa.gulumusic.data.bean.SongPathBean;
 import cn.guluwa.gulumusic.data.bean.SongWordBean;
 import cn.guluwa.gulumusic.data.bean.TracksBean;
+import io.reactivex.Flowable;
+import io.reactivex.Maybe;
 
 /**
  * Created by guluwa on 2018/1/12.
@@ -44,7 +46,7 @@ public interface SongsService {
      * @param id
      * @return
      */
-    LiveData<SongPathBean> querySongPath(String id);
+    Flowable<List<SongPathBean>> querySongPath(String id);
 
     /**
      * 查询歌曲歌词
@@ -52,7 +54,7 @@ public interface SongsService {
      * @param id
      * @return
      */
-    LiveData<SongWordBean> querySongWord(String id);
+    Flowable<List<SongWordBean>> querySongWord(String id);
 
     /**
      * 添加歌曲到热门歌曲表

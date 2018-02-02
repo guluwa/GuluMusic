@@ -12,6 +12,9 @@ import cn.guluwa.gulumusic.data.bean.SongWordBean;
 import cn.guluwa.gulumusic.data.bean.TracksBean;
 import cn.guluwa.gulumusic.data.bean.ViewDataBean;
 import cn.guluwa.gulumusic.data.total.SongDataSource;
+import cn.guluwa.gulumusic.listener.OnResultListener;
+import io.reactivex.functions.Action;
+import io.reactivex.functions.Consumer;
 
 /**
  * Created by guluwa on 2018/1/12.
@@ -60,19 +63,15 @@ public class LocalSongsDataSource implements SongDataSource {
      * @return
      */
     @Override
-    public LiveData<ViewDataBean<SongPathBean>> querySongPath(TracksBean song) {
-        MediatorLiveData<ViewDataBean<SongPathBean>> data = new MediatorLiveData<>();
-        data.setValue(ViewDataBean.loading());
-
-        data.addSource(songsService.querySongPath(String.valueOf(song.getId())), songPathBean -> {
-            if (songPathBean == null) {
-                data.setValue(ViewDataBean.empty());
-            } else {
-                songPathBean.setSong(song);
-                data.setValue(ViewDataBean.content(songPathBean));
-            }
-        });
-        return data;
+    public void querySongPath(TracksBean song, OnResultListener<SongPathBean> listener) {
+        songsService.querySongPath(String.valueOf(song.getId()))
+                .subscribe(songPathBeans -> {
+                    if (songPathBeans == null || songPathBeans.size() == 0) {
+                        listener.failed("本地找不到哦，请连接网络后播放");
+                    } else {
+                        listener.success(songPathBeans.get(0));
+                    }
+                }, throwable -> listener.failed(throwable.getMessage()));
     }
 
     /**
@@ -82,19 +81,17 @@ public class LocalSongsDataSource implements SongDataSource {
      * @return
      */
     @Override
-    public LiveData<ViewDataBean<SongWordBean>> querySongWord(TracksBean song) {
-        MediatorLiveData<ViewDataBean<SongWordBean>> data = new MediatorLiveData<>();
-        data.setValue(ViewDataBean.loading());
-
-        data.addSource(songsService.querySongWord(String.valueOf(song.getId())), songWordBean -> {
-            if (songWordBean == null) {
-                data.setValue(ViewDataBean.empty());
-            } else {
-                songWordBean.setSong(song);
-                data.setValue(ViewDataBean.content(songWordBean));
-            }
-        });
-        return data;
+    public void querySongWord(TracksBean song, OnResultListener<SongWordBean> listener) {
+        songsService.querySongWord(String.valueOf(song.getId()))
+                .subscribe(songWordBeans -> {
+                    if (songWordBeans == null || songWordBeans.size() == 0) {
+                        listener.failed("本地找不到哦，请连接网络后播放");
+                    } else {
+                        listener.success(songWordBeans.get(0));
+                    }
+                }, throwable -> {
+                    listener.failed(throwable.getMessage());
+                });
     }
 
     /**

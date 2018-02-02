@@ -13,6 +13,7 @@ import cn.guluwa.gulumusic.data.bean.ViewDataBean;
 import cn.guluwa.gulumusic.data.local.LocalSongsDataSource;
 import cn.guluwa.gulumusic.data.remote.RemoteSongsDataSource;
 import cn.guluwa.gulumusic.listener.OnResultListener;
+import cn.guluwa.gulumusic.manage.AppManager;
 import cn.guluwa.gulumusic.utils.AppUtils;
 
 /**
@@ -72,11 +73,11 @@ public class SongsRepository {
      * @param song
      * @return
      */
-    public LiveData<ViewDataBean<SongPathBean>> querySongPath(TracksBean song) {
+    public void querySongPath(TracksBean song, OnResultListener<SongPathBean> listener) {
         if (AppUtils.isNetConnected()) {
-            return remoteSongsDataSource.querySongPath(song);
+             remoteSongsDataSource.querySongPath(song, listener);
         } else {
-            return localSongsDataSource.querySongPath(song);
+             localSongsDataSource.querySongPath(song, listener);
         }
     }
 
@@ -86,11 +87,11 @@ public class SongsRepository {
      * @param song
      * @return
      */
-    public LiveData<ViewDataBean<SongWordBean>> querySongWord(TracksBean song) {
+    public void querySongWord(TracksBean song, OnResultListener<SongWordBean> listener) {
         if (AppUtils.isNetConnected()) {
-            return remoteSongsDataSource.querySongWord(song);
+             remoteSongsDataSource.querySongWord(song, listener);
         } else {
-            return localSongsDataSource.querySongWord(song);
+             localSongsDataSource.querySongWord(song, listener);
         }
     }
 

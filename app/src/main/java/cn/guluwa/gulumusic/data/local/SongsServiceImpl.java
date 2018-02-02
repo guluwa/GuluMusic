@@ -10,6 +10,8 @@ import cn.guluwa.gulumusic.data.bean.SongWordBean;
 import cn.guluwa.gulumusic.data.bean.TracksBean;
 import cn.guluwa.gulumusic.data.local.dao.SongsDao;
 import cn.guluwa.gulumusic.data.local.db.DBHelper;
+import io.reactivex.Flowable;
+import io.reactivex.Maybe;
 
 /**
  * Created by guluwa on 2018/1/12.
@@ -70,7 +72,7 @@ public class SongsServiceImpl implements SongsService {
      * @return
      */
     @Override
-    public LiveData<SongPathBean> querySongPath(String id) {
+    public Flowable<List<SongPathBean>> querySongPath(String id) {
         return songsDao.querySongPath(id);
     }
 
@@ -81,7 +83,7 @@ public class SongsServiceImpl implements SongsService {
      * @return
      */
     @Override
-    public LiveData<SongWordBean> querySongWord(String id) {
+    public Flowable<List<SongWordBean>> querySongWord(String id) {
         return songsDao.querySongWord(id);
     }
 

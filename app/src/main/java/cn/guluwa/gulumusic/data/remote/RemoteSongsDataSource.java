@@ -7,6 +7,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import cn.guluwa.gulumusic.data.bean.PlayListBean;
 import cn.guluwa.gulumusic.data.bean.SongPathBean;
 import cn.guluwa.gulumusic.data.bean.SongWordBean;
 import cn.guluwa.gulumusic.data.bean.TracksBean;
@@ -18,7 +19,9 @@ import cn.guluwa.gulumusic.data.total.SongDataSource;
 import cn.guluwa.gulumusic.listener.OnResultListener;
 import cn.guluwa.gulumusic.manage.Contacts;
 import cn.guluwa.gulumusic.utils.AppUtils;
+import io.reactivex.Observable;
 import io.reactivex.android.schedulers.AndroidSchedulers;
+import io.reactivex.functions.Consumer;
 import io.reactivex.schedulers.Schedulers;
 
 /**
@@ -76,24 +79,25 @@ public class RemoteSongsDataSource implements SongDataSource {
      * @return
      */
     @Override
-    public LiveData<ViewDataBean<SongPathBean>> querySongPath(TracksBean song) {
+    public void querySongPath(TracksBean song, OnResultListener<SongPathBean> listener) {
         Map<String, Object> map = new HashMap<>();
         map.put("types", "url");
         map.put("id", song.getId());
         map.put("source", "netease");
-        return LiveDataObservableAdapter.fromObservableViewData(
-                RetrofitFactory.getRetrofit().createApi(ApiService.class)
-                        .obtainNetCloudHotSongPath(Contacts.NET_CLOUD_SONG_CALLBACK, map)
-                        .subscribeOn(Schedulers.io())
-                        .observeOn(Schedulers.io())
-                        .map(songPathBean -> {
-                            songPathBean.setSong(song);
-                            songPathBean.setId(Integer.valueOf(song.getId()));
-                            LocalSongsDataSource.getInstance().addSongPath(songPathBean);
-                            return songPathBean;
-                        })
-                        .observeOn(AndroidSchedulers.mainThread())
-        );
+        RetrofitFactory.getRetrofit().createApi(ApiService.class)
+                .obtainNetCloudHotSongPath(Contacts.NET_CLOUD_SONG_CALLBACK, map)
+                .subscribeOn(Schedulers.io())
+                .observeOn(Schedulers.io())
+                .map(songPathBean -> {
+                    songPathBean.setSong(song);
+                    songPathBean.setId(song.getId());
+                    LocalSongsDataSource.getInstance().addSongPath(songPathBean);
+                    return songPathBean;
+                })
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(listener::success, throwable -> {
+                    listener.failed(throwable.getMessage());
+                });
     }
 
     /**
@@ -103,24 +107,23 @@ public class RemoteSongsDataSource implements SongDataSource {
      * @return
      */
     @Override
-    public LiveData<ViewDataBean<SongWordBean>> querySongWord(TracksBean song) {
+    public void querySongWord(TracksBean song, OnResultListener<SongWordBean> listener) {
         Map<String, Object> map = new HashMap<>();
         map.put("types", "lyric");
         map.put("id", song.getId());
         map.put("source", "netease");
-        return LiveDataObservableAdapter.fromObservableViewData(
-                RetrofitFactory.getRetrofit().createApi(ApiService.class)
-                        .obtainNetCloudHotSongWord(Contacts.NET_CLOUD_SONG_CALLBACK, map)
-                        .subscribeOn(Schedulers.io())
-                        .observeOn(Schedulers.io())
-                        .map(songWordBean -> {
-                            songWordBean.setSong(song);
-                            songWordBean.setId(Integer.valueOf(song.getId()));
-                            LocalSongsDataSource.getInstance().addSongWord(songWordBean);
-                            return songWordBean;
-                        })
-                        .observeOn(AndroidSchedulers.mainThread())
-        );
+        RetrofitFactory.getRetrofit().createApi(ApiService.class)
+                .obtainNetCloudHotSongWord(Contacts.NET_CLOUD_SONG_CALLBACK, map)
+                .subscribeOn(Schedulers.io())
+                .observeOn(Schedulers.io())
+                .map(songWordBean -> {
+                    songWordBean.setSong(song);
+                    songWordBean.setId(song.getId());
+                    LocalSongsDataSource.getInstance().addSongWord(songWordBean);
+                    return songWordBean;
+                })
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(listener::success, throwable -> listener.failed(throwable.getMessage()));
     }
 
     /**

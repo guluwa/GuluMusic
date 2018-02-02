@@ -26,15 +26,18 @@
         <activity
             android:name=".ui.play.PlayActivity"
             android:screenOrientation="portrait" />
+        <activity
+            android:name=".ui.setting.SettingsActivity"
+            android:label="@string/title_activity_settings" />
 
         <service
             android:name=".service.MusicAutoService"
             android:enabled="true"
             android:exported="true" />
-
-        <activity
-            android:name=".ui.setting.SettingsActivity"
-            android:label="@string/title_activity_settings"></activity>
+        <service
+            android:name=".service.MusicDownLoadService"
+            android:enabled="true"
+            android:exported="true" />
     </application>
 
 </manifest>

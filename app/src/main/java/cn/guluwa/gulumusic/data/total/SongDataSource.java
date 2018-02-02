@@ -10,6 +10,7 @@ import cn.guluwa.gulumusic.data.bean.SongPathBean;
 import cn.guluwa.gulumusic.data.bean.SongWordBean;
 import cn.guluwa.gulumusic.data.bean.TracksBean;
 import cn.guluwa.gulumusic.data.bean.ViewDataBean;
+import cn.guluwa.gulumusic.listener.OnResultListener;
 
 /**
  * Created by guluwa on 2018/1/12.
@@ -30,7 +31,7 @@ public interface SongDataSource {
      * @param song
      * @return
      */
-    LiveData<ViewDataBean<SongPathBean>> querySongPath(TracksBean song);
+    void querySongPath(TracksBean song,OnResultListener<SongPathBean> listener);
 
     /**
      * 查询歌曲歌词
@@ -38,5 +39,5 @@ public interface SongDataSource {
      * @param song
      * @return
      */
-    LiveData<ViewDataBean<SongWordBean>> querySongWord(TracksBean song);
+    void querySongWord(TracksBean song,OnResultListener<SongWordBean> listener);
 }

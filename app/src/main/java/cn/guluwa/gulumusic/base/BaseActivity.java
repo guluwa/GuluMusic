@@ -2,6 +2,8 @@ package cn.guluwa.gulumusic.base;
 
 import android.Manifest;
 import android.app.AlertDialog;
+import android.arch.lifecycle.ViewModel;
+import android.arch.lifecycle.ViewModelProviders;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
@@ -28,6 +30,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import cn.guluwa.gulumusic.R;
+import cn.guluwa.gulumusic.ui.main.MainViewModel;
 
 /**
  * Created by guluwa on 2018/1/11.
@@ -43,6 +46,8 @@ public abstract class BaseActivity extends AppCompatActivity {
 
     public ViewDataBinding mViewDataBinding;
 
+    public MainViewModel mViewModel;
+
     // 需要进行检测的权限数组
     protected String[] needPermissions = {
             Manifest.permission.WRITE_EXTERNAL_STORAGE,
@@ -57,6 +62,7 @@ public abstract class BaseActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         mViewDataBinding = DataBindingUtil.setContentView(this, getViewLayoutId());
+        mViewModel = ViewModelProviders.of(this).get(MainViewModel.class);
         bindServiceConnection();
         getWindow().setEnterTransition(new Explode());
         getWindow().setExitTransition(new Fade());
