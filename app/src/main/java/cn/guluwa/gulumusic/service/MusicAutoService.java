@@ -2,18 +2,10 @@ package cn.guluwa.gulumusic.service;
 
 import android.app.Service;
 import android.content.Intent;
-import android.media.MediaPlayer;
 import android.os.IBinder;
 import android.util.Log;
 
-import java.util.ArrayList;
-import java.util.List;
-
-import cn.guluwa.gulumusic.data.bean.BaseSongBean;
-import cn.guluwa.gulumusic.data.bean.TracksBean;
 import cn.guluwa.gulumusic.manage.AppManager;
-import cn.guluwa.gulumusic.ui.main.MainViewModel;
-import cn.guluwa.gulumusic.utils.RandomPicker;
 
 /**
  * Created by guluwa on 2018/1/26.
@@ -23,10 +15,17 @@ public class MusicAutoService extends Service {
 
     public static final String TAG = "MusicAutoService";
 
-    public MusicAutoService() {}
+    /**
+     * 播放器焦点管理器
+     */
+    private AudioFocusManager mAudioFocusManager;
+
+
+    public MusicAutoService() {
+    }
 
     //  通过 Binder 来保持 Activity 和 Service 的通信
-    public MyBinder binder = new MyBinder(this);
+    public MusicBinder binder = new MusicBinder(this);
 
     @Override
     public boolean onUnbind(Intent intent) {
@@ -41,11 +40,14 @@ public class MusicAutoService extends Service {
     @Override
     public void onCreate() {
         super.onCreate();
+        mAudioFocusManager = new AudioFocusManager(this);
         Log.w(TAG, "MusicAutoService in onCreate");
     }
 
     @Override
     public void onDestroy() {
+        binder.unbindProgressQuery();
+        mAudioFocusManager.abandonAudioFocus();
         binder.getMediaPlayer().reset();
         binder.getMediaPlayer().release();
         binder.setMediaPlayer(null);
@@ -59,5 +61,9 @@ public class MusicAutoService extends Service {
      */
     public void quit() {
         stopSelf();
+    }
+
+    public AudioFocusManager getAudioFocusManager() {
+        return mAudioFocusManager;
     }
 }

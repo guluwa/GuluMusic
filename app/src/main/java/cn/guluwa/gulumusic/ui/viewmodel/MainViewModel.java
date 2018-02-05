@@ -1,15 +1,17 @@
-package cn.guluwa.gulumusic.ui.main;
+package cn.guluwa.gulumusic.ui.viewmodel;
 
 import android.arch.lifecycle.LiveData;
 import android.arch.lifecycle.MutableLiveData;
 import android.arch.lifecycle.Transformations;
 import android.arch.lifecycle.ViewModel;
+import android.view.View;
 
 import java.io.File;
 import java.util.List;
 
 import cn.guluwa.gulumusic.data.bean.FreshBean;
 import cn.guluwa.gulumusic.data.bean.LocalSongBean;
+import cn.guluwa.gulumusic.data.bean.SearchResultSongBean;
 import cn.guluwa.gulumusic.data.bean.SongPathBean;
 import cn.guluwa.gulumusic.data.bean.SongWordBean;
 import cn.guluwa.gulumusic.data.bean.TracksBean;
@@ -90,5 +92,36 @@ public class MainViewModel extends ViewModel {
      */
     public void refreshLocal(boolean isFresh) {
         mLocalSongListFresh.setValue(isFresh);
+    }
+
+    //歌曲搜索
+    private MutableLiveData<FreshBean> mSearchSongListFresh;
+    //搜索歌曲
+    private LiveData<ViewDataBean<List<SearchResultSongBean>>> mSearchSongs;
+
+    /**
+     * 歌曲搜索
+     *
+     * @return
+     */
+    public LiveData<ViewDataBean<List<SearchResultSongBean>>> searchSongByKeyWord() {
+        if (mSearchSongs == null) {
+            mSearchSongListFresh = new MutableLiveData<>();
+            mSearchSongs = Transformations.switchMap(mSearchSongListFresh, input -> {
+                if (input.page != -1) {
+                    return songsRepository.searchSongByKeyWord(input);
+                } else {
+                    return null;
+                }
+            });
+        }
+        return mSearchSongs;
+    }
+
+    /**
+     * 刷新歌曲搜索
+     */
+    public void refreshSearchSongs(String key, int page) {
+        mSearchSongListFresh.setValue(new FreshBean(key, page));
     }
 }

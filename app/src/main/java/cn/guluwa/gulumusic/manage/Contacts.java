@@ -6,7 +6,9 @@ package cn.guluwa.gulumusic.manage;
 
 public class Contacts {
 
-    public static final int REQUEST_CODE = 520;
+    public static final int REQUEST_CODE_PLAY = 520;
+
+    public static final int REQUEST_CODE_SEARCH = 521;
 
     public static final int RESULT_SONG_CODE = 502;
 
@@ -41,9 +43,33 @@ public class Contacts {
     /**
      * 网易云
      */
-    public static final String NET_CLOUD_HOT_CALLBACK = "jQuery1113022893444506560168_1516348199347";
 
     public static final String NET_CLOUD_HOT_ID = "3778678";
 
-    public static final String NET_CLOUD_SONG_CALLBACK = "jQuery1113003709735504310796_1516351478034";
+    public static final String SONG_CALLBACK = "jQuery1113003709735504310796_1516351478034";
+
+    /**
+     * 网易云
+     */
+    public static final String TYPE_NETEASE = "netease";
+
+    /**
+     * QQ
+     */
+    public static final String TYPE_TENCENT = "tencent";
+
+    /**
+     * 虾米
+     */
+    public static final String TYPE_XIAMI = "xiami";
+
+    /**
+     * 酷狗
+     */
+    public static final String TYPE_KUGOU = "kugou";
+
+    /**
+     * 百度
+     */
+    public static final String TYPE_BAIDU = "baidu";
 }

@@ -4,7 +4,7 @@
     <!--右侧搜索操作条目-->
     <item
         android:id="@+id/action_search"
-        android:icon="@drawable/ic_search"
         android:title="@string/menu_search"
+        app:actionViewClass="android.support.v7.widget.SearchView"
         app:showAsAction="always" />
 </menu>

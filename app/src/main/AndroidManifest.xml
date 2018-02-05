@@ -34,10 +34,8 @@
             android:name=".service.MusicAutoService"
             android:enabled="true"
             android:exported="true" />
-        <service
-            android:name=".service.MusicDownLoadService"
-            android:enabled="true"
-            android:exported="true" />
+
+        <activity android:name=".ui.search.SearchActivity"></activity>
     </application>
 
 </manifest>

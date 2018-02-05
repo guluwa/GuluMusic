@@ -42,5 +42,5 @@ public interface OnSongStatusListener {
      *
      * @param progress
      */
-    void progress(float progress);
+    void progress(int progress, int duration);
 }

@@ -1,6 +1,5 @@
 package cn.guluwa.gulumusic.service;
 
-import android.arch.lifecycle.LiveData;
 import android.media.MediaPlayer;
 import android.os.Binder;
 import android.util.Log;
@@ -9,25 +8,27 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 import cn.guluwa.gulumusic.data.bean.BaseSongBean;
 import cn.guluwa.gulumusic.data.bean.LocalSongBean;
 import cn.guluwa.gulumusic.data.bean.SongPathBean;
 import cn.guluwa.gulumusic.data.bean.SongWordBean;
 import cn.guluwa.gulumusic.data.bean.TracksBean;
-import cn.guluwa.gulumusic.data.bean.ViewDataBean;
 import cn.guluwa.gulumusic.data.total.SongsRepository;
 import cn.guluwa.gulumusic.listener.OnResultListener;
 import cn.guluwa.gulumusic.listener.OnSongStatusListener;
 import cn.guluwa.gulumusic.manage.AppManager;
-import cn.guluwa.gulumusic.ui.main.MainViewModel;
 import cn.guluwa.gulumusic.utils.AppUtils;
 import cn.guluwa.gulumusic.utils.RandomPicker;
+import io.reactivex.Observable;
+import io.reactivex.android.schedulers.AndroidSchedulers;
+import io.reactivex.disposables.Disposable;
 
 /**
  * Created by guluwa on 2018/2/2.
  */
-public class MyBinder extends Binder {
+public class MusicBinder extends Binder {
 
     private MusicAutoService musicAutoService;
 
@@ -63,8 +64,20 @@ public class MyBinder extends Binder {
      */
     private RandomPicker mRandomPicker;
 
-    public MyBinder(MusicAutoService musicAutoService) {
+    /**
+     * 歌曲进度轮询
+     */
+    private Disposable disposable;
+
+    /**
+     * 歌曲是否正在加载
+     */
+    private boolean isLoading;
+
+    public MusicBinder(MusicAutoService musicAutoService) {
+        isLoading = false;
         this.musicAutoService = musicAutoService;
+
         mediaPlayer = new MediaPlayer();
         mediaPlayer.setOnCompletionListener(mediaPlayer -> {
             switch (AppManager.getInstance().getPlayMode()) {
@@ -83,6 +96,7 @@ public class MyBinder extends Binder {
         });
         mSongList = new ArrayList<>();
         listeners = new ArrayList<>();
+        bindProgressQuery();
     }
 
     public MusicAutoService getService() {
@@ -115,11 +129,13 @@ public class MyBinder extends Binder {
         mCurrentSong = song;
         //本地不存在，则去下载
         if ("".equals(mSongPath = AppUtils.isExistFile(String.format("%s_%s.mp3", mCurrentSong.getName(), mCurrentSong.getId()), 1))) {
+            isLoading = true;
             querySongPath();
             if (listeners.size() != 0) {
                 listeners.get(listeners.size() - 1).loading();
             }
         } else {
+            isLoading = false;
             if (listeners.size() != 0) {
                 listeners.get(listeners.size() - 1).start();
             }
@@ -138,34 +154,47 @@ public class MyBinder extends Binder {
         songsRepository.querySongPath(mCurrentSong, new OnResultListener<SongPathBean>() {
             @Override
             public void success(SongPathBean result) {
-                songsRepository.downloadSongFile(result, String.format("%s_%s.mp3", result.getSong().getName(), result.getSong().getId()),
-                        new OnResultListener<File>() {
-                            @Override
-                            public void success(File file) {
-                                System.out.println(file.getAbsolutePath());
-                                mSongPath = file.getAbsolutePath();
-                                if (result.getId() == mCurrentSong.getId()) {//下载完成的歌曲和当前播放歌曲是同一首
-                                    stop();
-                                    playNewSong(0);
-                                    if (listeners.size() != 0) {
-                                        listeners.get(listeners.size() - 1).start();
+                if ("".equals(result.getUrl())) {
+                    if (listeners.size() != 0) {
+                        listeners.get(listeners.size() - 1).error("歌曲暂时不能播放哦");
+                        getNextSong(mCurrentSong);
+                        listeners.get(listeners.size() - 1).end(mCurrentSong);
+                    }
+                } else {
+                    songsRepository.downloadSongFile(result, String.format("%s_%s.mp3", result.getSong().getName(), result.getSong().getId()),
+                            new OnResultListener<File>() {
+                                @Override
+                                public void success(File file) {
+                                    System.out.println(file.getAbsolutePath());
+                                    mSongPath = file.getAbsolutePath();
+                                    if (result.getId() == mCurrentSong.getId()) {//下载完成的歌曲和当前播放歌曲是同一首
+                                        isLoading = true;
+                                        stop();
+                                        playNewSong(0);
+                                        if (listeners.size() != 0) {
+                                            listeners.get(listeners.size() - 1).start();
+                                        }
                                     }
                                 }
-                            }
 
-                            @Override
-                            public void failed(String error) {
-                                if (listeners.size() != 0) {
-                                    listeners.get(listeners.size() - 1).error(error);
+                                @Override
+                                public void failed(String error) {
+                                    if (listeners.size() != 0) {
+                                        listeners.get(listeners.size() - 1).error(error);
+                                        getNextSong(mCurrentSong);
+                                        listeners.get(listeners.size() - 1).end(mCurrentSong);
+                                    }
                                 }
-                            }
-                        });
+                            });
+                }
             }
 
             @Override
             public void failed(String error) {
                 if (listeners.size() != 0) {
                     listeners.get(listeners.size() - 1).error(error);
+                    getNextSong(mCurrentSong);
+                    listeners.get(listeners.size() - 1).end(mCurrentSong);
                 }
             }
         });
@@ -197,8 +226,14 @@ public class MyBinder extends Binder {
         if (mediaPlayer != null) {
             if (mediaPlayer.isPlaying()) {
                 mediaPlayer.pause();
+                if (listeners.size() != 0) {
+                    listeners.get(listeners.size() - 1).pause();
+                }
             } else {
                 mediaPlayer.start();
+                if (listeners.size() != 0) {
+                    listeners.get(listeners.size() - 1).start();
+                }
             }
         }
     }
@@ -209,6 +244,9 @@ public class MyBinder extends Binder {
     public void stop() {
         if (mediaPlayer != null) {
             mediaPlayer.stop();
+            if (listeners.size() != 0) {
+                listeners.get(listeners.size() - 1).pause();
+            }
         }
     }
 
@@ -218,15 +256,20 @@ public class MyBinder extends Binder {
      * @param currentTime
      */
     public void playNewSong(int currentTime) {
-        if (mediaPlayer != null) {
-            try {
-                mediaPlayer.reset();
-                mediaPlayer.setDataSource(mSongPath);
-                mediaPlayer.prepare();
-                mediaPlayer.seekTo(currentTime);
-                mediaPlayer.start();
-            } catch (IOException e) {
-                e.printStackTrace();
+        if (musicAutoService.getAudioFocusManager().requestAudioFocus()) {
+            if (mediaPlayer != null) {
+                try {
+                    mediaPlayer.reset();
+                    mediaPlayer.setDataSource(mSongPath);
+                    mediaPlayer.prepare();
+                    mediaPlayer.seekTo(currentTime);
+                    mediaPlayer.start();
+                    if (listeners.size() != 0) {
+                        listeners.get(listeners.size() - 1).start();
+                    }
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
             }
         }
     }
@@ -305,6 +348,33 @@ public class MyBinder extends Binder {
         return mCurrentSong;
     }
 
+    /**
+     * 开始轮询
+     */
+    public void bindProgressQuery() {
+        if (disposable == null) {
+            disposable = Observable.interval(0, 150, TimeUnit.MILLISECONDS)
+                    .observeOn(AndroidSchedulers.mainThread())
+                    .subscribe(aLong -> {
+                        if (mediaPlayer.isPlaying()) {
+                            if (listeners.size() != 0) {
+                                listeners.get(listeners.size() - 1).progress(mediaPlayer.getCurrentPosition(), mediaPlayer.getDuration());
+                            }
+                        }
+                    });
+        }
+    }
+
+    /**
+     * 结束轮询
+     */
+    public void unbindProgressQuery() {
+        if (disposable != null && !disposable.isDisposed()) {
+            disposable.dispose();
+            disposable = null;
+        }
+    }
+
     public void setSongList(List<? extends BaseSongBean> mSongList) {
         this.mSongList = mSongList;
         mRandomPicker = null;
@@ -317,5 +387,9 @@ public class MyBinder extends Binder {
 
     public void setMediaPlayer(MediaPlayer mediaPlayer) {
         this.mediaPlayer = mediaPlayer;
+    }
+
+    public boolean isLoading() {
+        return isLoading;
     }
 }

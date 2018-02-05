@@ -117,23 +117,15 @@ public class PlayActivity extends BaseActivity {
                     showPlayModeImg(mode);
                     break;
                 case R.id.ivPlayMenu:
-
+                    showSnackBar("菜单");
                     break;
                 case R.id.mLastSongBtn:
                     AppManager.getInstance().getMusicAutoService().binder.stop();
-                    mCurrentSong = AppManager.getInstance().getMusicAutoService().binder.getLastSong(mCurrentSong);
-                    mPlayBinding.tvSongWord.setText("");
-                    mPlayBinding.mProgressView.setSongPlayLength(0, 0);
-                    mPlayBinding.setSong(mCurrentSong);
-                    initSongPic();
+                    playCurrentSong(AppManager.getInstance().getMusicAutoService().binder.getLastSong(mCurrentSong));
                     break;
                 case R.id.mNextSongBtn:
                     AppManager.getInstance().getMusicAutoService().binder.stop();
-                    mCurrentSong = AppManager.getInstance().getMusicAutoService().binder.getNextSong(mCurrentSong);
-                    mPlayBinding.tvSongWord.setText("");
-                    mPlayBinding.mProgressView.setSongPlayLength(0, 0);
-                    mPlayBinding.setSong(mCurrentSong);
-                    initSongPic();
+                    playCurrentSong(AppManager.getInstance().getMusicAutoService().binder.getNextSong(mCurrentSong));
                     break;
             }
         });
@@ -163,8 +155,6 @@ public class PlayActivity extends BaseActivity {
         mPlayBinding.mPlayBtn.setPlaying(getIntent().getIntExtra("status", -1));
         if (mPlayBinding.mPlayBtn.getIsPlaying() == -1) {
             isFirstSong = true;
-        } else if (mPlayBinding.mPlayBtn.getIsPlaying() == 1) {
-            bindProgressQuery();
         }
         mPlayBinding.mProgressView.setSongPlayLength(mCurrentSong.getCurrentTime(), mCurrentSong.getDuration());
         mPlayBinding.setSong(mCurrentSong);
@@ -179,6 +169,19 @@ public class PlayActivity extends BaseActivity {
     private void initSongLrc() {
         try {
             mLrcList = LrcParser.parserLocal(String.format("%s_%s.txt", mCurrentSong.getName(), mCurrentSong.getId()));
+            for (int i = 0; i < mLrcList.size(); i++) {
+                if (mLrcList.get(i).getTime() > mCurrentSong.getCurrentTime()) {
+                    if (i != 0) {
+                        mLrcPosition = i - 1;
+                    } else {
+                        mLrcPosition = 0;
+                    }
+                    if (mPlayBinding.mPlayBtn.getIsPlaying() != 0) {
+                        mPlayBinding.tvSongWord.setText(mLrcList.get(mLrcPosition).getWord());
+                    }
+                    break;
+                }
+            }
         } catch (Exception e) {
             mLrcList = null;
             mPlayBinding.tvSongWord.setText("暂无歌词");
@@ -242,7 +245,8 @@ public class PlayActivity extends BaseActivity {
         mPlayBinding.setSong(mCurrentSong);
         mPlayBinding.tvSongWord.setText("");
         mPlayBinding.mProgressView.setSongPlayLength(0, 0);
-        initSongPic(); //播放歌曲、利用服务后台播放
+        initSongPic();
+        //播放歌曲、利用服务后台播放
         playCurrentSong(0);
     }
 
@@ -265,73 +269,10 @@ public class PlayActivity extends BaseActivity {
     }
 
     /**
-     * 歌曲进度轮询
-     */
-    private Disposable disposable;
-
-    /**
-     * 开始轮询
-     */
-    public void bindProgressQuery() {
-        if (disposable == null) {
-            disposable = Observable.interval(0, 150, TimeUnit.MILLISECONDS)
-                    .observeOn(AndroidSchedulers.mainThread())
-                    .subscribe(aLong -> {
-                        if (AppManager.getInstance().getMusicAutoService() != null) {
-                            int musicCurrentPosition = AppManager.getInstance().getMusicAutoService().binder.getMediaPlayer().getCurrentPosition();
-                            if (musicCurrentPosition < 1000 && mLrcPosition != -1) {
-                                mLrcPosition = -1;
-                            }
-                            if (mLrcList != null) {
-                                if (mLrcPosition == -1) {//说明是第一次
-                                    for (int i = 0; i < mLrcList.size(); i++) {
-                                        if (mLrcList.get(i).getTime() > musicCurrentPosition) {
-                                            if (i != 0) {
-                                                mLrcPosition = i - 1;
-                                            } else {
-                                                mLrcPosition = 0;
-                                            }
-                                            if (mPlayBinding.mPlayBtn.getIsPlaying() != 0) {
-                                                mPlayBinding.tvSongWord.setText(mLrcList.get(mLrcPosition).getWord());
-                                            }
-                                            break;
-                                        }
-                                    }
-                                } else {
-                                    if (mLrcList.size() > mLrcPosition + 1) {
-                                        if (mLrcList.get(mLrcPosition + 1).getTime() < musicCurrentPosition) {
-                                            mLrcPosition++;
-                                            if (mLrcList.size() > mLrcPosition) {
-                                                if (mPlayBinding.mPlayBtn.getIsPlaying() != 0) {
-                                                    mPlayBinding.tvSongWord.setText(mLrcList.get(mLrcPosition).getWord());
-                                                }
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                            if (mPlayBinding.mPlayBtn.getIsPlaying() != 0) {
-                                mPlayBinding.mProgressView.setSongPlayLength(musicCurrentPosition, AppManager.getInstance().getMusicAutoService().binder.getMediaPlayer().getDuration());
-                            }
-                        }
-                    });
-        }
-    }
-
-    /**
-     * 结束轮询
-     */
-    public void unbindProgressQuery() {
-        if (disposable != null && !disposable.isDisposed()) {
-            disposable.dispose();
-            disposable = null;
-        }
-    }
-
-    /**
      * 歌曲播放进度
      */
     private OnSongStatusListener listener = new OnSongStatusListener() {
+
         @Override
         public void loading() {
             mPlayBinding.mPlayBtn.setPlaying(0);
@@ -340,6 +281,9 @@ public class PlayActivity extends BaseActivity {
         @Override
         public void start() {
             mPlayBinding.mPlayBtn.setPlaying(1);
+            if (!isFirstSong) {
+                initSongLrc();
+            }
         }
 
         @Override
@@ -350,6 +294,7 @@ public class PlayActivity extends BaseActivity {
         @Override
         public void end(TracksBean tracksBean) {
             playCurrentSong(tracksBean);
+            mLrcPosition = -1;
         }
 
         @Override
@@ -358,14 +303,44 @@ public class PlayActivity extends BaseActivity {
         }
 
         @Override
-        public void progress(float progress) {
-
+        public void progress(int progress, int duration) {
+            if (mLrcList != null) {
+                if (mLrcPosition == -1) {//说明是第一次
+                    for (int i = 0; i < mLrcList.size(); i++) {
+                        if (mLrcList.get(i).getTime() > progress) {
+                            if (i != 0) {
+                                mLrcPosition = i - 1;
+                            } else {
+                                mLrcPosition = 0;
+                            }
+                            if (mPlayBinding.mPlayBtn.getIsPlaying() != 0) {
+                                mPlayBinding.tvSongWord.setText(mLrcList.get(mLrcPosition).getWord());
+                            }
+                            break;
+                        }
+                    }
+                } else {
+                    if (mLrcList.size() > mLrcPosition + 1) {
+                        if (mLrcList.get(mLrcPosition + 1).getTime() < progress) {
+                            mLrcPosition++;
+                            if (mLrcList.size() > mLrcPosition) {
+                                if (mPlayBinding.mPlayBtn.getIsPlaying() != 0) {
+                                    mPlayBinding.tvSongWord.setText(mLrcList.get(mLrcPosition).getWord());
+                                    System.out.println(progress + ";" + mLrcList.get(mLrcPosition).getWord());
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            if (mPlayBinding.mPlayBtn.getIsPlaying() != 0) {
+                mPlayBinding.mProgressView.setSongPlayLength(progress, duration);
+            }
         }
     };
 
     @Override
     protected void onDestroy() {
-        unbindProgressQuery();
         AppManager.getInstance().getMusicAutoService().binder.unBindSongStatusListener(listener);
         super.onDestroy();
     }

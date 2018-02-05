@@ -8,25 +8,20 @@ import android.os.IBinder;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.ActivityOptionsCompat;
 import android.support.v4.util.Pair;
-import android.support.v4.view.MenuItemCompat;
 import android.support.v7.app.ActionBarDrawerToggle;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
-import android.support.v7.widget.SearchView;
-import android.util.Log;
 import android.view.Gravity;
 import android.view.KeyEvent;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
-import android.widget.Toast;
 
 import com.bumptech.glide.Glide;
 import com.google.gson.Gson;
 
 import java.text.SimpleDateFormat;
 import java.util.List;
-import java.util.concurrent.TimeUnit;
 
 import cn.guluwa.gulumusic.R;
 import cn.guluwa.gulumusic.adapter.PlayListAdapter;
@@ -39,13 +34,11 @@ import cn.guluwa.gulumusic.listener.OnSongStatusListener;
 import cn.guluwa.gulumusic.manage.AppManager;
 import cn.guluwa.gulumusic.manage.Contacts;
 import cn.guluwa.gulumusic.service.MusicAutoService;
-import cn.guluwa.gulumusic.service.MyBinder;
+import cn.guluwa.gulumusic.service.MusicBinder;
 import cn.guluwa.gulumusic.ui.play.PlayActivity;
+import cn.guluwa.gulumusic.ui.search.SearchActivity;
 import cn.guluwa.gulumusic.ui.setting.SettingsActivity;
 import cn.guluwa.gulumusic.utils.AppUtils;
-import io.reactivex.Observable;
-import io.reactivex.android.schedulers.AndroidSchedulers;
-import io.reactivex.disposables.Disposable;
 
 public class MainActivity extends BaseActivity {
 
@@ -131,16 +124,14 @@ public class MainActivity extends BaseActivity {
         mMainBinding.setClickListener(view -> {
             switch (view.getId()) {
                 case R.id.mBottomPlayInfo:
-                    if (mMainBinding.mPlayBtn.getIsPlaying() == 0) {
-                        showSnackBar("歌曲正在加载，请稍候~");
-                        return;
-                    }
                     Intent intent = new Intent(MainActivity.this, PlayActivity.class);
+                    if (AppManager.getInstance().getMusicAutoService().binder.getMediaPlayer().isPlaying()) {
+                        mCurrentSong.setCurrentTime(AppManager.getInstance().getMusicAutoService().binder.getMediaPlayer().getCurrentPosition());
+                    }
                     intent.putExtra("song", mCurrentSong);
                     intent.putExtra("status", mMainBinding.mPlayBtn.getIsPlaying());
                     ActivityOptionsCompat options = ActivityOptionsCompat.makeSceneTransitionAnimation(this, new Pair<>(mMainBinding.ivCurrentSongPic, "songImage"));
-                    ActivityCompat.startActivityForResult(this, intent, Contacts.REQUEST_CODE, options.toBundle());
-
+                    ActivityCompat.startActivityForResult(this, intent, Contacts.REQUEST_CODE_PLAY, options.toBundle());
                     break;
                 case R.id.mPlayBtn:
                     if (AppManager.getInstance().getMusicAutoService() != null &&
@@ -163,14 +154,14 @@ public class MainActivity extends BaseActivity {
                     if ("hot".equals(AppManager.getInstance().getPlayStatus())) {
                         return;
                     }
-                    getSongListData();
+                    getSongListData("hot");
                     break;
                 case R.id.flLocalSongs:
                     mMainBinding.mDrawerLayout.closeDrawer(Gravity.START);
                     if ("local".equals(AppManager.getInstance().getPlayStatus())) {
                         return;
                     }
-                    getSongListData();
+                    getSongListData("local");
                     break;
                 case R.id.flAppSetting:
                     startActivity(new Intent(MainActivity.this, SettingsActivity.class));
@@ -208,7 +199,7 @@ public class MainActivity extends BaseActivity {
         mMainBinding.mSwipeRefreshLayout.setColorSchemeColors(
                 getResources().getColor(R.color.yellow),
                 getResources().getColor(R.color.green));
-        mMainBinding.mSwipeRefreshLayout.setOnRefreshListener(this::getSongListData);
+        mMainBinding.mSwipeRefreshLayout.setOnRefreshListener(() -> getSongListData(AppManager.getInstance().getPlayStatus()));
     }
 
     /**
@@ -253,6 +244,7 @@ public class MainActivity extends BaseActivity {
      */
     @Override
     protected void initViewModel() {
+        //查询热门歌曲
         mViewModel.queryNetCloudHotSong().observe(this, data -> {
             if (data == null) {
                 showSnackBar("数据出错啦");
@@ -270,7 +262,7 @@ public class MainActivity extends BaseActivity {
                     break;
                 case Empty:
                     mViewModel.refreshHot(false, isFirstComing);
-                    showSnackBar("没有热门歌曲");
+                    showSnackBar("还没有热门歌曲哦");
                     mMainBinding.mSwipeRefreshLayout.setRefreshing(false);
                     break;
                 case Content:
@@ -283,8 +275,10 @@ public class MainActivity extends BaseActivity {
                     break;
             }
         });
+        //查询本地歌曲
         mViewModel.queryLocalSong().observe(this, listViewDataBean -> {
             if (listViewDataBean == null) {
+                showSnackBar("数据出错啦");
                 mMainBinding.mSwipeRefreshLayout.setRefreshing(false);
                 return;
             }
@@ -299,7 +293,7 @@ public class MainActivity extends BaseActivity {
                     break;
                 case Empty:
                     mViewModel.refreshLocal(false);
-                    showSnackBar("没有本地歌曲");
+                    showSnackBar("还没有本地歌曲哦");
                     mMainBinding.mSwipeRefreshLayout.setRefreshing(false);
                     break;
                 case Content:
@@ -313,39 +307,6 @@ public class MainActivity extends BaseActivity {
     }
 
     /**
-     * 歌曲进度轮询
-     */
-    private Disposable disposable;
-
-    /**
-     * 开始轮询
-     */
-    public void bindProgressQuery() {
-        if (disposable == null) {
-            disposable = Observable.interval(0, 1000, TimeUnit.MILLISECONDS)
-                    .observeOn(AndroidSchedulers.mainThread())
-                    .subscribe(aLong -> {
-                        if (AppManager.getInstance().getMusicAutoService() != null) {
-                            if (mMainBinding.mPlayBtn.getIsPlaying() != 0) {
-                                mMainBinding.tvCurrentSongProgress.setText(
-                                        time.format(AppManager.getInstance().getMusicAutoService().binder.getMediaPlayer().getCurrentPosition()));
-                            }
-                        }
-                    });
-        }
-    }
-
-    /**
-     * 结束轮询
-     */
-    public void unbindProgressQuery() {
-        if (disposable != null && !disposable.isDisposed()) {
-            disposable.dispose();
-            disposable = null;
-        }
-    }
-
-    /**
      * 设置列表数据、传到service、当前播放歌曲为空，设置为列表第一首
      *
      * @param data
@@ -353,6 +314,8 @@ public class MainActivity extends BaseActivity {
     public void setData(List<? extends BaseSongBean> data) {
         //填充列表数据
         ((PlayListAdapter) mMainBinding.mRecyclerView.getAdapter()).setData(data);
+        //列表滚动到顶部
+        mMainBinding.mRecyclerView.scrollTo(0, 0);
         //更新service数据
         AppManager.getInstance().getMusicAutoService().binder.setSongList(data);
         if (mCurrentSong == null) {
@@ -370,8 +333,8 @@ public class MainActivity extends BaseActivity {
 
     /**
      * 播放歌曲
-     *  @param song
      *
+     * @param song
      */
     private void playCurrentSong(TracksBean song) {
         //更新页面
@@ -407,10 +370,10 @@ public class MainActivity extends BaseActivity {
     private ServiceConnection serviceConnection = new ServiceConnection() {
         @Override
         public void onServiceConnected(ComponentName name, IBinder service) {
-            MusicAutoService mMusicService = ((MyBinder) (service)).getService();
+            MusicAutoService mMusicService = ((MusicBinder) (service)).getService();
             AppManager.getInstance().setMusicAutoService(mMusicService);
             System.out.println("MusicAutoService 初始化完成");
-            getSongListData();
+            getSongListData(AppManager.getInstance().getPlayStatus());
             //销毁serviceConnection
             if (serviceConnection != null) {
                 unbindService(serviceConnection);
@@ -428,8 +391,8 @@ public class MainActivity extends BaseActivity {
      * 刷新列表数据
      */
 
-    private void getSongListData() {
-        if ("hot".equals(AppManager.getInstance().getPlayStatus())) {
+    private void getSongListData(String type) {
+        if ("hot".equals(type)) {
             mViewModel.refreshHot(true, isFirstComing);
         } else {
             mViewModel.refreshLocal(true);
@@ -447,7 +410,6 @@ public class MainActivity extends BaseActivity {
 
         @Override
         public void start() {
-            bindProgressQuery();
             mMainBinding.mPlayBtn.setPlaying(1);
         }
 
@@ -467,24 +429,23 @@ public class MainActivity extends BaseActivity {
         }
 
         @Override
-        public void progress(float progress) {
-
+        public void progress(int progress, int duration) {
+            if (mMainBinding.mPlayBtn.getIsPlaying() != 0) {
+                mMainBinding.tvCurrentSongProgress.setText(time.format(progress));
+            }
         }
     };
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
-        if (requestCode == Contacts.REQUEST_CODE && resultCode == Contacts.RESULT_SONG_CODE) {
+        if (requestCode == Contacts.REQUEST_CODE_PLAY && resultCode == Contacts.RESULT_SONG_CODE) {
             mCurrentSong = (TracksBean) data.getSerializableExtra("song");
             mMainBinding.setSong(mCurrentSong);
             AppManager.getInstance().getMusicAutoService().binder.bindSongStatusListener(listener);
             int status;
             if (mMainBinding.mPlayBtn.getIsPlaying() != (status = data.getIntExtra("status", -1))) {
                 mMainBinding.mPlayBtn.setPlaying(status);
-                if (status == 1) {
-                    bindProgressQuery();
-                }
             }
         }
     }
@@ -508,7 +469,6 @@ public class MainActivity extends BaseActivity {
     @Override
     protected void onDestroy() {
         if (AppManager.getInstance().getMusicAutoService() != null) {
-            unbindProgressQuery();
             AppManager.getInstance().getMusicAutoService().binder.unBindSongStatusListener(listener);
             AppManager.getInstance().getMusicAutoService().quit();
             System.out.println("onDestroy");
@@ -529,42 +489,17 @@ public class MainActivity extends BaseActivity {
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         getMenuInflater().inflate(R.menu.main_activity_menu, menu);
-        //找到searchView
-        MenuItem searchItem = menu.findItem(R.id.action_search);
-        SearchView searchView = (SearchView) MenuItemCompat.getActionView(searchItem);
-        SearchView.SearchAutoComplete mSearchAutoComplete = searchView.findViewById(R.id.search_src_text);
-        //设置输入框提示文字样式
-        mSearchAutoComplete.setHintTextColor(getResources().getColor(R.color.gray));//设置提示文字颜色
-        mSearchAutoComplete.setTextColor(getResources().getColor(android.R.color.white));//设置内容文字颜色
-        searchView.setQueryHint(getString(R.string.search_view_hint));
-        searchView.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
-            @Override
-            public boolean onQueryTextSubmit(String query) {
-                //提交按钮的点击事件
-                showSnackBar(query);
-                return true;
-            }
-
-            @Override
-            public boolean onQueryTextChange(String newText) {
-                //当输入框内容改变的时候回调
-                Log.i("yjk", "内容: " + newText);
-                return true;
-            }
-        });
-        return true;
+        return super.onCreateOptionsMenu(menu);
     }
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         int id = item.getItemId();
-        String tip = "";
         switch (id) {
             case R.id.action_search:
-                tip = "搜索";
+                startActivityForResult(new Intent(MainActivity.this, SearchActivity.class), Contacts.REQUEST_CODE_SEARCH);
                 break;
         }
-        Toast.makeText(this, tip, Toast.LENGTH_SHORT).show();
         return super.onOptionsItemSelected(item);
     }
 }

@@ -2,14 +2,11 @@ package cn.guluwa.gulumusic.base;
 
 import android.Manifest;
 import android.app.AlertDialog;
-import android.arch.lifecycle.ViewModel;
 import android.arch.lifecycle.ViewModelProviders;
-import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.databinding.DataBindingUtil;
 import android.databinding.ViewDataBinding;
-import android.graphics.Color;
 import android.net.Uri;
 import android.os.Bundle;
 import android.provider.Settings;
@@ -20,17 +17,12 @@ import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.transition.Explode;
 import android.transition.Fade;
-import android.transition.Slide;
-import android.view.View;
-import android.view.Window;
-import android.widget.SeekBar;
-import android.widget.Toast;
 
 import java.util.ArrayList;
 import java.util.List;
 
 import cn.guluwa.gulumusic.R;
-import cn.guluwa.gulumusic.ui.main.MainViewModel;
+import cn.guluwa.gulumusic.ui.viewmodel.MainViewModel;
 
 /**
  * Created by guluwa on 2018/1/11.

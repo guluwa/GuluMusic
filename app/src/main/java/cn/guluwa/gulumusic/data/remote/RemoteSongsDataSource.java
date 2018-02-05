@@ -7,7 +7,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import cn.guluwa.gulumusic.data.bean.PlayListBean;
+import cn.guluwa.gulumusic.data.bean.FreshBean;
+import cn.guluwa.gulumusic.data.bean.SearchResultSongBean;
 import cn.guluwa.gulumusic.data.bean.SongPathBean;
 import cn.guluwa.gulumusic.data.bean.SongWordBean;
 import cn.guluwa.gulumusic.data.bean.TracksBean;
@@ -19,9 +20,8 @@ import cn.guluwa.gulumusic.data.total.SongDataSource;
 import cn.guluwa.gulumusic.listener.OnResultListener;
 import cn.guluwa.gulumusic.manage.Contacts;
 import cn.guluwa.gulumusic.utils.AppUtils;
-import io.reactivex.Observable;
+import io.reactivex.Maybe;
 import io.reactivex.android.schedulers.AndroidSchedulers;
-import io.reactivex.functions.Consumer;
 import io.reactivex.schedulers.Schedulers;
 
 /**
@@ -51,7 +51,7 @@ public class RemoteSongsDataSource implements SongDataSource {
         map.put("id", Contacts.NET_CLOUD_HOT_ID);
         return LiveDataObservableAdapter.fromObservableViewData(
                 RetrofitFactory.getRetrofit().createApi(ApiService.class)
-                        .obtainNetCloudHot(Contacts.NET_CLOUD_HOT_CALLBACK, map)
+                        .obtainNetCloudHot(Contacts.SONG_CALLBACK, map)
                         .subscribeOn(Schedulers.io())
                         .observeOn(Schedulers.io())
                         .map(playListBean -> {
@@ -73,6 +73,27 @@ public class RemoteSongsDataSource implements SongDataSource {
     }
 
     /**
+     * 歌曲搜索
+     *
+     * @param freshBean
+     * @return
+     */
+    public LiveData<ViewDataBean<List<SearchResultSongBean>>> searchSongByKeyWord(FreshBean freshBean) {
+        Map<String, Object> map = new HashMap<>();
+        map.put("types", "search");
+        map.put("count", 20);
+        map.put("source", Contacts.TYPE_NETEASE);
+        map.put("pages", freshBean.page);
+        map.put("name", freshBean.key);
+        return LiveDataObservableAdapter.fromObservableViewData(
+                RetrofitFactory.getRetrofit().createApi(ApiService.class)
+                        .searchSongByKeyWord(Contacts.SONG_CALLBACK, map)
+                        .subscribeOn(Schedulers.io())
+                        .observeOn(AndroidSchedulers.mainThread())
+        );
+    }
+
+    /**
      * 查询歌曲路径
      *
      * @param song
@@ -85,7 +106,7 @@ public class RemoteSongsDataSource implements SongDataSource {
         map.put("id", song.getId());
         map.put("source", "netease");
         RetrofitFactory.getRetrofit().createApi(ApiService.class)
-                .obtainNetCloudHotSongPath(Contacts.NET_CLOUD_SONG_CALLBACK, map)
+                .obtainSongPath(Contacts.SONG_CALLBACK, map)
                 .subscribeOn(Schedulers.io())
                 .observeOn(Schedulers.io())
                 .map(songPathBean -> {
@@ -113,7 +134,7 @@ public class RemoteSongsDataSource implements SongDataSource {
         map.put("id", song.getId());
         map.put("source", "netease");
         RetrofitFactory.getRetrofit().createApi(ApiService.class)
-                .obtainNetCloudHotSongWord(Contacts.NET_CLOUD_SONG_CALLBACK, map)
+                .obtainSongWord(Contacts.SONG_CALLBACK, map)
                 .subscribeOn(Schedulers.io())
                 .observeOn(Schedulers.io())
                 .map(songWordBean -> {

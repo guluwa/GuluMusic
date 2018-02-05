@@ -42,6 +42,7 @@
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:background="@color/green"
+                        android:elevation="4dp"
                         android:minHeight="?attr/actionBarSize"
                         android:popupTheme="@style/ThemeOverlay.AppCompat.Light"
                         app:layout_scrollFlags="scroll|enterAlways"
