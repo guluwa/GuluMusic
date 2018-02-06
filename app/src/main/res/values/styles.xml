@@ -5,9 +5,9 @@
         <!-- Customize your theme here. -->
         <item name="colorAccent">@color/colorAccent</item>
         <!--状态栏颜色-->
-        <item name="colorPrimaryDark">@color/green</item>
+        <!--<item name="colorPrimaryDark">@color/green</item>-->
         <!--Toolbar颜色-->
-        <item name="colorPrimary">@color/green</item>
+        <!--<item name="colorPrimary">@color/green</item>-->
         <!--返回键样式-->
         <item name="drawerArrowStyle">@style/AppTheme.DrawerArrowToggle</item>
         <!--toolbar菜单项图标的颜色-->

@@ -3,6 +3,7 @@ package cn.guluwa.gulumusic.utils;
 import android.app.Activity;
 import android.content.Context;
 import android.content.SharedPreferences;
+import android.databinding.BindingAdapter;
 import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.graphics.drawable.BitmapDrawable;
@@ -15,6 +16,7 @@ import android.telephony.TelephonyManager;
 import android.util.DisplayMetrics;
 import android.util.Log;
 import android.widget.ImageView;
+import android.widget.TextView;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -359,5 +361,27 @@ public class AppUtils {
         Log.e("gulu", "Network Type : " + strNetworkType);
 
         return strNetworkType;
+    }
+
+    /**
+     * 上拉加载提示
+     *
+     * @param textView
+     * @param mLoadMoreStatus
+     * @return
+     */
+    @BindingAdapter({"loadMoreTip"})
+    public static void getLoadMoreTip(TextView textView, int mLoadMoreStatus) {
+        switch (mLoadMoreStatus) {
+            case 1:
+                textView.setText("正在刷新呀");
+                break;
+            case 2:
+                textView.setText("加载成功啦");
+                break;
+            default:
+                textView.setText("点我，继续加载");
+                break;
+        }
     }
 }

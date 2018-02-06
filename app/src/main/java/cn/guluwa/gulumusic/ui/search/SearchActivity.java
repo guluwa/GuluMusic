@@ -2,29 +2,37 @@ package cn.guluwa.gulumusic.ui.search;
 
 import android.animation.Animator;
 import android.animation.ObjectAnimator;
+import android.content.Context;
 import android.graphics.Color;
 import android.support.v4.view.MenuItemCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.support.v7.view.menu.ActionMenuItemView;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.SearchView;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.ViewAnimationUtils;
+import android.view.inputmethod.InputMethodManager;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import com.bumptech.glide.Glide;
+
+import java.util.List;
 
 import cn.guluwa.gulumusic.R;
 import cn.guluwa.gulumusic.adapter.PlayListAdapter;
 import cn.guluwa.gulumusic.adapter.SearchResultListAdapter;
 import cn.guluwa.gulumusic.base.BaseActivity;
+import cn.guluwa.gulumusic.data.bean.SearchResultSongBean;
 import cn.guluwa.gulumusic.data.bean.TracksBean;
 import cn.guluwa.gulumusic.databinding.ActivityMainBinding;
 import cn.guluwa.gulumusic.databinding.ActivitySearchBinding;
 import cn.guluwa.gulumusic.listener.OnClickListener;
 import cn.guluwa.gulumusic.manage.AppManager;
+import cn.guluwa.gulumusic.manage.Contacts;
 import cn.guluwa.gulumusic.ui.main.MainActivity;
 import cn.guluwa.gulumusic.utils.AppUtils;
 
@@ -54,18 +62,41 @@ public class SearchActivity extends BaseActivity {
     protected void initViews() {
         initData();
         initToolBar();
-        initAnimation();
         initSwipeRefreshLayout();
         initRecyclerView();
     }
 
     private void initAnimation() {
+        int color;
+        switch (AppManager.getInstance().getSearchPlatform()) {
+            case Contacts.TYPE_TENCENT:
+                color = R.color.tencent_music_color;
+                mSearchBinding.mToolBar.setTitle("QQ");
+                break;
+            case Contacts.TYPE_XIAMI:
+                color = R.color.xia_mi_music_color;
+                mSearchBinding.mToolBar.setTitle("虾米");
+                break;
+            case Contacts.TYPE_KUGOU:
+                color = R.color.ku_gou_music_color;
+                mSearchBinding.mToolBar.setTitle("酷狗");
+                break;
+            case Contacts.TYPE_BAIDU:
+                color = R.color.bai_du_music_color;
+                mSearchBinding.mToolBar.setTitle("百度");
+                break;
+            default:
+                color = R.color.net_ease_music_color;
+                mSearchBinding.mToolBar.setTitle("网易云");
+                break;
+        }
+        getWindow().setStatusBarColor(AppUtils.deepenColor(getResources().getColor(color)));
+        mSearchBinding.mToolBar.setBackgroundColor(getResources().getColor(color));
         mSearchBinding.mToolBar.post(() -> {
             int cy = (mSearchBinding.mToolBar.getTop() + mSearchBinding.mToolBar.getBottom()) / 2;
             int finalRadius = Math.max(mSearchBinding.mToolBar.getWidth(), mSearchBinding.mToolBar.getHeight());
             Animator animator = ViewAnimationUtils.createCircularReveal(
                     mSearchBinding.mToolBar, mSearchBinding.mToolBar.getRight(), cy, finalRadius / 3, finalRadius);
-            animator.setDuration(500);
             animator.start();
         });
     }
@@ -75,7 +106,7 @@ public class SearchActivity extends BaseActivity {
         setSupportActionBar(mSearchBinding.mToolBar);
         getSupportActionBar().setHomeButtonEnabled(true); //设置返回键可用
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
-        getWindow().setStatusBarColor(AppUtils.deepenColor(Color.rgb(239, 200, 73)));
+        initAnimation();
     }
 
     private void initData() {
@@ -96,7 +127,8 @@ public class SearchActivity extends BaseActivity {
                 showSnackBar(getResources().getString(R.string.search_view_hint));
                 return;
             }
-            mViewModel.refreshSearchSongs(keyWord, page);
+            page = 1;
+            mViewModel.refreshSearchSongs(keyWord, page, true);
         });
     }
 
@@ -105,7 +137,12 @@ public class SearchActivity extends BaseActivity {
      */
     private void initRecyclerView() {
         SearchResultListAdapter mAdapter = new SearchResultListAdapter(song -> {
-
+            if (song instanceof SearchResultSongBean) {
+                showSnackBar(((SearchResultSongBean) song).getName());
+            } else {
+                mViewModel.refreshSearchSongs(keyWord, page, true);
+                ((SearchResultListAdapter) mSearchBinding.mRecyclerView.getAdapter()).setLoadMoreTip("正在刷新呀~~~");
+            }
         });
         mSearchBinding.mRecyclerView.setLayoutManager(new LinearLayoutManager(this));
         mSearchBinding.mRecyclerView.setAdapter(mAdapter);
@@ -116,28 +153,30 @@ public class SearchActivity extends BaseActivity {
         //歌曲搜索
         mViewModel.searchSongByKeyWord().observe(this, listViewDataBean -> {
             if (listViewDataBean == null) {
+                ((SearchResultListAdapter) mSearchBinding.mRecyclerView.getAdapter()).setLoadMoreTip("点我，继续加载~~~");
                 mSearchBinding.mSwipeRefreshLayout.setRefreshing(false);
                 return;
             }
             switch (listViewDataBean.status) {
                 case Loading:
-                    mSearchBinding.mSwipeRefreshLayout.setRefreshing(true);
+                    if (page == 1)
+                        mSearchBinding.mSwipeRefreshLayout.setRefreshing(true);
                     break;
                 case Error:
-                    mViewModel.refreshSearchSongs(keyWord, page = -1);
+                    mViewModel.refreshSearchSongs(keyWord, page, false);
                     showSnackBar(listViewDataBean.throwable.getMessage());
                     mSearchBinding.mSwipeRefreshLayout.setRefreshing(false);
+                    ((SearchResultListAdapter) mSearchBinding.mRecyclerView.getAdapter()).setLoadMoreTip("点我，继续加载~~~");
                     break;
                 case Empty:
-                    mViewModel.refreshSearchSongs(keyWord, page = -1);
+                    mViewModel.refreshSearchSongs(keyWord, page, false);
                     showSnackBar("没有更多了哦~");
                     mSearchBinding.mSwipeRefreshLayout.setRefreshing(false);
                     break;
                 case Content:
-                    AppManager.getInstance().setPlayStatus("local");
-                    mViewModel.refreshLocal(false);
+                    mViewModel.refreshSearchSongs(keyWord, page, false);
                     mSearchBinding.mSwipeRefreshLayout.setRefreshing(false);
-//                    setData(listViewDataBean.data);
+                    setData(listViewDataBean.data);
                     break;
             }
         });
@@ -149,7 +188,7 @@ public class SearchActivity extends BaseActivity {
         //找到searchView
         MenuItem searchItem = menu.findItem(R.id.action_search);
         SearchView searchView = (SearchView) MenuItemCompat.getActionView(searchItem);
-        searchView.setIconified(false);//一开始处于展开状态
+//        searchView.setIconified(false);//一开始处于展开状态
         SearchView.SearchAutoComplete mSearchAutoComplete = searchView.findViewById(R.id.search_src_text);
         //设置输入框提示文字样式
         mSearchAutoComplete.setHintTextColor(getResources().getColor(R.color.gray));//设置提示文字颜色
@@ -159,7 +198,10 @@ public class SearchActivity extends BaseActivity {
             @Override
             public boolean onQueryTextSubmit(String query) {
                 //提交按钮的点击事件
-                showSnackBar(query);
+                keyWord = query;
+                page = 1;
+                mViewModel.refreshSearchSongs(keyWord, page, true);
+                disAppearKeyBoard(searchView);
                 return true;
             }
 
@@ -178,7 +220,63 @@ public class SearchActivity extends BaseActivity {
             case android.R.id.home:
                 finish();
                 break;
+            case R.id.action_search_netease:
+                if (!Contacts.TYPE_NETEASE.equals(AppManager.getInstance().getSearchPlatform())) {
+                    AppManager.getInstance().setSearchPlatform(Contacts.TYPE_NETEASE);
+                    initAnimation();
+                }
+                break;
+            case R.id.action_search_tencent:
+                if (!Contacts.TYPE_TENCENT.equals(AppManager.getInstance().getSearchPlatform())) {
+                    AppManager.getInstance().setSearchPlatform(Contacts.TYPE_TENCENT);
+                    initAnimation();
+                }
+                break;
+            case R.id.action_search_xia_mi:
+                if (!Contacts.TYPE_XIAMI.equals(AppManager.getInstance().getSearchPlatform())) {
+                    AppManager.getInstance().setSearchPlatform(Contacts.TYPE_XIAMI);
+                    initAnimation();
+                }
+                break;
+            case R.id.action_search_ku_gou:
+                if (!Contacts.TYPE_KUGOU.equals(AppManager.getInstance().getSearchPlatform())) {
+                    AppManager.getInstance().setSearchPlatform(Contacts.TYPE_KUGOU);
+                    initAnimation();
+                }
+                break;
+            case R.id.action_search_bai_du:
+                if (!Contacts.TYPE_BAIDU.equals(AppManager.getInstance().getSearchPlatform())) {
+                    AppManager.getInstance().setSearchPlatform(Contacts.TYPE_BAIDU);
+                    initAnimation();
+                }
+                break;
         }
         return super.onOptionsItemSelected(item);
+    }
+
+    public void setData(List<SearchResultSongBean> data) {
+        //填充列表数据
+        if (data != null && data.size() != 0) {
+            if (page == 1) {
+                ((SearchResultListAdapter) mSearchBinding.mRecyclerView.getAdapter()).setData(data);
+            } else {
+                ((SearchResultListAdapter) mSearchBinding.mRecyclerView.getAdapter()).addData(data);
+            }
+            page++;
+        } else {
+            showSnackBar("没有更多了哦~");
+        }
+    }
+
+    @Override
+    protected void onDestroy() {
+        AppUtils.setString(Contacts.SEARCH_PLATFORM, AppManager.getInstance().getSearchPlatform());
+        super.onDestroy();
+    }
+
+    //隐藏软键盘
+    private void disAppearKeyBoard(SearchView searchView) {
+        ((InputMethodManager) searchView.getContext().getSystemService(Context.INPUT_METHOD_SERVICE))
+                .hideSoftInputFromWindow(getCurrentFocus().getWindowToken(), InputMethodManager.HIDE_NOT_ALWAYS);
     }
 }

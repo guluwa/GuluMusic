@@ -18,6 +18,7 @@ import cn.guluwa.gulumusic.data.remote.retrofit.ApiService;
 import cn.guluwa.gulumusic.data.remote.retrofit.RetrofitFactory;
 import cn.guluwa.gulumusic.data.total.SongDataSource;
 import cn.guluwa.gulumusic.listener.OnResultListener;
+import cn.guluwa.gulumusic.manage.AppManager;
 import cn.guluwa.gulumusic.manage.Contacts;
 import cn.guluwa.gulumusic.utils.AppUtils;
 import io.reactivex.Maybe;
@@ -82,7 +83,7 @@ public class RemoteSongsDataSource implements SongDataSource {
         Map<String, Object> map = new HashMap<>();
         map.put("types", "search");
         map.put("count", 20);
-        map.put("source", Contacts.TYPE_NETEASE);
+        map.put("source", AppManager.getInstance().getSearchPlatform());
         map.put("pages", freshBean.page);
         map.put("name", freshBean.key);
         return LiveDataObservableAdapter.fromObservableViewData(

@@ -22,8 +22,9 @@ public class FreshBean {
         this.isFresh = isFresh;
     }
 
-    public FreshBean(String key, int page) {
+    public FreshBean(String key, int page, boolean isFresh) {
         this.page = page;
         this.key = key;
+        this.isFresh = isFresh;
     }
 }

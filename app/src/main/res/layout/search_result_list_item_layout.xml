@@ -3,17 +3,109 @@
 
     <data>
 
+        <import type="android.view.View" />
+
+        <variable
+            name="index"
+            type="Integer" />
+
+        <variable
+            name="visibility"
+            type="Boolean" />
+
         <variable
             name="song"
             type="cn.guluwa.gulumusic.data.bean.SearchResultSongBean" />
+
+        <variable
+            name="clickListener"
+            type="android.view.View.OnClickListener" />
     </data>
 
     <android.support.constraint.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+        xmlns:app="http://schemas.android.com/apk/res-auto"
         android:layout_width="match_parent"
-        android:layout_height="50dp">
+        android:layout_height="wrap_content"
+        android:background="@color/white">
 
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content" />
+        <android.support.constraint.ConstraintLayout
+            android:id="@+id/mSongContainer"
+            android:layout_width="match_parent"
+            android:layout_height="60dp"
+            android:onClick="@{clickListener}">
+
+            <TextView
+                android:id="@+id/tvSongIndex"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="20dp"
+                android:ellipsize="end"
+                android:lines="1"
+                android:text='@{String.valueOf(index)}'
+                android:textColor="@color/black"
+                android:textSize="15sp"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent" />
+
+            <TextView
+                android:id="@+id/tvSongName"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="60dp"
+                android:layout_marginTop="10dp"
+                android:ellipsize="end"
+                android:maxLength="30"
+                android:text="@{song.name}"
+                android:textColor="@color/black"
+                android:textSize="15sp"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent" />
+
+            <TextView
+                android:id="@+id/tvSongSingerAndAl"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="10dp"
+                android:layout_marginStart="60dp"
+                android:ellipsize="end"
+                android:maxLength="30"
+                android:text='@{String.format("%s%s",song.artist.size()!=0?String.format("%s - ",song.artist.get(0)):"",song.album)}'
+                android:textColor="@color/text_gray"
+                android:textSize="12sp"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintStart_toStartOf="parent" />
+
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="1dp"
+                android:layout_marginStart="60dp"
+                android:background="@color/indicator_color"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent" />
+        </android.support.constraint.ConstraintLayout>
+
+        <android.support.constraint.ConstraintLayout
+            android:id="@+id/mSongLoadMore"
+            android:layout_width="match_parent"
+            android:layout_height="50dp"
+            android:onClick="@{clickListener}"
+            android:visibility="@{visibility?View.VISIBLE:View.GONE}"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/mSongContainer">
+
+            <TextView
+                android:id="@+id/tvSongLoadMore"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@{song.loadMoreTip}"
+                android:textColor="@color/black"
+                android:textSize="15sp"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent" />
+        </android.support.constraint.ConstraintLayout>
     </android.support.constraint.ConstraintLayout>
 </layout>

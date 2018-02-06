@@ -36,9 +36,14 @@ public class Contacts {
     public static final String CAN_DOWNLOAD_WITHOUT_WIFI = "can_download_without_wifi";
 
     /**
+     * 搜索平台（网易云、QQ、虾米、酷狗、百度）
+     */
+    public static final String SEARCH_PLATFORM = "search_platform";
+
+    /**
      * 服务器baseUrl
      */
-    public static final String BASEURL = "http://lab.mkblog.cn/music_new/";
+    public static final String BASEURL = "http://lab.mkblog.cn/music/";
 
     /**
      * 网易云

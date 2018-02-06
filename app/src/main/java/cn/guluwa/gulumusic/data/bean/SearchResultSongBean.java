@@ -19,20 +19,33 @@ public class SearchResultSongBean {
      * source : netease
      */
 
-    private int id;
+    private String id;
     private String name;
     private String album;
     private String pic_id;
-    private int url_id;
-    private int lyric_id;
+    private String url_id;
+    private String lyric_id;
     private String source;
     private List<String> artist;
 
-    public int getId() {
+    /**
+     * 列表上拉加载状态 0：每点击、1：点击，正在加载
+     */
+    private String mLoadMoreTip = "点我，继续加载~~~";
+
+    public String getLoadMoreTip() {
+        return mLoadMoreTip;
+    }
+
+    public void setLoadMoreTip(String mLoadMoreTip) {
+        this.mLoadMoreTip = mLoadMoreTip;
+    }
+
+    public String getId() {
         return id;
     }
 
-    public void setId(int id) {
+    public void setId(String id) {
         this.id = id;
     }
 
@@ -60,19 +73,19 @@ public class SearchResultSongBean {
         this.pic_id = pic_id;
     }
 
-    public int getUrl_id() {
+    public String getUrl_id() {
         return url_id;
     }
 
-    public void setUrl_id(int url_id) {
+    public void setUrl_id(String url_id) {
         this.url_id = url_id;
     }
 
-    public int getLyric_id() {
+    public String getLyric_id() {
         return lyric_id;
     }
 
-    public void setLyric_id(int lyric_id) {
+    public void setLyric_id(String lyric_id) {
         this.lyric_id = lyric_id;
     }
 

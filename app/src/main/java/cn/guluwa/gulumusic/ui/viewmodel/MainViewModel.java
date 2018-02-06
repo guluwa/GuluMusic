@@ -108,7 +108,7 @@ public class MainViewModel extends ViewModel {
         if (mSearchSongs == null) {
             mSearchSongListFresh = new MutableLiveData<>();
             mSearchSongs = Transformations.switchMap(mSearchSongListFresh, input -> {
-                if (input.page != -1) {
+                if (input.isFresh) {
                     return songsRepository.searchSongByKeyWord(input);
                 } else {
                     return null;
@@ -121,7 +121,7 @@ public class MainViewModel extends ViewModel {
     /**
      * 刷新歌曲搜索
      */
-    public void refreshSearchSongs(String key, int page) {
-        mSearchSongListFresh.setValue(new FreshBean(key, page));
+    public void refreshSearchSongs(String key, int page, boolean isFresh) {
+        mSearchSongListFresh.setValue(new FreshBean(key, page, isFresh));
     }
 }

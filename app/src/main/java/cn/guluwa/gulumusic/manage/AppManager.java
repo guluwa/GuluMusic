@@ -25,6 +25,11 @@ public class AppManager {
      */
     private String mPlayStatus;
 
+    /**
+     * 搜索平台（网易云、QQ、虾米、酷狗、百度）
+     */
+    private String mSearchPlatform;
+
     private AppManager() {
     }
 
@@ -58,5 +63,13 @@ public class AppManager {
 
     public void setPlayStatus(String mPlayStatus) {
         this.mPlayStatus = mPlayStatus;
+    }
+
+    public String getSearchPlatform() {
+        return mSearchPlatform;
+    }
+
+    public void setSearchPlatform(String mSearchPlatform) {
+        this.mSearchPlatform = mSearchPlatform;
     }
 }

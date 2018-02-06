@@ -6,10 +6,6 @@
         <import type="cn.guluwa.gulumusic.utils.ImageViewAttrAdapter" />
 
         <variable
-            name="index"
-            type="Integer" />
-
-        <variable
             name="song"
             type="cn.guluwa.gulumusic.data.bean.BaseSongBean" />
 

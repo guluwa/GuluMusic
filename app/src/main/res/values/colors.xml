@@ -15,6 +15,11 @@
     <color name="black_transparent">#aa000000</color>
     <color name="white_transparent">#ccffffff</color>
     <color name="indicator_color">#eaeaea</color>
-
     <color name="ic_gray_color">#757575</color>
+
+    <color name="net_ease_music_color">#ea1c1c</color>
+    <color name="tencent_music_color">#00b45a</color>
+    <color name="xia_mi_music_color">#e46f0f</color>
+    <color name="ku_gou_music_color">#2e94fd</color>
+    <color name="bai_du_music_color">#0dd4c6</color>
 </resources>

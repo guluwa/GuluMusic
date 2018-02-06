@@ -23,11 +23,11 @@ import cn.guluwa.gulumusic.utils.AppUtils;
 
 public class PlayListAdapter extends RecyclerView.Adapter<PlayListAdapter.ViewHolder> {
 
-    private OnClickListener listener;
+    private OnClickListener<TracksBean> listener;
 
     private List<? extends BaseSongBean> data = new ArrayList<>();
 
-    public PlayListAdapter(OnClickListener listener) {
+    public PlayListAdapter(OnClickListener<TracksBean> listener) {
         this.listener = listener;
     }
 
@@ -49,8 +49,7 @@ public class PlayListAdapter extends RecyclerView.Adapter<PlayListAdapter.ViewHo
 
     @Override
     public void onBindViewHolder(PlayListAdapter.ViewHolder holder, int position) {
-        holder.getPlayListItemLayoutBinding().setSong(data.get(position));
-        holder.getPlayListItemLayoutBinding().setIndex(position + 1);
+        holder.getViewBinder().setSong(data.get(position));
     }
 
     @Override
@@ -60,20 +59,20 @@ public class PlayListAdapter extends RecyclerView.Adapter<PlayListAdapter.ViewHo
 
     public class ViewHolder extends RecyclerView.ViewHolder {
 
-        PlayListItemLayoutBinding mPlayListItemLayoutBinding;
+        PlayListItemLayoutBinding mViewBinder;
 
-        public PlayListItemLayoutBinding getPlayListItemLayoutBinding() {
-            return mPlayListItemLayoutBinding;
+        public PlayListItemLayoutBinding getViewBinder() {
+            return mViewBinder;
         }
 
-        public void setPlayListItemLayoutBinding(PlayListItemLayoutBinding mPlayListItemLayoutBinding) {
-            this.mPlayListItemLayoutBinding = mPlayListItemLayoutBinding;
+        public void setViewBinder(PlayListItemLayoutBinding mPlayListItemLayoutBinding) {
+            this.mViewBinder = mPlayListItemLayoutBinding;
         }
 
-        public ViewHolder(PlayListItemLayoutBinding mPlayListItemLayoutBinding) {
-            super(mPlayListItemLayoutBinding.getRoot());
-            this.mPlayListItemLayoutBinding = mPlayListItemLayoutBinding;
-            mPlayListItemLayoutBinding.setClickListener(view -> {
+        public ViewHolder(PlayListItemLayoutBinding mViewBinder) {
+            super(mViewBinder.getRoot());
+            setViewBinder(mViewBinder);
+            mViewBinder.setClickListener(view -> {
                 if (data.get(getAdapterPosition()) instanceof TracksBean) {
                     listener.click((TracksBean) data.get(getAdapterPosition()));
                 } else {
