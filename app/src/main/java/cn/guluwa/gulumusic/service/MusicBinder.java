@@ -31,7 +31,7 @@ import io.reactivex.disposables.Disposable;
 /**
  * Created by guluwa on 2018/2/2.
  */
-public class MusicBinder extends Binder {
+public class MusicBinder<T> extends Binder {
 
     private MusicAutoService musicAutoService;
 
@@ -50,7 +50,7 @@ public class MusicBinder extends Binder {
     /**
      * 歌曲列表
      */
-    private List<? extends BaseSongBean> mSongList;
+    private List<T> mSongList;
 
     /**
      * 当前播放歌曲
@@ -175,7 +175,9 @@ public class MusicBinder extends Binder {
                                     mSongPath = file.getAbsolutePath();
                                     if (result.getId().equals(mCurrentSong.getId())) {//下载完成的歌曲和当前播放歌曲是同一首
                                         isLoading = true;
-                                        stop();
+                                        if (mediaPlayer.isPlaying()) {
+                                            stop();
+                                        }
                                         playNewSong(0);
                                         if (listeners.size() != 0) {
                                             listeners.get(listeners.size() - 1).start();
@@ -233,6 +235,8 @@ public class MusicBinder extends Binder {
             @Override
             public void success(SongPathBean result) {
                 System.out.println(result.getUrl());
+                mCurrentSong.getAl().setPicUrl(result.getUrl());
+                mSongList.add((T) mCurrentSong);
             }
 
             @Override
@@ -400,7 +404,7 @@ public class MusicBinder extends Binder {
         }
     }
 
-    public void setSongList(List<? extends BaseSongBean> mSongList) {
+    public void setSongList(List<T> mSongList) {
         this.mSongList = mSongList;
         mRandomPicker = null;
         mRandomPicker = new RandomPicker(mSongList.size());

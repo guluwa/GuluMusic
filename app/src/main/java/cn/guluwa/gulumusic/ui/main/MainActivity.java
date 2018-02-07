@@ -212,7 +212,10 @@ public class MainActivity extends BaseActivity {
                     return;
                 }
             }
-            AppManager.getInstance().getMusicAutoService().binder.stop();
+            if (AppManager.getInstance().getMusicAutoService().binder.getMediaPlayer().isPlaying()) {
+                AppManager.getInstance().getMusicAutoService().binder.stop();
+                isFirstSong = false;
+            }
             playCurrentSong(song);
         });
         mMainBinding.mRecyclerView.setLayoutManager(new LinearLayoutManager(this));
@@ -413,15 +416,16 @@ public class MainActivity extends BaseActivity {
     private OnSongStatusListener listener = new OnSongStatusListener() {
         @Override
         public void loading() {
+            isFirstSong = false;
             mMainBinding.mPlayBtn.setPlaying(0);
-            if (!mCurrentSong.getId().equals(AppManager.getInstance().getMusicAutoService().binder.getCurrentSong().getId())) {
-                reFreshLayout(AppManager.getInstance().getMusicAutoService().binder.getCurrentSong());
-            }
         }
 
         @Override
         public void start() {
             mMainBinding.mPlayBtn.setPlaying(1);
+            if (!mCurrentSong.getId().equals(AppManager.getInstance().getMusicAutoService().binder.getCurrentSong().getId())) {
+                reFreshLayout(AppManager.getInstance().getMusicAutoService().binder.getCurrentSong());
+            }
         }
 
         @Override

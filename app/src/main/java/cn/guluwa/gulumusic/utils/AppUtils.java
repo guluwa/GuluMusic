@@ -321,6 +321,17 @@ public class AppUtils {
         return localSongBean;
     }
 
+    //热门歌曲转基础歌曲
+    public static BaseSongBean getBaseSongBean(TracksBean tracksBean) {
+        BaseSongBean baseSongBean = new BaseSongBean();
+        baseSongBean.setName(tracksBean.getName());
+        baseSongBean.setAl(tracksBean.getAl());
+        baseSongBean.setSinger(tracksBean.getSinger());
+        baseSongBean.setTag(tracksBean.getTag());
+        baseSongBean.setSource(tracksBean.getSource());
+        return baseSongBean;
+    }
+
     //计算播放模式
     public static int getPlayMode(int mode) {
         if (mode < 2) {
