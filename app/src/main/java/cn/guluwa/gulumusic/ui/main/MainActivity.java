@@ -1,5 +1,6 @@
 package cn.guluwa.gulumusic.ui.main;
 
+import android.app.AlertDialog;
 import android.content.ComponentName;
 import android.content.Intent;
 import android.content.ServiceConnection;
@@ -13,9 +14,12 @@ import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.view.Gravity;
 import android.view.KeyEvent;
+import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.CheckBox;
+import android.widget.TextView;
 
 import com.bumptech.glide.Glide;
 import com.google.gson.Gson;
@@ -217,6 +221,8 @@ public class MainActivity extends BaseActivity {
                 isFirstSong = false;
             }
             playCurrentSong(song);
+        }, song -> {
+            showDeleteDialog(song);
         });
         mMainBinding.mRecyclerView.setLayoutManager(new LinearLayoutManager(this));
         mMainBinding.mRecyclerView.setAdapter(mAdapter);
@@ -240,6 +246,28 @@ public class MainActivity extends BaseActivity {
                 super.onScrolled(recyclerView, dx, dy);
             }
         });
+    }
+
+    /**
+     * 删除本地歌曲确认对话框
+     */
+    private void showDeleteDialog(LocalSongBean song) {
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setTitle("提示");
+        View view = LayoutInflater.from(this).inflate(R.layout.song_delete_tip_dialog, null, false);
+        TextView tvDialogMessage = view.findViewById(R.id.tvDialogMessage);
+        tvDialogMessage.setText(String.format("亲，您确定要删除「%s」吗？",
+                song.getName().length() <= 8 ? song.getName() : String.format("%s…", song.getName().substring(0, 7))));
+        CheckBox cbDeleteSongFile = view.findViewById(R.id.cbDeleteSongFile);
+        builder.setView(view);
+        builder.setNegativeButton("取消", (dialog, which) -> dialog.dismiss());
+        builder.setPositiveButton("删除", (dialog, which) -> {
+            dialog.dismiss();
+        });
+        builder.setCancelable(false);
+        AlertDialog dialog = builder.show();
+        dialog.getButton(AlertDialog.BUTTON_NEGATIVE).setTextColor(Color.BLACK);
+        dialog.getButton(AlertDialog.BUTTON_POSITIVE).setTextColor(Color.BLACK);
     }
 
     /**
@@ -461,6 +489,9 @@ public class MainActivity extends BaseActivity {
             int status;
             if (mMainBinding.mPlayBtn.getIsPlaying() != (status = data.getIntExtra("status", -1))) {
                 mMainBinding.mPlayBtn.setPlaying(status);
+            }
+            if (status == 1) {
+                isFirstSong = false;
             }
         }
     }

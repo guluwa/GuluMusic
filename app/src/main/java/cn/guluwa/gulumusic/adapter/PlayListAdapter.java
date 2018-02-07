@@ -15,6 +15,7 @@ import cn.guluwa.gulumusic.data.bean.LocalSongBean;
 import cn.guluwa.gulumusic.data.bean.TracksBean;
 import cn.guluwa.gulumusic.databinding.PlayListItemLayoutBinding;
 import cn.guluwa.gulumusic.listener.OnClickListener;
+import cn.guluwa.gulumusic.listener.OnLongClickListener;
 import cn.guluwa.gulumusic.utils.AppUtils;
 
 /**
@@ -25,10 +26,13 @@ public class PlayListAdapter extends RecyclerView.Adapter<PlayListAdapter.ViewHo
 
     private OnClickListener<TracksBean> listener;
 
+    private OnLongClickListener longListener;
+
     private List<? extends BaseSongBean> data = new ArrayList<>();
 
-    public PlayListAdapter(OnClickListener<TracksBean> listener) {
+    public PlayListAdapter(OnClickListener<TracksBean> listener, OnLongClickListener longListener) {
         this.listener = listener;
+        this.longListener = longListener;
     }
 
     public void setData(List<? extends BaseSongBean> data) {
@@ -78,6 +82,12 @@ public class PlayListAdapter extends RecyclerView.Adapter<PlayListAdapter.ViewHo
                 } else {
                     listener.click(AppUtils.getSongBean((LocalSongBean) data.get(getAdapterPosition())));
                 }
+            });
+            mViewBinder.setLongClickListener(view -> {
+                if (data.get(getAdapterPosition()) instanceof LocalSongBean) {
+                    longListener.click((LocalSongBean) data.get(getAdapterPosition()));
+                }
+                return true;
             });
         }
     }
