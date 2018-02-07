@@ -6,9 +6,11 @@ import android.arch.persistence.room.PrimaryKey;
 
 import java.io.Serializable;
 
+import android.support.annotation.NonNull;
+
 /**
  * 歌曲路径类
- *
+ * <p>
  * Created by guluwa on 2018/1/19.
  */
 
@@ -21,19 +23,21 @@ public class SongPathBean implements Serializable {
      */
 
     private static final long serialVersionUID = -6267004480939769470L;
+
     @PrimaryKey
-    private int id;
+    @NonNull
+    private String id;
     private String url;
     @Ignore
     private int br;
     @Ignore
     private TracksBean song;
 
-    public int getId() {
+    public String getId() {
         return id;
     }
 
-    public void setId(int id) {
+    public void setId(String id) {
         this.id = id;
     }
 

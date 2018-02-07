@@ -45,13 +45,13 @@ public class RetrofitWorker {
                     if (connected) {
                         return chain.proceed(chain.request());
                     } else {
-                        throw new NoNetworkException();
+                        throw new NoNetworkException("没有网络哦~~~");
                     }
                 })
                 .addInterceptor(chain -> {
                     Response proceed = chain.proceed(chain.request());
                     if (proceed.code() == 404) {
-                        throw new ServiceException();
+                        throw new ServiceException("服务器好像出了点小问题~~~");
                     } else {
                         return proceed;
                     }

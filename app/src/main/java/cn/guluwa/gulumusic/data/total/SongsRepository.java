@@ -80,7 +80,7 @@ public class SongsRepository {
     }
 
     /**
-     * 查询歌曲路径
+     * 查询歌曲路径(首页)
      *
      * @param song
      * @return
@@ -94,7 +94,7 @@ public class SongsRepository {
     }
 
     /**
-     * 查询歌曲歌词
+     * 查询歌曲歌词(首页)
      *
      * @param song
      * @return
@@ -105,6 +105,13 @@ public class SongsRepository {
         } else {
             localSongsDataSource.querySongWord(song, listener);
         }
+    }
+
+    /**
+     * 查询歌曲封面图（搜索）
+     */
+    public void querySongPic(TracksBean song, OnResultListener<SongPathBean> listener) {
+        remoteSongsDataSource.querySearchSongPic(song, listener);
     }
 
     /**

@@ -28,19 +28,6 @@ public class SearchResultSongBean {
     private String source;
     private List<String> artist;
 
-    /**
-     * 列表上拉加载状态 0：每点击、1：点击，正在加载
-     */
-    private String mLoadMoreTip = "点我，继续加载~~~";
-
-    public String getLoadMoreTip() {
-        return mLoadMoreTip;
-    }
-
-    public void setLoadMoreTip(String mLoadMoreTip) {
-        this.mLoadMoreTip = mLoadMoreTip;
-    }
-
     public String getId() {
         return id;
     }

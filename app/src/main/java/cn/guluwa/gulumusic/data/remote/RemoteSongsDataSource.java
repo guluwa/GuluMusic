@@ -8,6 +8,7 @@ import java.util.List;
 import java.util.Map;
 
 import cn.guluwa.gulumusic.data.bean.FreshBean;
+import cn.guluwa.gulumusic.data.bean.LocalSongBean;
 import cn.guluwa.gulumusic.data.bean.SearchResultSongBean;
 import cn.guluwa.gulumusic.data.bean.SongPathBean;
 import cn.guluwa.gulumusic.data.bean.SongWordBean;
@@ -23,6 +24,7 @@ import cn.guluwa.gulumusic.manage.Contacts;
 import cn.guluwa.gulumusic.utils.AppUtils;
 import io.reactivex.Maybe;
 import io.reactivex.android.schedulers.AndroidSchedulers;
+import io.reactivex.functions.Consumer;
 import io.reactivex.schedulers.Schedulers;
 
 /**
@@ -62,8 +64,8 @@ public class RemoteSongsDataSource implements SongDataSource {
                                                 null : playListBean.getPlaylist().getTracks().get(i).getAr().get(0));
                                 playListBean.getPlaylist().getTracks().get(i).setTag(
                                         playListBean.getPlaylist().getTracks().get(i).getAlia().size() == 0 ?
-                                                "" : playListBean.getPlaylist().getTracks().get(i).getAlia().get(0)
-                                );
+                                                "" : playListBean.getPlaylist().getTracks().get(i).getAlia().get(0));
+                                playListBean.getPlaylist().getTracks().get(i).setSource("netease");
                                 playListBean.getPlaylist().getTracks().get(i).setIndex(i);
                             }
                             LocalSongsDataSource.getInstance().addSongs(playListBean.getPlaylist().getTracks());
@@ -95,7 +97,7 @@ public class RemoteSongsDataSource implements SongDataSource {
     }
 
     /**
-     * 查询歌曲路径
+     * 查询歌曲路径(首页)
      *
      * @param song
      * @return
@@ -104,8 +106,8 @@ public class RemoteSongsDataSource implements SongDataSource {
     public void querySongPath(TracksBean song, OnResultListener<SongPathBean> listener) {
         Map<String, Object> map = new HashMap<>();
         map.put("types", "url");
-        map.put("id", song.getId());
-        map.put("source", "netease");
+        map.put("id", "".equals(song.getUrl_id()) ? song.getId() : song.getUrl_id());
+        map.put("source", song.getSource());
         RetrofitFactory.getRetrofit().createApi(ApiService.class)
                 .obtainSongPath(Contacts.SONG_CALLBACK, map)
                 .subscribeOn(Schedulers.io())
@@ -123,7 +125,7 @@ public class RemoteSongsDataSource implements SongDataSource {
     }
 
     /**
-     * 查询歌曲歌词
+     * 查询歌曲歌词(首页)
      *
      * @param song
      * @return
@@ -132,8 +134,8 @@ public class RemoteSongsDataSource implements SongDataSource {
     public void querySongWord(TracksBean song, OnResultListener<SongWordBean> listener) {
         Map<String, Object> map = new HashMap<>();
         map.put("types", "lyric");
-        map.put("id", song.getId());
-        map.put("source", "netease");
+        map.put("id", "".equals(song.getLyric_id()) ? song.getId() : song.getLyric_id());
+        map.put("source", song.getSource());
         RetrofitFactory.getRetrofit().createApi(ApiService.class)
                 .obtainSongWord(Contacts.SONG_CALLBACK, map)
                 .subscribeOn(Schedulers.io())
@@ -143,6 +145,34 @@ public class RemoteSongsDataSource implements SongDataSource {
                     songWordBean.setId(song.getId());
                     LocalSongsDataSource.getInstance().addSongWord(songWordBean);
                     return songWordBean;
+                })
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(listener::success, throwable -> listener.failed(throwable.getMessage()));
+    }
+
+    /**
+     * 查询歌曲封面图(搜索)
+     *
+     * @param song
+     * @param listener
+     */
+    public void querySearchSongPic(TracksBean song, OnResultListener<SongPathBean> listener) {
+        Map<String, Object> map = new HashMap<>();
+        map.put("types", "pic");
+        map.put("id", "".equals(song.getPic_id()) ? song.getId() : song.getPic_id());
+        map.put("source", song.getSource());
+        RetrofitFactory.getRetrofit().createApi(ApiService.class)
+                .obtainSongPath(Contacts.SONG_CALLBACK, map)
+                .subscribeOn(Schedulers.io())
+                .observeOn(Schedulers.io())
+                .map(songPathBean -> {
+                    if (LocalSongsDataSource.getInstance().queryLocalSong(song.getId(), song.getName()) == null ) {
+                        song.getAl().setPicUrl(songPathBean.getUrl());
+                        LocalSongsDataSource.getInstance().addLocalSong(AppUtils.getLocalSongBean(song));
+                    } else {
+                        System.out.println("歌曲已存在");
+                    }
+                    return songPathBean;
                 })
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribe(listener::success, throwable -> listener.failed(throwable.getMessage()));

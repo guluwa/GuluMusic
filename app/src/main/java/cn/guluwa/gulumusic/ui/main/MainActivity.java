@@ -208,7 +208,7 @@ public class MainActivity extends BaseActivity {
     private void initRecyclerView() {
         PlayListAdapter mAdapter = new PlayListAdapter((song) -> {
             if (mCurrentSong != null) {
-                if (song.getId() == mCurrentSong.getId() && mMainBinding.mPlayBtn.getIsPlaying() == 1) {
+                if (song.getId().equals(mCurrentSong.getId()) && mMainBinding.mPlayBtn.getIsPlaying() == 1) {
                     return;
                 }
             }
@@ -337,12 +337,20 @@ public class MainActivity extends BaseActivity {
      * @param song
      */
     private void playCurrentSong(TracksBean song) {
-        //更新页面
+        reFreshLayout(song);
+        //播放歌曲、利用服务后台播放
+        playCurrentSong(0);
+    }
+
+    /**
+     * 更新页面
+     *
+     * @param song
+     */
+    private void reFreshLayout(TracksBean song) {
         mCurrentSong = song;
         mMainBinding.setSong(mCurrentSong);
         mMainBinding.tvCurrentSongProgress.setText("00:00");
-        //播放歌曲、利用服务后台播放
-        playCurrentSong(0);
     }
 
     /**
@@ -406,6 +414,9 @@ public class MainActivity extends BaseActivity {
         @Override
         public void loading() {
             mMainBinding.mPlayBtn.setPlaying(0);
+            if (!mCurrentSong.getId().equals(AppManager.getInstance().getMusicAutoService().binder.getCurrentSong().getId())) {
+                reFreshLayout(AppManager.getInstance().getMusicAutoService().binder.getCurrentSong());
+            }
         }
 
         @Override

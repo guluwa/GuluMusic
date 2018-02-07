@@ -4,6 +4,18 @@
     <string name="drawer_open">open</string>
     <string name="drawer_close">close</string>
     <string name="search_view_hint">搜索歌手、歌名、专辑</string>
+    <string name="type_qq">QQ</string>
+    <string name="type_xia_mi">虾米</string>
+    <string name="type_ku_gou">酷狗</string>
+    <string name="type_bai_du">百度</string>
+    <string name="type_net_ease">网易云</string>
+    <string name="search_list_tip">请点击放大镜输入搜索内容\n点击更多图标切换搜索平台~~~</string>
+    <string name="load_moreing_tip">正在刷新呀~~~</string>
+    <string name="load_more_tip">点我，继续加载~~~</string>
+    <string name="search_result_empty_tip">没有找到相关歌曲~~~</string>
+    <string name="search_result_no_more_tip">没有更多了哦~~~~</string>
+    <string name="song_cant_plsy_tip">歌曲暂时不能播放哦</string>
+
     <string name="title_activity_settings">Settings</string>
 
     <!-- Strings related to Settings -->

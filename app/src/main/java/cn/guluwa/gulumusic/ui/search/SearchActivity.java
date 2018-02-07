@@ -1,39 +1,27 @@
 package cn.guluwa.gulumusic.ui.search;
 
 import android.animation.Animator;
-import android.animation.ObjectAnimator;
 import android.content.Context;
-import android.graphics.Color;
 import android.support.v4.view.MenuItemCompat;
-import android.support.v7.app.AppCompatActivity;
-import android.os.Bundle;
-import android.support.v7.view.menu.ActionMenuItemView;
 import android.support.v7.widget.LinearLayoutManager;
-import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.SearchView;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.ViewAnimationUtils;
 import android.view.inputmethod.InputMethodManager;
-import android.widget.TextView;
-import android.widget.Toast;
-
-import com.bumptech.glide.Glide;
 
 import java.util.List;
 
 import cn.guluwa.gulumusic.R;
-import cn.guluwa.gulumusic.adapter.PlayListAdapter;
 import cn.guluwa.gulumusic.adapter.SearchResultListAdapter;
 import cn.guluwa.gulumusic.base.BaseActivity;
+import cn.guluwa.gulumusic.data.bean.LocalSongBean;
 import cn.guluwa.gulumusic.data.bean.SearchResultSongBean;
 import cn.guluwa.gulumusic.data.bean.TracksBean;
-import cn.guluwa.gulumusic.databinding.ActivityMainBinding;
+import cn.guluwa.gulumusic.data.remote.retrofit.exception.BaseException;
 import cn.guluwa.gulumusic.databinding.ActivitySearchBinding;
-import cn.guluwa.gulumusic.listener.OnClickListener;
 import cn.guluwa.gulumusic.manage.AppManager;
 import cn.guluwa.gulumusic.manage.Contacts;
-import cn.guluwa.gulumusic.ui.main.MainActivity;
 import cn.guluwa.gulumusic.utils.AppUtils;
 
 public class SearchActivity extends BaseActivity {
@@ -53,6 +41,11 @@ public class SearchActivity extends BaseActivity {
      */
     private int page;
 
+    /**
+     * 是否加载更多
+     */
+    private boolean isLoadMoreIng;
+
     @Override
     public int getViewLayoutId() {
         return R.layout.activity_search;
@@ -71,23 +64,23 @@ public class SearchActivity extends BaseActivity {
         switch (AppManager.getInstance().getSearchPlatform()) {
             case Contacts.TYPE_TENCENT:
                 color = R.color.tencent_music_color;
-                mSearchBinding.mToolBar.setTitle("QQ");
+                mSearchBinding.mToolBar.setTitle(R.string.type_qq);
                 break;
             case Contacts.TYPE_XIAMI:
                 color = R.color.xia_mi_music_color;
-                mSearchBinding.mToolBar.setTitle("虾米");
+                mSearchBinding.mToolBar.setTitle(R.string.type_xia_mi);
                 break;
             case Contacts.TYPE_KUGOU:
                 color = R.color.ku_gou_music_color;
-                mSearchBinding.mToolBar.setTitle("酷狗");
+                mSearchBinding.mToolBar.setTitle(R.string.type_ku_gou);
                 break;
             case Contacts.TYPE_BAIDU:
                 color = R.color.bai_du_music_color;
-                mSearchBinding.mToolBar.setTitle("百度");
+                mSearchBinding.mToolBar.setTitle(R.string.type_bai_du);
                 break;
             default:
                 color = R.color.net_ease_music_color;
-                mSearchBinding.mToolBar.setTitle("网易云");
+                mSearchBinding.mToolBar.setTitle(R.string.type_net_ease);
                 break;
         }
         getWindow().setStatusBarColor(AppUtils.deepenColor(getResources().getColor(color)));
@@ -138,14 +131,28 @@ public class SearchActivity extends BaseActivity {
     private void initRecyclerView() {
         SearchResultListAdapter mAdapter = new SearchResultListAdapter(song -> {
             if (song instanceof SearchResultSongBean) {
-                showSnackBar(((SearchResultSongBean) song).getName());
+                if (AppManager.getInstance().getMusicAutoService().binder.getMediaPlayer().isPlaying()) {
+                    if (((SearchResultSongBean) song).getId().equals(AppManager.getInstance().getMusicAutoService().binder.getCurrentSong().getId())) {
+                        return;
+                    }
+                    AppManager.getInstance().getMusicAutoService().binder.stop();
+                }
+                playCurrentSong(AppUtils.getSongBean((SearchResultSongBean) song));
             } else {
-                mViewModel.refreshSearchSongs(keyWord, page, true);
-                ((SearchResultListAdapter) mSearchBinding.mRecyclerView.getAdapter()).setLoadMoreTip("正在刷新呀~~~");
+                if (!isLoadMoreIng) {
+                    isLoadMoreIng = true;
+                    mViewModel.refreshSearchSongs(keyWord, page, true);
+                    ((SearchResultListAdapter) mSearchBinding.mRecyclerView.getAdapter()).setLoadMoreTip(getString(R.string.load_moreing_tip));
+                }
             }
         });
+        mAdapter.setListEmptyTip(getString(R.string.search_list_tip));
         mSearchBinding.mRecyclerView.setLayoutManager(new LinearLayoutManager(this));
         mSearchBinding.mRecyclerView.setAdapter(mAdapter);
+    }
+
+    private void playCurrentSong(TracksBean mCurrentSong) {
+        AppManager.getInstance().getMusicAutoService().binder.playCurrentSong(mCurrentSong, 0);
     }
 
     @Override
@@ -153,7 +160,8 @@ public class SearchActivity extends BaseActivity {
         //歌曲搜索
         mViewModel.searchSongByKeyWord().observe(this, listViewDataBean -> {
             if (listViewDataBean == null) {
-                ((SearchResultListAdapter) mSearchBinding.mRecyclerView.getAdapter()).setLoadMoreTip("点我，继续加载~~~");
+                isLoadMoreIng = false;
+                ((SearchResultListAdapter) mSearchBinding.mRecyclerView.getAdapter()).setLoadMoreTip(getString(R.string.load_more_tip));
                 mSearchBinding.mSwipeRefreshLayout.setRefreshing(false);
                 return;
             }
@@ -163,17 +171,36 @@ public class SearchActivity extends BaseActivity {
                         mSearchBinding.mSwipeRefreshLayout.setRefreshing(true);
                     break;
                 case Error:
+                    isLoadMoreIng = false;
                     mViewModel.refreshSearchSongs(keyWord, page, false);
-                    showSnackBar(listViewDataBean.throwable.getMessage());
                     mSearchBinding.mSwipeRefreshLayout.setRefreshing(false);
-                    ((SearchResultListAdapter) mSearchBinding.mRecyclerView.getAdapter()).setLoadMoreTip("点我，继续加载~~~");
+                    String msg;
+                    if (listViewDataBean.throwable instanceof BaseException) {
+                        msg = ((BaseException) listViewDataBean.throwable).getMsg();
+                    } else {
+                        msg = listViewDataBean.throwable.getMessage();
+                    }
+                    if (((SearchResultListAdapter) mSearchBinding.mRecyclerView.getAdapter()).getData().size() == 1 &&
+                            ((SearchResultListAdapter) mSearchBinding.mRecyclerView.getAdapter()).getData().get(0) instanceof String) {
+                        ((SearchResultListAdapter) mSearchBinding.mRecyclerView.getAdapter()).setListEmptyTip(msg);
+                    } else {
+                        showSnackBar(msg);
+                        ((SearchResultListAdapter) mSearchBinding.mRecyclerView.getAdapter()).setLoadMoreTip(getString(R.string.load_more_tip));
+                    }
                     break;
                 case Empty:
+                    isLoadMoreIng = false;
                     mViewModel.refreshSearchSongs(keyWord, page, false);
-                    showSnackBar("没有更多了哦~");
                     mSearchBinding.mSwipeRefreshLayout.setRefreshing(false);
+                    if (((SearchResultListAdapter) mSearchBinding.mRecyclerView.getAdapter()).getData().size() == 1 &&
+                            ((SearchResultListAdapter) mSearchBinding.mRecyclerView.getAdapter()).getData().get(0) instanceof String) {
+                        ((SearchResultListAdapter) mSearchBinding.mRecyclerView.getAdapter()).setListEmptyTip(getString(R.string.search_result_empty_tip));
+                    } else {
+                        showSnackBar(getString(R.string.search_result_no_more_tip));
+                    }
                     break;
                 case Content:
+                    isLoadMoreIng = false;
                     mViewModel.refreshSearchSongs(keyWord, page, false);
                     mSearchBinding.mSwipeRefreshLayout.setRefreshing(false);
                     setData(listViewDataBean.data);
@@ -258,13 +285,18 @@ public class SearchActivity extends BaseActivity {
         //填充列表数据
         if (data != null && data.size() != 0) {
             if (page == 1) {
-                ((SearchResultListAdapter) mSearchBinding.mRecyclerView.getAdapter()).setData(data);
+                ((SearchResultListAdapter) mSearchBinding.mRecyclerView.getAdapter()).setData(data, getString(R.string.load_more_tip));
             } else {
-                ((SearchResultListAdapter) mSearchBinding.mRecyclerView.getAdapter()).addData(data);
+                ((SearchResultListAdapter) mSearchBinding.mRecyclerView.getAdapter()).addData(data, getString(R.string.load_more_tip));
             }
             page++;
         } else {
-            showSnackBar("没有更多了哦~");
+            if (page == 1) {
+                ((SearchResultListAdapter) mSearchBinding.mRecyclerView.getAdapter()).setListEmptyTip(getString(R.string.search_result_empty_tip));
+            } else {
+                showSnackBar(getString(R.string.search_result_no_more_tip));
+                ((SearchResultListAdapter) mSearchBinding.mRecyclerView.getAdapter()).setLoadMoreTip(getString(R.string.load_more_tip));
+            }
         }
     }
 

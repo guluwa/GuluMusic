@@ -6,6 +6,7 @@ import android.view.View;
 import java.util.List;
 
 import cn.guluwa.gulumusic.data.bean.PlayListBean;
+import cn.guluwa.gulumusic.data.bean.SearchResultSongBean;
 import cn.guluwa.gulumusic.data.bean.SongPathBean;
 import cn.guluwa.gulumusic.data.bean.SongWordBean;
 import cn.guluwa.gulumusic.data.bean.TracksBean;
@@ -26,18 +27,20 @@ public interface SongDataSource {
     LiveData<ViewDataBean<List<TracksBean>>> queryNetCloudHotSong();
 
     /**
-     * 查询歌曲路径
+     * 查询歌曲路径(首页)
      *
      * @param song
+     * @param listener
      * @return
      */
-    void querySongPath(TracksBean song,OnResultListener<SongPathBean> listener);
+    void querySongPath(TracksBean song, OnResultListener<SongPathBean> listener);
 
     /**
-     * 查询歌曲歌词
+     * 查询歌曲歌词(首页)
      *
      * @param song
+     * @param listener
      * @return
      */
-    void querySongWord(TracksBean song,OnResultListener<SongWordBean> listener);
+    void querySongWord(TracksBean song, OnResultListener<SongWordBean> listener);
 }

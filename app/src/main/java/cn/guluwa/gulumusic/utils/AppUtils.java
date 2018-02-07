@@ -25,7 +25,9 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 
+import cn.guluwa.gulumusic.data.bean.BaseSongBean;
 import cn.guluwa.gulumusic.data.bean.LocalSongBean;
+import cn.guluwa.gulumusic.data.bean.SearchResultSongBean;
 import cn.guluwa.gulumusic.data.bean.TracksBean;
 import cn.guluwa.gulumusic.data.local.LocalSongsDataSource;
 import cn.guluwa.gulumusic.listener.OnColorListener;
@@ -284,6 +286,26 @@ public class AppUtils {
         tracksBean.setAl(localSongBean.getAl());
         tracksBean.setSinger(localSongBean.getSinger());
         tracksBean.setTag(localSongBean.getTag());
+        tracksBean.setSource(localSongBean.getSource());
+        return tracksBean;
+    }
+
+    //搜索歌曲转热门歌曲
+    public static TracksBean getSongBean(SearchResultSongBean songBean) {
+        TracksBean tracksBean = new TracksBean();
+        tracksBean.setId(songBean.getId());
+        tracksBean.setName(songBean.getName());
+        TracksBean.ArBean singer = new BaseSongBean.ArBean();
+        singer.setName(songBean.getArtist().size() != 0 ? songBean.getArtist().get(0) : "");
+        tracksBean.setSinger(singer);
+        TracksBean.AlBean alBean = new BaseSongBean.AlBean();
+        alBean.setName(songBean.getName());
+        tracksBean.setAl(alBean);
+        tracksBean.setTag(songBean.getAlbum());
+        tracksBean.setSource(songBean.getSource());
+        tracksBean.setPic_id(songBean.getPic_id());
+        tracksBean.setUrl_id(songBean.getUrl_id());
+        tracksBean.setLyric_id(songBean.getLyric_id());
         return tracksBean;
     }
 
@@ -295,6 +317,7 @@ public class AppUtils {
         localSongBean.setAl(tracksBean.getAl());
         localSongBean.setSinger(tracksBean.getSinger());
         localSongBean.setTag(tracksBean.getTag());
+        localSongBean.setSource(tracksBean.getSource());
         return localSongBean;
     }
 
@@ -361,27 +384,5 @@ public class AppUtils {
         Log.e("gulu", "Network Type : " + strNetworkType);
 
         return strNetworkType;
-    }
-
-    /**
-     * 上拉加载提示
-     *
-     * @param textView
-     * @param mLoadMoreStatus
-     * @return
-     */
-    @BindingAdapter({"loadMoreTip"})
-    public static void getLoadMoreTip(TextView textView, int mLoadMoreStatus) {
-        switch (mLoadMoreStatus) {
-            case 1:
-                textView.setText("正在刷新呀");
-                break;
-            case 2:
-                textView.setText("加载成功啦");
-                break;
-            default:
-                textView.setText("点我，继续加载");
-                break;
-        }
     }
 }

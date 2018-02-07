@@ -7,6 +7,7 @@ import android.view.View;
 import java.util.List;
 
 import cn.guluwa.gulumusic.data.bean.LocalSongBean;
+import cn.guluwa.gulumusic.data.bean.SearchResultSongBean;
 import cn.guluwa.gulumusic.data.bean.SongPathBean;
 import cn.guluwa.gulumusic.data.bean.SongWordBean;
 import cn.guluwa.gulumusic.data.bean.TracksBean;
@@ -120,7 +121,7 @@ public class LocalSongsDataSource implements SongDataSource {
      * @param name
      * @return
      */
-    public LocalSongBean queryLocalSong(int id, String name) {
+    public LocalSongBean queryLocalSong(String id, String name) {
         return songsService.queryLocalSong(id, name);
     }
 

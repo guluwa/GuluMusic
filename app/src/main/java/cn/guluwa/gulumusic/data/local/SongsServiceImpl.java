@@ -53,6 +53,7 @@ public class SongsServiceImpl implements SongsService {
         return songsDao.queryLocalSong();
     }
 
+
     /**
      * 查询本地歌曲（单曲）
      *
@@ -61,7 +62,7 @@ public class SongsServiceImpl implements SongsService {
      * @return
      */
     @Override
-    public LocalSongBean queryLocalSong(int id, String name) {
+    public LocalSongBean queryLocalSong(String id, String name) {
         return songsDao.queryLocalSong(id, name);
     }
 

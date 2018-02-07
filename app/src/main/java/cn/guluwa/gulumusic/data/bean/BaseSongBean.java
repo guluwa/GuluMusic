@@ -22,6 +22,7 @@ public class BaseSongBean implements Serializable {
     @Embedded
     private TracksBean.ArBean singer;
     private String tag;
+    private String source;
 
     @Ignore
     private int currentTime = -1;
@@ -31,6 +32,14 @@ public class BaseSongBean implements Serializable {
     private List<TracksBean.ArBean> ar;
     @Ignore
     private List<String> alia;
+
+    public String getSource() {
+        return source;
+    }
+
+    public void setSource(String source) {
+        this.source = source;
+    }
 
     public int getDuration() {
         return duration;
@@ -109,7 +118,7 @@ public class BaseSongBean implements Serializable {
         private int id;
         @ColumnInfo(name = "al_name")
         private String name;
-        private String picUrl;
+        private String picUrl = "";
 
         public int getId() {
             return id;

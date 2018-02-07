@@ -6,9 +6,11 @@ import android.arch.persistence.room.PrimaryKey;
 
 import java.io.Serializable;
 
+import android.support.annotation.NonNull;
+
 /**
  * 歌词类
- *
+ * <p>
  * Created by guluwa on 2018/1/19.
  */
 
@@ -60,19 +62,21 @@ public class SongWordBean implements Serializable {
      */
 
     private static final long serialVersionUID = -1442257143570149636L;
+
     @PrimaryKey
-    private int id;
+    @NonNull
+    private String id;
     private String lyric;
     @Ignore
     private String tlyric;
     @Ignore
     private TracksBean song;
 
-    public int getId() {
+    public String getId() {
         return id;
     }
 
-    public void setId(int id) {
+    public void setId(String id) {
         this.id = id;
     }
 

@@ -19,7 +19,7 @@ public class LocalSongBean extends BaseSongBean implements Serializable {
     @PrimaryKey(autoGenerate = true)
     private int index;
 
-    private int id;
+    private String id;
 
     public int getIndex() {
         return index;
@@ -29,11 +29,11 @@ public class LocalSongBean extends BaseSongBean implements Serializable {
         this.index = index;
     }
 
-    public int getId() {
+    public String getId() {
         return id;
     }
 
-    public void setId(int id) {
+    public void setId(String id) {
         this.id = id;
     }
 }

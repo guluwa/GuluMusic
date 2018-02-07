@@ -6,4 +6,9 @@ package cn.guluwa.gulumusic.data.remote.retrofit.exception;
 
 public class ServiceException extends BaseException {
 
+    private static final long serialVersionUID = 2211853108336484888L;
+
+    public ServiceException(String msg) {
+        this.msg = msg;
+    }
 }

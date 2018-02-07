@@ -38,7 +38,7 @@ public interface SongsService {
      * @param name
      * @return
      */
-    LocalSongBean queryLocalSong(int id, String name);
+    LocalSongBean queryLocalSong(String id, String name);
 
     /**
      * 查询歌曲路径

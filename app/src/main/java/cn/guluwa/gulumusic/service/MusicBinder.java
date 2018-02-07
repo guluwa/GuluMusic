@@ -10,11 +10,14 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
+import cn.guluwa.gulumusic.R;
 import cn.guluwa.gulumusic.data.bean.BaseSongBean;
 import cn.guluwa.gulumusic.data.bean.LocalSongBean;
+import cn.guluwa.gulumusic.data.bean.SearchResultSongBean;
 import cn.guluwa.gulumusic.data.bean.SongPathBean;
 import cn.guluwa.gulumusic.data.bean.SongWordBean;
 import cn.guluwa.gulumusic.data.bean.TracksBean;
+import cn.guluwa.gulumusic.data.local.LocalSongsDataSource;
 import cn.guluwa.gulumusic.data.total.SongsRepository;
 import cn.guluwa.gulumusic.listener.OnResultListener;
 import cn.guluwa.gulumusic.listener.OnSongStatusListener;
@@ -145,10 +148,13 @@ public class MusicBinder extends Binder {
         if ("".equals(AppUtils.isExistFile(String.format("%s_%s.txt", mCurrentSong.getName(), mCurrentSong.getId()), 2))) {
             querySongWord();
         }
+        if ("".equals(song.getAl().getPicUrl())) {
+            querySongPic();
+        }
     }
 
     /**
-     * 查询歌曲路径
+     * 查询歌曲路径(首页、搜索)
      */
     private void querySongPath() {
         songsRepository.querySongPath(mCurrentSong, new OnResultListener<SongPathBean>() {
@@ -156,7 +162,7 @@ public class MusicBinder extends Binder {
             public void success(SongPathBean result) {
                 if ("".equals(result.getUrl())) {
                     if (listeners.size() != 0) {
-                        listeners.get(listeners.size() - 1).error("歌曲暂时不能播放哦");
+                        listeners.get(listeners.size() - 1).error(musicAutoService.getString(R.string.song_cant_plsy_tip));
                         getNextSong(mCurrentSong);
                         listeners.get(listeners.size() - 1).end(mCurrentSong);
                     }
@@ -167,7 +173,7 @@ public class MusicBinder extends Binder {
                                 public void success(File file) {
                                     System.out.println(file.getAbsolutePath());
                                     mSongPath = file.getAbsolutePath();
-                                    if (result.getId() == mCurrentSong.getId()) {//下载完成的歌曲和当前播放歌曲是同一首
+                                    if (result.getId().equals(mCurrentSong.getId())) {//下载完成的歌曲和当前播放歌曲是同一首
                                         isLoading = true;
                                         stop();
                                         playNewSong(0);
@@ -201,13 +207,32 @@ public class MusicBinder extends Binder {
     }
 
     /**
-     * 查询歌曲歌词
+     * 查询歌曲歌词(首页、搜索)
      */
     private void querySongWord() {
         songsRepository.querySongWord(mCurrentSong, new OnResultListener<SongWordBean>() {
             @Override
             public void success(SongWordBean result) {
                 AppUtils.writeWord2Disk(result.getLyric(), String.format("%s_%s.txt", result.getSong().getName(), result.getSong().getId()));
+            }
+
+            @Override
+            public void failed(String error) {
+                if (listeners.size() != 0) {
+                    listeners.get(listeners.size() - 1).error(error);
+                }
+            }
+        });
+    }
+
+    /**
+     * 查询歌曲封面图（首页、搜索）
+     */
+    private void querySongPic() {
+        songsRepository.querySongPic(mCurrentSong, new OnResultListener<SongPathBean>() {
+            @Override
+            public void success(SongPathBean result) {
+                System.out.println(result.getUrl());
             }
 
             @Override
@@ -391,5 +416,9 @@ public class MusicBinder extends Binder {
 
     public boolean isLoading() {
         return isLoading;
+    }
+
+    public TracksBean getCurrentSong() {
+        return mCurrentSong;
     }
 }

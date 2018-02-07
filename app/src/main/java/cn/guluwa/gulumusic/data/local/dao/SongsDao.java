@@ -64,7 +64,7 @@ public interface SongsDao {
      * @return
      */
     @Query("select * from local_songs where id=:id and name=:name")
-    LocalSongBean queryLocalSong(int id, String name);
+    LocalSongBean queryLocalSong(String id, String name);
 
     /**
      * 添加歌曲到热门歌曲表

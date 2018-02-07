@@ -7,6 +7,7 @@ import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.databinding.DataBindingUtil;
 import android.databinding.ViewDataBinding;
+import android.graphics.Color;
 import android.net.Uri;
 import android.os.Bundle;
 import android.provider.Settings;
@@ -126,7 +127,9 @@ public abstract class BaseActivity extends AppCompatActivity {
         builder.setNegativeButton("取消", (dialog, which) -> finish());
         builder.setPositiveButton("设置", (dialog, which) -> startAppSettings());
         builder.setCancelable(false);
-        builder.show();
+        AlertDialog dialog = builder.show();
+        dialog.getButton(AlertDialog.BUTTON_NEGATIVE).setTextColor(Color.BLACK);
+        dialog.getButton(AlertDialog.BUTTON_POSITIVE).setTextColor(Color.BLACK);
     }
 
     private void startAppSettings() {
