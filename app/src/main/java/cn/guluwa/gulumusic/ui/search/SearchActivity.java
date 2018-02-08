@@ -2,14 +2,20 @@ package cn.guluwa.gulumusic.ui.search;
 
 import android.animation.Animator;
 import android.content.Context;
+import android.content.Intent;
+import android.support.v4.app.ActivityCompat;
+import android.support.v4.app.ActivityOptionsCompat;
+import android.support.v4.util.Pair;
 import android.support.v4.view.MenuItemCompat;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.SearchView;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.View;
 import android.view.ViewAnimationUtils;
 import android.view.inputmethod.InputMethodManager;
 
+import java.text.SimpleDateFormat;
 import java.util.List;
 
 import cn.guluwa.gulumusic.R;
@@ -18,11 +24,20 @@ import cn.guluwa.gulumusic.base.BaseActivity;
 import cn.guluwa.gulumusic.data.bean.LocalSongBean;
 import cn.guluwa.gulumusic.data.bean.SearchResultSongBean;
 import cn.guluwa.gulumusic.data.bean.TracksBean;
+import cn.guluwa.gulumusic.data.local.LocalSongsDataSource;
 import cn.guluwa.gulumusic.data.remote.retrofit.exception.BaseException;
 import cn.guluwa.gulumusic.databinding.ActivitySearchBinding;
+import cn.guluwa.gulumusic.listener.OnSongStatusListener;
 import cn.guluwa.gulumusic.manage.AppManager;
 import cn.guluwa.gulumusic.manage.Contacts;
+import cn.guluwa.gulumusic.ui.main.MainActivity;
+import cn.guluwa.gulumusic.ui.play.PlayActivity;
 import cn.guluwa.gulumusic.utils.AppUtils;
+import io.reactivex.Observable;
+import io.reactivex.android.schedulers.AndroidSchedulers;
+import io.reactivex.functions.Consumer;
+import io.reactivex.functions.Function;
+import io.reactivex.schedulers.Schedulers;
 
 public class SearchActivity extends BaseActivity {
 
@@ -46,6 +61,26 @@ public class SearchActivity extends BaseActivity {
      */
     private boolean isLoadMoreIng;
 
+    /**
+     * 搜索平台主题颜色
+     */
+    private int color;
+
+    /**
+     * 是否下载了歌曲
+     */
+    private boolean isDownLoadSong;
+
+    /**
+     * 当前播放歌曲
+     */
+    private TracksBean mCurrentSong;
+
+    /**
+     * 格式化时间
+     */
+    private SimpleDateFormat time;
+
     @Override
     public int getViewLayoutId() {
         return R.layout.activity_search;
@@ -54,13 +89,16 @@ public class SearchActivity extends BaseActivity {
     @Override
     protected void initViews() {
         initData();
+        initClickListener();
         initToolBar();
         initSwipeRefreshLayout();
         initRecyclerView();
     }
 
+    /**
+     * 搜索平台切换动画
+     */
     private void initAnimation() {
-        int color;
         switch (AppManager.getInstance().getSearchPlatform()) {
             case Contacts.TYPE_TENCENT:
                 color = R.color.tencent_music_color;
@@ -83,6 +121,9 @@ public class SearchActivity extends BaseActivity {
                 mSearchBinding.mToolBar.setTitle(R.string.type_net_ease);
                 break;
         }
+        if (mSearchBinding.mRecyclerView.getAdapter() != null) {
+            ((SearchResultListAdapter) mSearchBinding.mRecyclerView.getAdapter()).setColor(color);
+        }
         getWindow().setStatusBarColor(AppUtils.deepenColor(getResources().getColor(color)));
         mSearchBinding.mToolBar.setBackgroundColor(getResources().getColor(color));
         mSearchBinding.mToolBar.post(() -> {
@@ -94,6 +135,9 @@ public class SearchActivity extends BaseActivity {
         });
     }
 
+    /**
+     * toolbar初始化
+     */
     private void initToolBar() {
         mSearchBinding.mToolBar.setTitle(R.string.app_name);//设置Toolbar标题
         setSupportActionBar(mSearchBinding.mToolBar);
@@ -102,10 +146,52 @@ public class SearchActivity extends BaseActivity {
         initAnimation();
     }
 
+    /**
+     * 数据初始化
+     */
     private void initData() {
         keyWord = "";
         page = -1;
         mSearchBinding = (ActivitySearchBinding) mViewDataBinding;
+        isDownLoadSong = false;
+        time = new SimpleDateFormat("mm:ss");
+        reFreshLayout((TracksBean) getIntent().getSerializableExtra("song"));
+        mSearchBinding.mPlayBtn.setPlaying(getIntent().getIntExtra("status", -1));
+        AppManager.getInstance().getMusicAutoService().binder.bindSongStatusListener(listener);
+    }
+
+    /**
+     * 点击事件初始化
+     */
+    private void initClickListener() {
+        mSearchBinding.setClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                switch (view.getId()) {
+                    case R.id.mBottomPlayInfo:
+                        Intent intent = new Intent(SearchActivity.this, PlayActivity.class);
+                        if (AppManager.getInstance().getMusicAutoService().binder.getMediaPlayer().isPlaying()) {
+                            mCurrentSong.setCurrentTime(AppManager.getInstance().getMusicAutoService().binder.getMediaPlayer().getCurrentPosition());
+                        }
+                        intent.putExtra("song", mCurrentSong);
+                        intent.putExtra("status", mSearchBinding.mPlayBtn.getIsPlaying());
+                        ActivityOptionsCompat options = ActivityOptionsCompat.makeSceneTransitionAnimation(SearchActivity.this, new Pair<>(mSearchBinding.ivCurrentSongPic, "songImage"));
+                        ActivityCompat.startActivityForResult(SearchActivity.this, intent, Contacts.REQUEST_CODE_PLAY, options.toBundle());
+                        break;
+                    case R.id.mPlayBtn:
+                        if (AppManager.getInstance().getMusicAutoService() != null &&
+                                AppManager.getInstance().getMusicAutoService().binder.getMediaPlayer() != null) {
+                            if (AppManager.getInstance().getMusicAutoService().binder.getMediaPlayer().isPlaying()) {
+                                mSearchBinding.mPlayBtn.setPlaying(-1);
+                            } else {
+                                mSearchBinding.mPlayBtn.setPlaying(1);
+                            }
+                            playCurrentSong(mCurrentSong.getCurrentTime());
+                        }
+                        break;
+                }
+            }
+        });
     }
 
     /**
@@ -137,7 +223,7 @@ public class SearchActivity extends BaseActivity {
                     }
                     AppManager.getInstance().getMusicAutoService().binder.stop();
                 }
-                playCurrentSong(AppUtils.getSongBean((SearchResultSongBean) song));
+                playCurrentSong((SearchResultSongBean) song);
             } else {
                 if (!isLoadMoreIng) {
                     isLoadMoreIng = true;
@@ -147,14 +233,79 @@ public class SearchActivity extends BaseActivity {
             }
         });
         mAdapter.setListEmptyTip(getString(R.string.search_list_tip));
+        mAdapter.setColor(color);
         mSearchBinding.mRecyclerView.setLayoutManager(new LinearLayoutManager(this));
         mSearchBinding.mRecyclerView.setAdapter(mAdapter);
     }
 
-    private void playCurrentSong(TracksBean mCurrentSong) {
-        AppManager.getInstance().getMusicAutoService().binder.playCurrentSong(mCurrentSong, 0);
+    /**
+     * 播放歌曲
+     *
+     * @param song
+     */
+    private void playCurrentSong(SearchResultSongBean song) {
+        reFreshLayout(AppUtils.getSongBean(song));
+        if (song.isDownLoad()) {
+            Observable.just("")
+                    .observeOn(Schedulers.io())
+                    .map(s -> LocalSongsDataSource.getInstance().queryLocalSong(song.getId(), song.getName()))
+                    .observeOn(AndroidSchedulers.mainThread())
+                    .subscribe(localSongBean -> {
+                                mCurrentSong = AppUtils.getSongBean(localSongBean);
+                                AppManager.getInstance().getMusicAutoService().binder.setPrepare(false);
+                                playCurrentSong(0);
+                            },
+                            throwable -> {
+                                AppManager.getInstance().getMusicAutoService().binder.setPrepare(false);
+                                playCurrentSong(0);
+                            });
+        } else {
+            isDownLoadSong = true;
+            AppManager.getInstance().getMusicAutoService().binder.setPrepare(false);
+            playCurrentSong(0);
+        }
     }
 
+    /**
+     * 播放歌曲
+     *
+     * @param song
+     */
+    private void playCurrentSong(TracksBean song) {
+        reFreshLayout(song);
+        //播放歌曲、利用服务后台播放
+        AppManager.getInstance().getMusicAutoService().binder.setPrepare(false);
+        playCurrentSong(0);
+    }
+
+    /**
+     * 不换歌曲（第一次进入）
+     *
+     * @param mCurrentTime
+     */
+    private void playCurrentSong(int mCurrentTime) {
+        if (AppManager.getInstance().getMusicAutoService().binder.isPrepare()) {
+            AppManager.getInstance().getMusicAutoService().binder.playOrPauseSong(-1);
+        } else {
+            AppManager.getInstance().getMusicAutoService().binder.playCurrentSong(mCurrentSong, mCurrentTime);
+        }
+    }
+
+
+    /**
+     * 更新页面
+     *
+     * @param song
+     */
+    private void reFreshLayout(TracksBean song) {
+        mCurrentSong = song;
+        mSearchBinding.setSong(mCurrentSong);
+        mSearchBinding.tvCurrentSongProgress.setText("00:00");
+    }
+
+    /**
+     * viewModel初始化
+     */
     @Override
     protected void initViewModel() {
         //歌曲搜索
@@ -209,6 +360,12 @@ public class SearchActivity extends BaseActivity {
         });
     }
 
+    /**
+     * 菜单
+     *
+     * @param menu
+     * @return
+     */
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         getMenuInflater().inflate(R.menu.search_activity_menu, menu);
@@ -241,11 +398,17 @@ public class SearchActivity extends BaseActivity {
         return true;
     }
 
+    /**
+     * 菜单点击事件
+     *
+     * @param item
+     * @return
+     */
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()) {
             case android.R.id.home:
-                finish();
+                onBackPressed();
                 break;
             case R.id.action_search_netease:
                 if (!Contacts.TYPE_NETEASE.equals(AppManager.getInstance().getSearchPlatform())) {
@@ -281,8 +444,12 @@ public class SearchActivity extends BaseActivity {
         return super.onOptionsItemSelected(item);
     }
 
+    /**
+     * 填充列表数据
+     *
+     * @param data
+     */
     public void setData(List<SearchResultSongBean> data) {
-        //填充列表数据
         if (data != null && data.size() != 0) {
             if (page == 1) {
                 ((SearchResultListAdapter) mSearchBinding.mRecyclerView.getAdapter()).setData(data, getString(R.string.load_more_tip));
@@ -300,8 +467,50 @@ public class SearchActivity extends BaseActivity {
         }
     }
 
+    /**
+     * 歌曲播放进度
+     */
+    private OnSongStatusListener listener = new OnSongStatusListener() {
+
+        @Override
+        public void loading() {
+            mSearchBinding.mPlayBtn.setPlaying(0);
+        }
+
+        @Override
+        public void start() {
+            mSearchBinding.mPlayBtn.setPlaying(1);
+            if (!mCurrentSong.getId().equals(AppManager.getInstance().getMusicAutoService().binder.getCurrentSong().getId())) {
+                reFreshLayout(AppManager.getInstance().getMusicAutoService().binder.getCurrentSong());
+            }
+        }
+
+        @Override
+        public void pause() {
+            mSearchBinding.mPlayBtn.setPlaying(-1);
+        }
+
+        @Override
+        public void end(TracksBean tracksBean) {
+            playCurrentSong(tracksBean);
+        }
+
+        @Override
+        public void error(String msg) {
+            showSnackBar(msg);
+        }
+
+        @Override
+        public void progress(int progress, int duration) {
+            if (mSearchBinding.mPlayBtn.getIsPlaying() != 0) {
+                mSearchBinding.tvCurrentSongProgress.setText(time.format(progress));
+            }
+        }
+    };
+
     @Override
     protected void onDestroy() {
+        AppManager.getInstance().getMusicAutoService().binder.unBindSongStatusListener(listener);
         AppUtils.setString(Contacts.SEARCH_PLATFORM, AppManager.getInstance().getSearchPlatform());
         super.onDestroy();
     }
@@ -310,5 +519,15 @@ public class SearchActivity extends BaseActivity {
     private void disAppearKeyBoard(SearchView searchView) {
         ((InputMethodManager) searchView.getContext().getSystemService(Context.INPUT_METHOD_SERVICE))
                 .hideSoftInputFromWindow(getCurrentFocus().getWindowToken(), InputMethodManager.HIDE_NOT_ALWAYS);
+    }
+
+    @Override
+    public void onBackPressed() {
+        if (isDownLoadSong) {
+            Intent intent = new Intent(SearchActivity.this, MainActivity.class);
+            intent.putExtra("isDownLoadSong", isDownLoadSong);
+            setResult(Contacts.RESULT_SONG_CODE, intent);
+        }
+        super.onBackPressed();
     }
 }

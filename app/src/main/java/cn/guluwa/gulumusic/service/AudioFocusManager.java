@@ -37,7 +37,7 @@ public class AudioFocusManager implements AudioManager.OnAudioFocusChangeListene
             case AudioManager.AUDIOFOCUS_GAIN:
                 if (!willPlay() && isPausedByFocusLossTransient) {
                     // 通话结束，恢复播放
-                    mPlayService.binder.playOrPause();
+                    mPlayService.binder.playOrPauseSong(-1);
                 }
 
                 volume = mAudioManager.getStreamVolume(AudioManager.STREAM_MUSIC);
@@ -84,7 +84,7 @@ public class AudioFocusManager implements AudioManager.OnAudioFocusChangeListene
         if (mPlayService.binder.isLoading()) {
             mPlayService.binder.stop();
         } else if (mPlayService.binder.getMediaPlayer().isPlaying()) {
-            mPlayService.binder.playOrPause();
+            mPlayService.binder.playOrPauseSong(-1);
         }
     }
 }

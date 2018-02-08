@@ -2,6 +2,7 @@ package cn.guluwa.gulumusic.adapter;
 
 import android.databinding.DataBindingUtil;
 import android.databinding.ViewDataBinding;
+import android.support.graphics.drawable.VectorDrawableCompat;
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -30,6 +31,8 @@ public class SearchResultListAdapter<T> extends RecyclerView.Adapter<SearchResul
     private static final int TYPE_EMPTY = 2;//列表空、错误提示
 
     private OnClickListener listener;//点击事件监听
+
+    private int color;//按钮颜色
 
     private List<T> data = new ArrayList<>();
 
@@ -78,6 +81,10 @@ public class SearchResultListAdapter<T> extends RecyclerView.Adapter<SearchResul
         notifyDataSetChanged();
     }
 
+    public void setColor(int color) {
+        this.color = color;
+    }
+
     @Override
     public int getItemViewType(int position) {
         if (data.get(position) instanceof String) {
@@ -110,6 +117,25 @@ public class SearchResultListAdapter<T> extends RecyclerView.Adapter<SearchResul
         if (getItemViewType(position) == TYPE_NORMAL) {
             holder.getViewBinder().setSong((SearchResultSongBean) data.get(position));
             holder.getViewBinder().setIndex(position + 1);
+            //more
+            VectorDrawableCompat vectorDrawableMore = VectorDrawableCompat.create(
+                    holder.getViewBinder().getRoot().getResources(),
+                    R.drawable.ic_more_vertical,
+                    holder.getViewBinder().getRoot().getContext().getTheme());
+            vectorDrawableMore.setTint(holder.getViewBinder().getRoot().getResources().getColor(color));
+            holder.getViewBinder().ivMore.setImageDrawable(vectorDrawableMore);
+            //download
+            if (((SearchResultSongBean) data.get(position)).isDownLoad()) {
+                VectorDrawableCompat vectorDrawableDownLoad = VectorDrawableCompat.create(
+                        holder.getViewBinder().getRoot().getResources(),
+                        R.drawable.ic_song_has_down_load,
+                        holder.getViewBinder().getRoot().getContext().getTheme());
+                vectorDrawableDownLoad.setTint(holder.getViewBinder().getRoot().getResources().getColor(color));
+                holder.getViewBinder().ivSongStatus.setImageDrawable(vectorDrawableDownLoad);
+                holder.getViewBinder().ivSongStatus.setVisibility(View.VISIBLE);
+            } else {
+                holder.getViewBinder().ivSongStatus.setVisibility(View.GONE);
+            }
         } else if (getItemViewType(position) == TYPE_FOOTER) {
             holder.getLoadMoreViewBinder().setLoadMoreTip((String) data.get(position));
         } else {

@@ -17,25 +17,20 @@
         <!--Activity Transition-->
         <item name="android:windowContentTransitions">true</item>
         <!--页面切换动画-->
-        <!--<item name="android:windowAnimationStyle">@style/AnimationActivity</item>-->
+        <item name="android:windowAnimationStyle">@style/AnimationActivity</item>
     </style>
 
     <!--页面切换动画-->
     <style name="AnimationActivity" parent="@android:style/Animation.Activity">
-        <item name="android:activityOpenEnterAnimation">@anim/slide_in_bottom</item>
-        <item name="android:activityCloseExitAnimation">@anim/slide_out_bottom</item>
-        <item name="android:activityOpenExitAnimation">@anim/slide_out_top</item>
-        <item name="android:activityCloseEnterAnimation">@anim/slide_in_top</item>
+        <item name="android:activityOpenEnterAnimation">@anim/alpha_in</item>
+        <item name="android:activityCloseExitAnimation">@anim/alpha_out</item>
+        <item name="android:activityOpenExitAnimation">@anim/alpha_out</item>
+        <item name="android:activityCloseEnterAnimation">@anim/alpha_in</item>
     </style>
 
     <!--侧滑栏样式-->
     <style name="AppTheme.DrawerArrowToggle" parent="Base.Widget.AppCompat.DrawerArrowToggle">
         <item name="color">@android:color/white</item>
-    </style>
-
-    <!--搜索栏样式-->
-    <style name="SearchViewStyle" parent="Widget.AppCompat.SearchView">
-        <item name="searchIcon">@drawable/search_icon</item>
     </style>
 
     <!--checkBox样式-->

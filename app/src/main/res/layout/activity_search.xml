@@ -1,16 +1,32 @@
 <?xml version="1.0" encoding="utf-8"?>
 <layout>
 
-    <android.support.constraint.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    <data>
+
+        <import type="cn.guluwa.gulumusic.utils.ImageViewAttrAdapter" />
+
+        <variable
+            name="song"
+            type="cn.guluwa.gulumusic.data.bean.BaseSongBean" />
+
+        <variable
+            name="clickListener"
+            type="android.view.View.OnClickListener" />
+
+    </data>
+
+    <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
         xmlns:app="http://schemas.android.com/apk/res-auto"
         xmlns:tools="http://schemas.android.com/tools"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
+        android:orientation="vertical"
         tools:context="cn.guluwa.gulumusic.ui.search.SearchActivity">
 
         <android.support.design.widget.CoordinatorLayout
             android:layout_width="match_parent"
-            android:layout_height="wrap_content">
+            android:layout_height="0dp"
+            android:layout_weight="1">
 
             <android.support.design.widget.AppBarLayout
                 android:layout_width="match_parent"
@@ -40,5 +56,69 @@
                     android:layout_height="wrap_content" />
             </android.support.v4.widget.SwipeRefreshLayout>
         </android.support.design.widget.CoordinatorLayout>
-    </android.support.constraint.ConstraintLayout>
+
+        <android.support.constraint.ConstraintLayout
+            android:id="@+id/mBottomPlayInfo"
+            android:layout_width="match_parent"
+            android:layout_height="50dp"
+            android:layout_gravity="bottom"
+            android:background="@drawable/touch_ripple_bg"
+            android:onClick="@{clickListener}"
+            app:layout_constraintBottom_toBottomOf="parent">
+
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="1dp"
+                android:background="@color/indicator_color" />
+
+            <ImageView
+                android:id="@+id/ivCurrentSongPic"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:layout_marginStart="25dp"
+                android:src="@mipmap/ic_launcher"
+                android:transitionName="songImage"
+                app:circleImageUrl="@{song.al.picUrl}"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintLeft_toLeftOf="parent"
+                app:layout_constraintTop_toTopOf="parent" />
+
+            <TextView
+                android:id="@+id/tvCurrentSongName"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="25dp"
+                android:text="@{song.name}"
+                android:textColor="@color/play_view_black"
+                android:textSize="13sp"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintLeft_toRightOf="@+id/ivCurrentSongPic"
+                app:layout_constraintTop_toTopOf="parent" />
+
+            <TextView
+                android:id="@+id/tvCurrentSongProgress"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginEnd="25dp"
+                android:textColor="@color/text_gray"
+                android:textSize="13sp"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintRight_toLeftOf="@+id/mPlayBtn"
+                app:layout_constraintTop_toTopOf="parent" />
+
+            <cn.guluwa.gulumusic.view.PlayButton
+                android:id="@+id/mPlayBtn"
+                android:layout_width="32dp"
+                android:layout_height="32dp"
+                android:layout_marginEnd="25dp"
+                android:onClick="@{clickListener}"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintRight_toRightOf="parent"
+                app:layout_constraintTop_toTopOf="parent"
+                app:lineWidth="1"
+                app:lineXOffset="4"
+                app:lineYOffset="6"
+                app:triangleWidth="10" />
+        </android.support.constraint.ConstraintLayout>
+    </LinearLayout>
 </layout>

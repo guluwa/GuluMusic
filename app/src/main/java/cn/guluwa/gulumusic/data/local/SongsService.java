@@ -71,6 +71,13 @@ public interface SongsService {
     void addLocalSong(LocalSongBean localSongBean);
 
     /**
+     * 从本地歌曲表删除歌曲
+     *
+     * @param localSongBean
+     */
+    void deleteLocalSong(LocalSongBean localSongBean);
+
+    /**
      * 添加歌曲路径
      *
      * @param songPathBean

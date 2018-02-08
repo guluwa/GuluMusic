@@ -2,6 +2,7 @@ package cn.guluwa.gulumusic.adapter;
 
 import android.databinding.DataBindingUtil;
 import android.databinding.ViewDataBinding;
+import android.support.graphics.drawable.VectorDrawableCompat;
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.ViewGroup;
@@ -89,6 +90,11 @@ public class PlayListAdapter extends RecyclerView.Adapter<PlayListAdapter.ViewHo
                 }
                 return true;
             });
+            VectorDrawableCompat vectorDrawableCompat = VectorDrawableCompat.create(
+                    mViewBinder.getRoot().getResources(), R.drawable.ic_more_vertical, mViewBinder.getRoot().getContext().getTheme());
+            //你需要改变的颜色
+            vectorDrawableCompat.setTint(mViewBinder.getRoot().getResources().getColor(R.color.play_view_gray));
+            mViewBinder.ivMore.setImageDrawable(vectorDrawableCompat);
         }
     }
 }

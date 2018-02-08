@@ -25,6 +25,7 @@ import cn.guluwa.gulumusic.utils.AppUtils;
 import io.reactivex.Maybe;
 import io.reactivex.android.schedulers.AndroidSchedulers;
 import io.reactivex.functions.Consumer;
+import io.reactivex.functions.Function;
 import io.reactivex.schedulers.Schedulers;
 
 /**
@@ -92,6 +93,20 @@ public class RemoteSongsDataSource implements SongDataSource {
                 RetrofitFactory.getRetrofit().createApi(ApiService.class)
                         .searchSongByKeyWord(Contacts.SONG_CALLBACK, map)
                         .subscribeOn(Schedulers.io())
+                        .observeOn(Schedulers.io())
+                        .map(searchResultSongBeans -> {
+                            for (int i = 0; i < searchResultSongBeans.size(); i++) {
+                                LocalSongBean localSongBean = LocalSongsDataSource.getInstance().queryLocalSong(
+                                        searchResultSongBeans.get(i).getId(),
+                                        searchResultSongBeans.get(i).getName());
+                                if (localSongBean == null) {
+                                    searchResultSongBeans.get(i).setDownLoad(false);
+                                } else {
+                                    searchResultSongBeans.get(i).setDownLoad(true);
+                                }
+                            }
+                            return searchResultSongBeans;
+                        })
                         .observeOn(AndroidSchedulers.mainThread())
         );
     }
@@ -166,7 +181,7 @@ public class RemoteSongsDataSource implements SongDataSource {
                 .subscribeOn(Schedulers.io())
                 .observeOn(Schedulers.io())
                 .map(songPathBean -> {
-                    if (LocalSongsDataSource.getInstance().queryLocalSong(song.getId(), song.getName()) == null ) {
+                    if (LocalSongsDataSource.getInstance().queryLocalSong(song.getId(), song.getName()) == null) {
                         song.getAl().setPicUrl(songPathBean.getUrl());
                         LocalSongsDataSource.getInstance().addLocalSong(AppUtils.getLocalSongBean(song));
                     } else {

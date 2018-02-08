@@ -242,6 +242,17 @@ public class AppUtils {
         return file.exists() ? file.getAbsolutePath() : "";
     }
 
+    //删除本地文件
+    public static void deleteFile(String name, int type) {
+        File file;
+        if (type == 1) {
+            file = new File(Environment.getExternalStorageDirectory().getAbsolutePath() + "/gulu_music/song/" + name);
+        } else {
+            file = new File(Environment.getExternalStorageDirectory().getAbsolutePath() + "/gulu_music/word/" + name);
+        }
+        if (file.exists()) file.delete();
+    }
+
     //获取sharePreference Integer类型的值
     public static int getInteger(String key, final int defaultValue) {
         final SharedPreferences settings = PreferenceManager

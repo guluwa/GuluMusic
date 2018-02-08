@@ -62,11 +62,6 @@ public class PlayActivity extends BaseActivity {
      */
     private int mLrcPosition;
 
-    /**
-     * 是否第一首歌
-     */
-    private boolean isFirstSong;
-
     @Override
     public int getViewLayoutId() {
         return R.layout.activity_play;
@@ -100,12 +95,7 @@ public class PlayActivity extends BaseActivity {
                         } else {
                             mPlayBinding.mPlayBtn.setPlaying(1);
                         }
-                        if (isFirstSong) {
-                            isFirstSong = false;
-                            playCurrentSong(mCurrentSong.getCurrentTime());
-                        } else {
-                            AppManager.getInstance().getMusicAutoService().binder.playOrPause();
-                        }
+                        playCurrentSong(mCurrentSong.getCurrentTime());
                     }
                     break;
                 case R.id.ivDownBack:
@@ -153,9 +143,6 @@ public class PlayActivity extends BaseActivity {
         mLrcPosition = -1;
         mCurrentSong = (TracksBean) getIntent().getSerializableExtra("song");
         mPlayBinding.mPlayBtn.setPlaying(getIntent().getIntExtra("status", -1));
-        if (mPlayBinding.mPlayBtn.getIsPlaying() == -1) {
-            isFirstSong = true;
-        }
         mPlayBinding.mProgressView.setSongPlayLength(mCurrentSong.getCurrentTime(), mCurrentSong.getDuration());
         mPlayBinding.setSong(mCurrentSong);
         showPlayModeImg(AppManager.getInstance().getPlayMode());
@@ -167,25 +154,27 @@ public class PlayActivity extends BaseActivity {
      * 歌词处理
      */
     private void initSongLrc() {
-        try {
-            mLrcList = LrcParser.parserLocal(String.format("%s_%s.txt", mCurrentSong.getName(), mCurrentSong.getId()));
-            for (int i = 0; i < mLrcList.size(); i++) {
-                if (mLrcList.get(i).getTime() > mCurrentSong.getCurrentTime()) {
-                    if (i != 0) {
-                        mLrcPosition = i - 1;
-                    } else {
-                        mLrcPosition = 0;
+        if (mLrcList == null) {
+            try {
+                mLrcList = LrcParser.parserLocal(String.format("%s_%s.txt", mCurrentSong.getName(), mCurrentSong.getId()));
+                for (int i = 0; i < mLrcList.size(); i++) {
+                    if (mLrcList.get(i).getTime() > mCurrentSong.getCurrentTime()) {
+                        if (i != 0) {
+                            mLrcPosition = i - 1;
+                        } else {
+                            mLrcPosition = 0;
+                        }
+                        if (mPlayBinding.mPlayBtn.getIsPlaying() != 0) {
+                            mPlayBinding.tvSongWord.setText(mLrcList.get(mLrcPosition).getWord());
+                        }
+                        break;
                     }
-                    if (mPlayBinding.mPlayBtn.getIsPlaying() != 0) {
-                        mPlayBinding.tvSongWord.setText(mLrcList.get(mLrcPosition).getWord());
-                    }
-                    break;
                 }
+            } catch (Exception e) {
+                mLrcList = null;
+                mPlayBinding.tvSongWord.setText("暂无歌词");
+                e.printStackTrace();
             }
-        } catch (Exception e) {
-            mLrcList = null;
-            mPlayBinding.tvSongWord.setText("暂无歌词");
-            e.printStackTrace();
         }
     }
 
@@ -247,6 +236,7 @@ public class PlayActivity extends BaseActivity {
         mPlayBinding.mProgressView.setSongPlayLength(0, 0);
         initSongPic();
         //播放歌曲、利用服务后台播放
+        AppManager.getInstance().getMusicAutoService().binder.setPrepare(false);
         playCurrentSong(0);
     }
 
@@ -256,7 +246,11 @@ public class PlayActivity extends BaseActivity {
      * @param mCurrentTime
      */
     private void playCurrentSong(int mCurrentTime) {
-        AppManager.getInstance().getMusicAutoService().binder.playCurrentSong(mCurrentSong, mCurrentTime);
+        if (AppManager.getInstance().getMusicAutoService().binder.isPrepare()) {
+            AppManager.getInstance().getMusicAutoService().binder.playOrPauseSong(-1);
+        } else {
+            AppManager.getInstance().getMusicAutoService().binder.playCurrentSong(mCurrentSong, mCurrentTime);
+        }
     }
 
     @Override
@@ -281,9 +275,7 @@ public class PlayActivity extends BaseActivity {
         @Override
         public void start() {
             mPlayBinding.mPlayBtn.setPlaying(1);
-            if (!isFirstSong) {
-                initSongLrc();
-            }
+            initSongLrc();
         }
 
         @Override
@@ -295,11 +287,14 @@ public class PlayActivity extends BaseActivity {
         public void end(TracksBean tracksBean) {
             playCurrentSong(tracksBean);
             mLrcPosition = -1;
+            mLrcList = null;
         }
 
         @Override
         public void error(String msg) {
             showSnackBar(msg);
+            mLrcPosition = -1;
+            mLrcList = null;
         }
 
         @Override

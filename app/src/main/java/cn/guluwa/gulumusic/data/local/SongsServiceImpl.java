@@ -109,6 +109,16 @@ public class SongsServiceImpl implements SongsService {
     }
 
     /**
+     * 从本地歌曲表删除歌曲
+     *
+     * @param localSongBean
+     */
+    @Override
+    public void deleteLocalSong(LocalSongBean localSongBean) {
+        songsDao.deleteLocalSong(localSongBean);
+    }
+
+    /**
      * 添加歌曲路径
      *
      * @param songPathBean

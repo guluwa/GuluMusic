@@ -77,11 +77,18 @@ public class MusicBinder<T> extends Binder {
      */
     private boolean isLoading;
 
+    /**
+     * mediaPlayer是否准备完成
+     */
+    private boolean isPrepare;
+
     public MusicBinder(MusicAutoService musicAutoService) {
         isLoading = false;
         this.musicAutoService = musicAutoService;
-
         mediaPlayer = new MediaPlayer();
+        mediaPlayer.setOnPreparedListener(mediaPlayer -> {
+            isPrepare = true;
+        });
         mediaPlayer.setOnCompletionListener(mediaPlayer -> {
             switch (AppManager.getInstance().getPlayMode()) {
                 case 0://单曲循环
@@ -113,6 +120,7 @@ public class MusicBinder<T> extends Binder {
      */
     public void bindSongStatusListener(OnSongStatusListener listener) {
         listeners.add(listener);
+        System.out.println("listeners: " + listeners.size());
     }
 
     /**
@@ -142,8 +150,10 @@ public class MusicBinder<T> extends Binder {
             if (listeners.size() != 0) {
                 listeners.get(listeners.size() - 1).start();
             }
-            stop();
-            playNewSong(mCurrentTime);
+            if (mediaPlayer.isPlaying()) {
+                stop();
+            }
+            playOrPauseSong(mCurrentTime);
         }
         if ("".equals(AppUtils.isExistFile(String.format("%s_%s.txt", mCurrentSong.getName(), mCurrentSong.getId()), 2))) {
             querySongWord();
@@ -178,7 +188,7 @@ public class MusicBinder<T> extends Binder {
                                         if (mediaPlayer.isPlaying()) {
                                             stop();
                                         }
-                                        playNewSong(0);
+                                        playOrPauseSong(0);
                                         if (listeners.size() != 0) {
                                             listeners.get(listeners.size() - 1).start();
                                         }
@@ -249,30 +259,12 @@ public class MusicBinder<T> extends Binder {
     }
 
     /**
-     * 暂停（继续）播放（同一首歌）
-     */
-    public void playOrPause() {
-        if (mediaPlayer != null) {
-            if (mediaPlayer.isPlaying()) {
-                mediaPlayer.pause();
-                if (listeners.size() != 0) {
-                    listeners.get(listeners.size() - 1).pause();
-                }
-            } else {
-                mediaPlayer.start();
-                if (listeners.size() != 0) {
-                    listeners.get(listeners.size() - 1).start();
-                }
-            }
-        }
-    }
-
-    /**
      * 结束播放（开始下一首）
      */
     public void stop() {
         if (mediaPlayer != null) {
             mediaPlayer.stop();
+            isPrepare = false;
             if (listeners.size() != 0) {
                 listeners.get(listeners.size() - 1).pause();
             }
@@ -280,24 +272,40 @@ public class MusicBinder<T> extends Binder {
     }
 
     /**
-     * 开始播放新一首歌(play)
+     * 开始或暂停播放
      *
      * @param currentTime
      */
-    public void playNewSong(int currentTime) {
-        if (musicAutoService.getAudioFocusManager().requestAudioFocus()) {
+    public void playOrPauseSong(int currentTime) {
+        if (!isPrepare) {
+            if (musicAutoService.getAudioFocusManager().requestAudioFocus()) {
+                if (mediaPlayer != null) {
+                    try {
+                        mediaPlayer.reset();
+                        mediaPlayer.setDataSource(mSongPath);
+                        mediaPlayer.prepare();
+                        mediaPlayer.seekTo(currentTime);
+                        mediaPlayer.start();
+                        if (listeners.size() != 0) {
+                            listeners.get(listeners.size() - 1).start();
+                        }
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                }
+            }
+        } else {
             if (mediaPlayer != null) {
-                try {
-                    mediaPlayer.reset();
-                    mediaPlayer.setDataSource(mSongPath);
-                    mediaPlayer.prepare();
-                    mediaPlayer.seekTo(currentTime);
+                if (mediaPlayer.isPlaying()) {
+                    mediaPlayer.pause();
+                    if (listeners.size() != 0) {
+                        listeners.get(listeners.size() - 1).pause();
+                    }
+                } else {
                     mediaPlayer.start();
                     if (listeners.size() != 0) {
                         listeners.get(listeners.size() - 1).start();
                     }
-                } catch (IOException e) {
-                    e.printStackTrace();
                 }
             }
         }
@@ -424,5 +432,13 @@ public class MusicBinder<T> extends Binder {
 
     public TracksBean getCurrentSong() {
         return mCurrentSong;
+    }
+
+    public boolean isPrepare() {
+        return isPrepare;
+    }
+
+    public void setPrepare(boolean prepare) {
+        isPrepare = prepare;
     }
 }

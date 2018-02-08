@@ -160,4 +160,13 @@ public class LocalSongsDataSource implements SongDataSource {
     public void addLocalSong(LocalSongBean localSongBean) {
         songsService.addLocalSong(localSongBean);
     }
+
+    /**
+     * 从本地歌曲表删除歌曲
+     *
+     * @param localSongBean
+     */
+    public void deleteLocalSong(LocalSongBean localSongBean) {
+        songsService.deleteLocalSong(localSongBean);
+    }
 }

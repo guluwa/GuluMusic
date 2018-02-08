@@ -2,6 +2,7 @@ package cn.guluwa.gulumusic.data.local.dao;
 
 import android.arch.lifecycle.LiveData;
 import android.arch.persistence.room.Dao;
+import android.arch.persistence.room.Delete;
 import android.arch.persistence.room.Insert;
 import android.arch.persistence.room.OnConflictStrategy;
 import android.arch.persistence.room.Query;
@@ -81,6 +82,14 @@ public interface SongsDao {
      */
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     void addLocalSong(LocalSongBean songBean);
+
+    /**
+     * 从本地歌曲表删除歌曲
+     *
+     * @param songBean
+     */
+    @Delete
+    void deleteLocalSong(LocalSongBean songBean);
 
     /**
      * 添加歌曲路径

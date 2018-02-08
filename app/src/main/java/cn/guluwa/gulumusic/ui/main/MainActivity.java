@@ -33,6 +33,7 @@ import cn.guluwa.gulumusic.base.BaseActivity;
 import cn.guluwa.gulumusic.data.bean.BaseSongBean;
 import cn.guluwa.gulumusic.data.bean.LocalSongBean;
 import cn.guluwa.gulumusic.data.bean.TracksBean;
+import cn.guluwa.gulumusic.data.local.LocalSongsDataSource;
 import cn.guluwa.gulumusic.databinding.ActivityMainBinding;
 import cn.guluwa.gulumusic.listener.OnSongStatusListener;
 import cn.guluwa.gulumusic.manage.AppManager;
@@ -43,6 +44,13 @@ import cn.guluwa.gulumusic.ui.play.PlayActivity;
 import cn.guluwa.gulumusic.ui.search.SearchActivity;
 import cn.guluwa.gulumusic.ui.setting.SettingsActivity;
 import cn.guluwa.gulumusic.utils.AppUtils;
+import io.reactivex.Observable;
+import io.reactivex.ObservableEmitter;
+import io.reactivex.ObservableOnSubscribe;
+import io.reactivex.android.schedulers.AndroidSchedulers;
+import io.reactivex.functions.Consumer;
+import io.reactivex.functions.Function;
+import io.reactivex.schedulers.Schedulers;
 
 public class MainActivity extends BaseActivity {
 
@@ -65,11 +73,6 @@ public class MainActivity extends BaseActivity {
      * 格式化时间
      */
     private SimpleDateFormat time;
-
-    /**
-     * 是否第一首歌
-     */
-    private boolean isFirstSong;
 
     /**
      * 是否第一次进入
@@ -113,12 +116,11 @@ public class MainActivity extends BaseActivity {
         if (mCurrentSong != null) {
             String mSongPath = AppUtils.isExistFile(String.format("%s_%s.mp3", mCurrentSong.getName(), mCurrentSong.getId()), 1);
             if (!"".equals(mSongPath)) {
-                isFirstSong = true;
                 mMainBinding.setSong(mCurrentSong);
-                mMainBinding.mPlayBtn.setPlaying(-1);
                 mMainBinding.tvCurrentSongProgress.setText(time.format(mCurrentSong.getCurrentTime()));
             }
         }
+        mMainBinding.mPlayBtn.setPlaying(-1);
     }
 
     /**
@@ -145,12 +147,7 @@ public class MainActivity extends BaseActivity {
                         } else {
                             mMainBinding.mPlayBtn.setPlaying(1);
                         }
-                        if (isFirstSong) {
-                            isFirstSong = false;
-                            playCurrentSong(mCurrentSong.getCurrentTime());
-                        } else {
-                            AppManager.getInstance().getMusicAutoService().binder.playOrPause();
-                        }
+                        playCurrentSong(mCurrentSong.getCurrentTime());
                     }
                     break;
                 case R.id.flNetCloudSongs:
@@ -218,7 +215,6 @@ public class MainActivity extends BaseActivity {
             }
             if (AppManager.getInstance().getMusicAutoService().binder.getMediaPlayer().isPlaying()) {
                 AppManager.getInstance().getMusicAutoService().binder.stop();
-                isFirstSong = false;
             }
             playCurrentSong(song);
         }, song -> {
@@ -262,12 +258,34 @@ public class MainActivity extends BaseActivity {
         builder.setView(view);
         builder.setNegativeButton("取消", (dialog, which) -> dialog.dismiss());
         builder.setPositiveButton("删除", (dialog, which) -> {
+            deleteLocalSong(cbDeleteSongFile.isChecked(), song);
             dialog.dismiss();
         });
         builder.setCancelable(false);
         AlertDialog dialog = builder.show();
         dialog.getButton(AlertDialog.BUTTON_NEGATIVE).setTextColor(Color.BLACK);
         dialog.getButton(AlertDialog.BUTTON_POSITIVE).setTextColor(Color.BLACK);
+    }
+
+    /**
+     * 删除本地歌曲
+     */
+    private void deleteLocalSong(boolean isChecked, LocalSongBean song) {
+        Observable.just(isChecked)
+                .observeOn(Schedulers.io())
+                .map(o -> {
+                    if (!isChecked) {
+                        AppUtils.deleteFile(String.format("%s_%s.mp3", song.getName(), song.getId()), 1);
+                        AppUtils.deleteFile(String.format("%s_%s.txt", song.getName(), song.getId()), 2);
+                    }
+                    LocalSongsDataSource.getInstance().deleteLocalSong(song);
+                    return isChecked;
+                })
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(o -> {
+                    showSnackBar("删除成功");
+                    mViewModel.refreshLocal(true);
+                }, throwable -> showSnackBar("删除失败"));
     }
 
     /**
@@ -358,7 +376,6 @@ public class MainActivity extends BaseActivity {
             mMainBinding.setSong(mCurrentSong);
             mMainBinding.tvCurrentSongProgress.setText("00:00");
             mMainBinding.mPlayBtn.setPlaying(-1);
-            isFirstSong = true;
         }
     }
 
@@ -370,7 +387,21 @@ public class MainActivity extends BaseActivity {
     private void playCurrentSong(TracksBean song) {
         reFreshLayout(song);
         //播放歌曲、利用服务后台播放
+        AppManager.getInstance().getMusicAutoService().binder.setPrepare(false);
         playCurrentSong(0);
+    }
+
+    /**
+     * 不换歌曲（第一次进入）
+     *
+     * @param mCurrentTime
+     */
+    private void playCurrentSong(int mCurrentTime) {
+        if (AppManager.getInstance().getMusicAutoService().binder.isPrepare()) {
+            AppManager.getInstance().getMusicAutoService().binder.playOrPauseSong(-1);
+        } else {
+            AppManager.getInstance().getMusicAutoService().binder.playCurrentSong(mCurrentSong, mCurrentTime);
+        }
     }
 
     /**
@@ -382,15 +413,6 @@ public class MainActivity extends BaseActivity {
         mCurrentSong = song;
         mMainBinding.setSong(mCurrentSong);
         mMainBinding.tvCurrentSongProgress.setText("00:00");
-    }
-
-    /**
-     * 不换歌曲（第一次进入）
-     *
-     * @param mCurrentTime
-     */
-    private void playCurrentSong(int mCurrentTime) {
-        AppManager.getInstance().getMusicAutoService().binder.playCurrentSong(mCurrentSong, mCurrentTime);
     }
 
     /**
@@ -429,7 +451,6 @@ public class MainActivity extends BaseActivity {
     /**
      * 刷新列表数据
      */
-
     private void getSongListData(String type) {
         if ("hot".equals(type)) {
             mViewModel.refreshHot(true, isFirstComing);
@@ -444,7 +465,6 @@ public class MainActivity extends BaseActivity {
     private OnSongStatusListener listener = new OnSongStatusListener() {
         @Override
         public void loading() {
-            isFirstSong = false;
             mMainBinding.mPlayBtn.setPlaying(0);
         }
 
@@ -485,13 +505,14 @@ public class MainActivity extends BaseActivity {
         if (requestCode == Contacts.REQUEST_CODE_PLAY && resultCode == Contacts.RESULT_SONG_CODE) {
             mCurrentSong = (TracksBean) data.getSerializableExtra("song");
             mMainBinding.setSong(mCurrentSong);
-            AppManager.getInstance().getMusicAutoService().binder.bindSongStatusListener(listener);
             int status;
             if (mMainBinding.mPlayBtn.getIsPlaying() != (status = data.getIntExtra("status", -1))) {
                 mMainBinding.mPlayBtn.setPlaying(status);
             }
-            if (status == 1) {
-                isFirstSong = false;
+        } else if (requestCode == Contacts.REQUEST_CODE_SEARCH && resultCode == Contacts.RESULT_SONG_CODE) {
+            boolean isDownLoadSong = data.getBooleanExtra("isDownLoadSong", false);
+            if (isDownLoadSong && "local".equals(AppManager.getInstance().getPlayStatus())) {
+                mViewModel.refreshLocal(true);
             }
         }
     }
@@ -543,7 +564,13 @@ public class MainActivity extends BaseActivity {
         int id = item.getItemId();
         switch (id) {
             case R.id.action_search:
-                startActivityForResult(new Intent(MainActivity.this, SearchActivity.class), Contacts.REQUEST_CODE_SEARCH);
+                Intent intent = new Intent(MainActivity.this, SearchActivity.class);
+                if (AppManager.getInstance().getMusicAutoService().binder.getMediaPlayer().isPlaying()) {
+                    mCurrentSong.setCurrentTime(AppManager.getInstance().getMusicAutoService().binder.getMediaPlayer().getCurrentPosition());
+                }
+                intent.putExtra("song", mCurrentSong);
+                intent.putExtra("status", mMainBinding.mPlayBtn.getIsPlaying());
+                startActivityForResult(intent, Contacts.REQUEST_CODE_SEARCH);
                 break;
         }
         return super.onOptionsItemSelected(item);

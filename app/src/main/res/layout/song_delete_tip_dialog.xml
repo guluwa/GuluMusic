@@ -11,7 +11,7 @@
         android:layout_marginStart="50dp"
         android:layout_marginTop="10dp"
         android:textColor="@color/black"
-        android:textSize="15sp"
+        android:textSize="16sp"
         app:layout_constraintBottom_toTopOf="@+id/cbDeleteSongFile"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
@@ -24,7 +24,7 @@
         android:layout_marginTop="30sp"
         android:text="保留本地歌曲、歌词文件"
         android:textColor="@color/black"
-        android:textSize="15sp"
+        android:textSize="16sp"
         android:theme="@style/CheckBoxColor"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintStart_toStartOf="parent"

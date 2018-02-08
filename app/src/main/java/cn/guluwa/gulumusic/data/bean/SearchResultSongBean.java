@@ -28,6 +28,16 @@ public class SearchResultSongBean {
     private String source;
     private List<String> artist;
 
+    private boolean isDownLoad;
+
+    public boolean isDownLoad() {
+        return isDownLoad;
+    }
+
+    public void setDownLoad(boolean downLoad) {
+        isDownLoad = downLoad;
+    }
+
     public String getId() {
         return id;
     }
