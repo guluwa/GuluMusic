@@ -520,8 +520,7 @@ public class MainActivity extends BaseActivity {
     @Override
     protected void onStop() {
         if (AppManager.getInstance().getMusicAutoService() != null &&
-                AppManager.getInstance().getMusicAutoService().binder.getMediaPlayer() != null &&
-                mCurrentSong != null) {
+                AppManager.getInstance().getMusicAutoService().binder.getMediaPlayer() != null && mCurrentSong != null) {
             if (AppManager.getInstance().getMusicAutoService().binder.getMediaPlayer().isPlaying()) {
                 mCurrentSong.setDuration(AppManager.getInstance().getMusicAutoService().binder.getMediaPlayer().getDuration());
                 mCurrentSong.setCurrentTime(AppManager.getInstance().getMusicAutoService().binder.getMediaPlayer().getCurrentPosition());
