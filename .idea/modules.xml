@@ -2,7 +2,7 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/GuluMusic.iml" filepath="$PROJECT_DIR$/GuluMusic.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/GuluMusic.iml" filepath="$PROJECT_DIR$/.idea/GuluMusic.iml" />
       <module fileurl="file://$PROJECT_DIR$/app/app.iml" filepath="$PROJECT_DIR$/app/app.iml" />
     </modules>
   </component>

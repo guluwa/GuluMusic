@@ -3,6 +3,7 @@ package cn.guluwa.gulumusic.service;
 import android.app.Service;
 import android.content.Intent;
 import android.os.IBinder;
+import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
 
 import cn.guluwa.gulumusic.manage.AppManager;
@@ -51,7 +52,7 @@ public class MusicAutoService extends Service {
         binder.getMediaPlayer().reset();
         binder.getMediaPlayer().release();
         binder.setMediaPlayer(null);
-        AppManager.getInstance().setMusicAutoService(null);
+        AppManager.Companion.getInstance().setMusicAutoService(null);
         super.onDestroy();
         Log.w(TAG, "MusicAutoService in onDestroy");
     }

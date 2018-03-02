@@ -117,22 +117,22 @@ public class ProgressView extends View {
     private void initPaint() {
         mProgressColor = getResources().getColor(R.color.play_view_black);
         mIndicatorColor = getResources().getColor(R.color.play_view_gray);
-        mViewHeight = AppUtils.dp2px(getContext(), 16);
-        mTextSize = AppUtils.sp2px(getContext(), 12);
+        mViewHeight = AppUtils.INSTANCE.dp2px(getContext(), 16);
+        mTextSize = AppUtils.INSTANCE.sp2px(getContext(), 12);
         mSongPlayLength = "00:00";
         mSongTotalLength = "00:00";
         mProgress = 0;
         time = new SimpleDateFormat("mm:ss");
 
         mTopProgressPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
-        mTopProgressPaint.setStrokeWidth(AppUtils.dp2px(getContext(), 2));
+        mTopProgressPaint.setStrokeWidth(AppUtils.INSTANCE.dp2px(getContext(), 2));
         mTopProgressPaint.setStyle(Paint.Style.FILL_AND_STROKE);
         mTopProgressPaint.setColor(mProgressColor);
         mTopProgressPaint.setStrokeJoin(Paint.Join.ROUND);
         mTopProgressPaint.setStrokeCap(Paint.Cap.ROUND);
 
         mBtmProgressPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
-        mBtmProgressPaint.setStrokeWidth(AppUtils.dp2px(getContext(), 2));
+        mBtmProgressPaint.setStrokeWidth(AppUtils.INSTANCE.dp2px(getContext(), 2));
         mBtmProgressPaint.setStyle(Paint.Style.STROKE);
         mBtmProgressPaint.setColor(mIndicatorColor);
         mBtmProgressPaint.setStrokeJoin(Paint.Join.ROUND);
@@ -145,9 +145,9 @@ public class ProgressView extends View {
 
         Paint.FontMetrics fontMetrics = mTextPaint.getFontMetrics();
         yOffset = -(fontMetrics.ascent + fontMetrics.descent) / 2;
-        mTextWidth = mTextSize * mSongTotalLength.length() / 2 + AppUtils.dp2px(getContext(), 10);
-        mIndicatorCircleSmallRadius = AppUtils.dp2px(getContext(), 2);
-        mIndicatorCircleBigRadius = AppUtils.dp2px(getContext(), 4);
+        mTextWidth = mTextSize * mSongTotalLength.length() / 2 + AppUtils.INSTANCE.dp2px(getContext(), 10);
+        mIndicatorCircleSmallRadius = AppUtils.INSTANCE.dp2px(getContext(), 2);
+        mIndicatorCircleBigRadius = AppUtils.INSTANCE.dp2px(getContext(), 4);
     }
 
     @Override

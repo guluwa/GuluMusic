@@ -99,7 +99,7 @@ public class SearchActivity extends BaseActivity {
      * 搜索平台切换动画
      */
     private void initAnimation() {
-        switch (AppManager.getInstance().getSearchPlatform()) {
+        switch (AppManager.Companion.getInstance().getSearchPlatform()) {
             case Contacts.TYPE_TENCENT:
                 color = R.color.tencent_music_color;
                 mSearchBinding.mToolBar.setTitle(R.string.type_qq);
@@ -124,7 +124,7 @@ public class SearchActivity extends BaseActivity {
         if (mSearchBinding.mRecyclerView.getAdapter() != null) {
             ((SearchResultListAdapter) mSearchBinding.mRecyclerView.getAdapter()).setColor(color);
         }
-        getWindow().setStatusBarColor(AppUtils.deepenColor(getResources().getColor(color)));
+        getWindow().setStatusBarColor(AppUtils.INSTANCE.deepenColor(getResources().getColor(color)));
         mSearchBinding.mToolBar.setBackgroundColor(getResources().getColor(color));
         mSearchBinding.mToolBar.post(() -> {
             int cy = (mSearchBinding.mToolBar.getTop() + mSearchBinding.mToolBar.getBottom()) / 2;
@@ -157,7 +157,7 @@ public class SearchActivity extends BaseActivity {
         time = new SimpleDateFormat("mm:ss");
         reFreshLayout((TracksBean) getIntent().getSerializableExtra("song"));
         mSearchBinding.mPlayBtn.setPlaying(getIntent().getIntExtra("status", -1));
-        AppManager.getInstance().getMusicAutoService().binder.bindSongStatusListener(listener);
+        AppManager.Companion.getInstance().getMusicAutoService().binder.bindSongStatusListener(listener);
     }
 
     /**
@@ -170,8 +170,8 @@ public class SearchActivity extends BaseActivity {
                 switch (view.getId()) {
                     case R.id.mBottomPlayInfo:
                         Intent intent = new Intent(SearchActivity.this, PlayActivity.class);
-                        if (AppManager.getInstance().getMusicAutoService().binder.getMediaPlayer().isPlaying()) {
-                            mCurrentSong.setCurrentTime(AppManager.getInstance().getMusicAutoService().binder.getMediaPlayer().getCurrentPosition());
+                        if (AppManager.Companion.getInstance().getMusicAutoService().binder.getMediaPlayer().isPlaying()) {
+                            mCurrentSong.setCurrentTime(AppManager.Companion.getInstance().getMusicAutoService().binder.getMediaPlayer().getCurrentPosition());
                         }
                         intent.putExtra("song", mCurrentSong);
                         intent.putExtra("status", mSearchBinding.mPlayBtn.getIsPlaying());
@@ -179,9 +179,9 @@ public class SearchActivity extends BaseActivity {
                         ActivityCompat.startActivityForResult(SearchActivity.this, intent, Contacts.REQUEST_CODE_PLAY, options.toBundle());
                         break;
                     case R.id.mPlayBtn:
-                        if (AppManager.getInstance().getMusicAutoService() != null &&
-                                AppManager.getInstance().getMusicAutoService().binder.getMediaPlayer() != null) {
-                            if (AppManager.getInstance().getMusicAutoService().binder.getMediaPlayer().isPlaying()) {
+                        if (AppManager.Companion.getInstance().getMusicAutoService() != null &&
+                                AppManager.Companion.getInstance().getMusicAutoService().binder.getMediaPlayer() != null) {
+                            if (AppManager.Companion.getInstance().getMusicAutoService().binder.getMediaPlayer().isPlaying()) {
                                 mSearchBinding.mPlayBtn.setPlaying(-1);
                             } else {
                                 mSearchBinding.mPlayBtn.setPlaying(1);
@@ -217,11 +217,11 @@ public class SearchActivity extends BaseActivity {
     private void initRecyclerView() {
         SearchResultListAdapter mAdapter = new SearchResultListAdapter(song -> {
             if (song instanceof SearchResultSongBean) {
-                if (AppManager.getInstance().getMusicAutoService().binder.getMediaPlayer().isPlaying()) {
-                    if (((SearchResultSongBean) song).getId().equals(AppManager.getInstance().getMusicAutoService().binder.getCurrentSong().getId())) {
+                if (AppManager.Companion.getInstance().getMusicAutoService().binder.getMediaPlayer().isPlaying()) {
+                    if (((SearchResultSongBean) song).getId().equals(AppManager.Companion.getInstance().getMusicAutoService().binder.getCurrentSong().getId())) {
                         return;
                     }
-                    AppManager.getInstance().getMusicAutoService().binder.stop();
+                    AppManager.Companion.getInstance().getMusicAutoService().binder.stop();
                 }
                 playCurrentSong((SearchResultSongBean) song);
             } else {
@@ -244,24 +244,24 @@ public class SearchActivity extends BaseActivity {
      * @param song
      */
     private void playCurrentSong(SearchResultSongBean song) {
-        reFreshLayout(AppUtils.getSongBean(song));
+        reFreshLayout(AppUtils.INSTANCE.getSongBean(song));
         if (song.isDownLoad()) {
             Observable.just("")
                     .observeOn(Schedulers.io())
-                    .map(s -> LocalSongsDataSource.getInstance().queryLocalSong(song.getId(), song.getName()))
+                    .map(s -> LocalSongsDataSource.Companion.getInstance().queryLocalSong(song.getId(), song.getName()))
                     .observeOn(AndroidSchedulers.mainThread())
                     .subscribe(localSongBean -> {
-                                mCurrentSong = AppUtils.getSongBean(localSongBean);
-                                AppManager.getInstance().getMusicAutoService().binder.setPrepare(false);
+                                mCurrentSong = AppUtils.INSTANCE.getSongBean(localSongBean);
+                                AppManager.Companion.getInstance().getMusicAutoService().binder.setPrepare(false);
                                 playCurrentSong(0);
                             },
                             throwable -> {
-                                AppManager.getInstance().getMusicAutoService().binder.setPrepare(false);
+                                AppManager.Companion.getInstance().getMusicAutoService().binder.setPrepare(false);
                                 playCurrentSong(0);
                             });
         } else {
             isDownLoadSong = true;
-            AppManager.getInstance().getMusicAutoService().binder.setPrepare(false);
+            AppManager.Companion.getInstance().getMusicAutoService().binder.setPrepare(false);
             playCurrentSong(0);
         }
     }
@@ -274,7 +274,7 @@ public class SearchActivity extends BaseActivity {
     private void playCurrentSong(TracksBean song) {
         reFreshLayout(song);
         //播放歌曲、利用服务后台播放
-        AppManager.getInstance().getMusicAutoService().binder.setPrepare(false);
+        AppManager.Companion.getInstance().getMusicAutoService().binder.setPrepare(false);
         playCurrentSong(0);
     }
 
@@ -284,10 +284,10 @@ public class SearchActivity extends BaseActivity {
      * @param mCurrentTime
      */
     private void playCurrentSong(int mCurrentTime) {
-        if (AppManager.getInstance().getMusicAutoService().binder.isPrepare()) {
-            AppManager.getInstance().getMusicAutoService().binder.playOrPauseSong(-1);
+        if (AppManager.Companion.getInstance().getMusicAutoService().binder.isPrepare()) {
+            AppManager.Companion.getInstance().getMusicAutoService().binder.playOrPauseSong(-1);
         } else {
-            AppManager.getInstance().getMusicAutoService().binder.playCurrentSong(mCurrentSong, mCurrentTime);
+            AppManager.Companion.getInstance().getMusicAutoService().binder.playCurrentSong(mCurrentSong, mCurrentTime);
         }
     }
 
@@ -316,7 +316,7 @@ public class SearchActivity extends BaseActivity {
                 mSearchBinding.mSwipeRefreshLayout.setRefreshing(false);
                 return;
             }
-            switch (listViewDataBean.status) {
+            switch (listViewDataBean.getStatus()) {
                 case Loading:
                     if (page == 1)
                         mSearchBinding.mSwipeRefreshLayout.setRefreshing(true);
@@ -326,10 +326,10 @@ public class SearchActivity extends BaseActivity {
                     mViewModel.refreshSearchSongs(keyWord, page, false);
                     mSearchBinding.mSwipeRefreshLayout.setRefreshing(false);
                     String msg;
-                    if (listViewDataBean.throwable instanceof BaseException) {
-                        msg = ((BaseException) listViewDataBean.throwable).getMsg();
+                    if (listViewDataBean.getThrowable() instanceof BaseException) {
+                        msg = ((BaseException) listViewDataBean.getThrowable()).getMsg();
                     } else {
-                        msg = listViewDataBean.throwable.getMessage();
+                        msg = listViewDataBean.getThrowable().getMessage();
                     }
                     if (((SearchResultListAdapter) mSearchBinding.mRecyclerView.getAdapter()).getData().size() == 1 &&
                             ((SearchResultListAdapter) mSearchBinding.mRecyclerView.getAdapter()).getData().get(0) instanceof String) {
@@ -354,7 +354,7 @@ public class SearchActivity extends BaseActivity {
                     isLoadMoreIng = false;
                     mViewModel.refreshSearchSongs(keyWord, page, false);
                     mSearchBinding.mSwipeRefreshLayout.setRefreshing(false);
-                    setData(listViewDataBean.data);
+                    setData(listViewDataBean.getData());
                     break;
             }
         });
@@ -411,32 +411,32 @@ public class SearchActivity extends BaseActivity {
                 onBackPressed();
                 break;
             case R.id.action_search_netease:
-                if (!Contacts.TYPE_NETEASE.equals(AppManager.getInstance().getSearchPlatform())) {
-                    AppManager.getInstance().setSearchPlatform(Contacts.TYPE_NETEASE);
+                if (!Contacts.TYPE_NETEASE.equals(AppManager.Companion.getInstance().getSearchPlatform())) {
+                    AppManager.Companion.getInstance().setSearchPlatform(Contacts.TYPE_NETEASE);
                     initAnimation();
                 }
                 break;
             case R.id.action_search_tencent:
-                if (!Contacts.TYPE_TENCENT.equals(AppManager.getInstance().getSearchPlatform())) {
-                    AppManager.getInstance().setSearchPlatform(Contacts.TYPE_TENCENT);
+                if (!Contacts.TYPE_TENCENT.equals(AppManager.Companion.getInstance().getSearchPlatform())) {
+                    AppManager.Companion.getInstance().setSearchPlatform(Contacts.TYPE_TENCENT);
                     initAnimation();
                 }
                 break;
             case R.id.action_search_xia_mi:
-                if (!Contacts.TYPE_XIAMI.equals(AppManager.getInstance().getSearchPlatform())) {
-                    AppManager.getInstance().setSearchPlatform(Contacts.TYPE_XIAMI);
+                if (!Contacts.TYPE_XIAMI.equals(AppManager.Companion.getInstance().getSearchPlatform())) {
+                    AppManager.Companion.getInstance().setSearchPlatform(Contacts.TYPE_XIAMI);
                     initAnimation();
                 }
                 break;
             case R.id.action_search_ku_gou:
-                if (!Contacts.TYPE_KUGOU.equals(AppManager.getInstance().getSearchPlatform())) {
-                    AppManager.getInstance().setSearchPlatform(Contacts.TYPE_KUGOU);
+                if (!Contacts.TYPE_KUGOU.equals(AppManager.Companion.getInstance().getSearchPlatform())) {
+                    AppManager.Companion.getInstance().setSearchPlatform(Contacts.TYPE_KUGOU);
                     initAnimation();
                 }
                 break;
             case R.id.action_search_bai_du:
-                if (!Contacts.TYPE_BAIDU.equals(AppManager.getInstance().getSearchPlatform())) {
-                    AppManager.getInstance().setSearchPlatform(Contacts.TYPE_BAIDU);
+                if (!Contacts.TYPE_BAIDU.equals(AppManager.Companion.getInstance().getSearchPlatform())) {
+                    AppManager.Companion.getInstance().setSearchPlatform(Contacts.TYPE_BAIDU);
                     initAnimation();
                 }
                 break;
@@ -480,8 +480,8 @@ public class SearchActivity extends BaseActivity {
         @Override
         public void start() {
             mSearchBinding.mPlayBtn.setPlaying(1);
-            if (!mCurrentSong.getId().equals(AppManager.getInstance().getMusicAutoService().binder.getCurrentSong().getId())) {
-                reFreshLayout(AppManager.getInstance().getMusicAutoService().binder.getCurrentSong());
+            if (!mCurrentSong.getId().equals(AppManager.Companion.getInstance().getMusicAutoService().binder.getCurrentSong().getId())) {
+                reFreshLayout(AppManager.Companion.getInstance().getMusicAutoService().binder.getCurrentSong());
             }
         }
 
@@ -510,8 +510,8 @@ public class SearchActivity extends BaseActivity {
 
     @Override
     protected void onDestroy() {
-        AppManager.getInstance().getMusicAutoService().binder.unBindSongStatusListener(listener);
-        AppUtils.setString(Contacts.SEARCH_PLATFORM, AppManager.getInstance().getSearchPlatform());
+        AppManager.Companion.getInstance().getMusicAutoService().binder.unBindSongStatusListener(listener);
+        AppUtils.INSTANCE.setString(Contacts.SEARCH_PLATFORM, AppManager.Companion.getInstance().getSearchPlatform());
         super.onDestroy();
     }
 

@@ -81,7 +81,7 @@ public class PlayListAdapter extends RecyclerView.Adapter<PlayListAdapter.ViewHo
                 if (data.get(getAdapterPosition()) instanceof TracksBean) {
                     listener.click((TracksBean) data.get(getAdapterPosition()));
                 } else {
-                    listener.click(AppUtils.getSongBean((LocalSongBean) data.get(getAdapterPosition())));
+                    listener.click(AppUtils.INSTANCE.getSongBean((LocalSongBean) data.get(getAdapterPosition())));
                 }
             });
             mViewBinder.setLongClickListener(view -> {

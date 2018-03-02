@@ -25,8 +25,6 @@ import cn.guluwa.gulumusic.listener.OnResultListener;
 
 public class MainViewModel extends ViewModel {
 
-    private SongsRepository songsRepository = SongsRepository.getInstance();
-
     //热门歌曲刷新
     private MutableLiveData<FreshBean> mHotSongListFresh;
     //热门歌曲
@@ -41,8 +39,8 @@ public class MainViewModel extends ViewModel {
         if (mHotSongs == null) {
             mHotSongListFresh = new MutableLiveData<>();
             mHotSongs = Transformations.switchMap(mHotSongListFresh, input -> {
-                if (input.isFresh) {
-                    return songsRepository.queryNetCloudHotSong(input.isFirstComing);
+                if (input.isFresh()) {
+                    return SongsRepository.Companion.getInstance().queryNetCloudHotSong(input.isFirstComing());
                 } else {
                     return null;
                 }
@@ -76,7 +74,7 @@ public class MainViewModel extends ViewModel {
             mLocalSongListFresh = new MutableLiveData<>();
             mLocalSongs = Transformations.switchMap(mLocalSongListFresh, input -> {
                 if (input) {
-                    return songsRepository.queryLocalSong();
+                    return SongsRepository.Companion.getInstance().queryLocalSong();
                 } else {
                     return null;
                 }
@@ -108,8 +106,8 @@ public class MainViewModel extends ViewModel {
         if (mSearchSongs == null) {
             mSearchSongListFresh = new MutableLiveData<>();
             mSearchSongs = Transformations.switchMap(mSearchSongListFresh, input -> {
-                if (input.isFresh) {
-                    return songsRepository.searchSongByKeyWord(input);
+                if (input.isFresh()) {
+                    return SongsRepository.Companion.getInstance().searchSongByKeyWord(input);
                 } else {
                     return null;
                 }

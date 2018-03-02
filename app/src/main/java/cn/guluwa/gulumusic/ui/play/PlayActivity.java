@@ -88,9 +88,9 @@ public class PlayActivity extends BaseActivity {
         mPlayBinding.setClickListener(view -> {
             switch (view.getId()) {
                 case R.id.mPlayBtn:
-                    if (AppManager.getInstance().getMusicAutoService() != null &&
-                            AppManager.getInstance().getMusicAutoService().binder.getMediaPlayer() != null) {
-                        if (AppManager.getInstance().getMusicAutoService().binder.getMediaPlayer().isPlaying()) {
+                    if (AppManager.Companion.getInstance().getMusicAutoService() != null &&
+                            AppManager.Companion.getInstance().getMusicAutoService().binder.getMediaPlayer() != null) {
+                        if (AppManager.Companion.getInstance().getMusicAutoService().binder.getMediaPlayer().isPlaying()) {
                             mPlayBinding.mPlayBtn.setPlaying(-1);
                         } else {
                             mPlayBinding.mPlayBtn.setPlaying(1);
@@ -102,20 +102,20 @@ public class PlayActivity extends BaseActivity {
                     onBackPressed();
                     break;
                 case R.id.ivPlayMode:
-                    int mode = AppUtils.getPlayMode(AppManager.getInstance().getPlayMode());
-                    AppManager.getInstance().setPlayMode(mode);
+                    int mode = AppUtils.INSTANCE.getPlayMode(AppManager.Companion.getInstance().getPlayMode());
+                    AppManager.Companion.getInstance().setPlayMode(mode);
                     showPlayModeImg(mode);
                     break;
                 case R.id.ivPlayMenu:
                     showSnackBar("菜单");
                     break;
                 case R.id.mLastSongBtn:
-                    AppManager.getInstance().getMusicAutoService().binder.stop();
-                    playCurrentSong(AppManager.getInstance().getMusicAutoService().binder.getLastSong(mCurrentSong));
+                    AppManager.Companion.getInstance().getMusicAutoService().binder.stop();
+                    playCurrentSong(AppManager.Companion.getInstance().getMusicAutoService().binder.getLastSong(mCurrentSong));
                     break;
                 case R.id.mNextSongBtn:
-                    AppManager.getInstance().getMusicAutoService().binder.stop();
-                    playCurrentSong(AppManager.getInstance().getMusicAutoService().binder.getNextSong(mCurrentSong));
+                    AppManager.Companion.getInstance().getMusicAutoService().binder.stop();
+                    playCurrentSong(AppManager.Companion.getInstance().getMusicAutoService().binder.getNextSong(mCurrentSong));
                     break;
             }
         });
@@ -145,9 +145,9 @@ public class PlayActivity extends BaseActivity {
         mPlayBinding.mPlayBtn.setPlaying(getIntent().getIntExtra("status", -1));
         mPlayBinding.mProgressView.setSongPlayLength(mCurrentSong.getCurrentTime(), mCurrentSong.getDuration());
         mPlayBinding.setSong(mCurrentSong);
-        showPlayModeImg(AppManager.getInstance().getPlayMode());
+        showPlayModeImg(AppManager.Companion.getInstance().getPlayMode());
         initSongLrc();
-        AppManager.getInstance().getMusicAutoService().binder.bindSongStatusListener(listener);
+        AppManager.Companion.getInstance().getMusicAutoService().binder.bindSongStatusListener(listener);
     }
 
     /**
@@ -156,7 +156,7 @@ public class PlayActivity extends BaseActivity {
     private void initSongLrc() {
         if (mLrcList == null) {
             try {
-                mLrcList = LrcParser.parserLocal(String.format("%s_%s.txt", mCurrentSong.getName(), mCurrentSong.getId()));
+                mLrcList = LrcParser.INSTANCE.parserLocal(String.format("%s_%s.txt", mCurrentSong.getName(), mCurrentSong.getId()));
                 for (int i = 0; i < mLrcList.size(); i++) {
                     if (mLrcList.get(i).getTime() > mCurrentSong.getCurrentTime()) {
                         if (i != 0) {
@@ -182,7 +182,7 @@ public class PlayActivity extends BaseActivity {
      * 图片初始化
      */
     private void initSongPic() {
-        Glide.with(MyApplication.getContext()).asBitmap().apply(new RequestOptions().centerCrop())
+        Glide.with(MyApplication.Companion.getContext()).asBitmap().apply(new RequestOptions().centerCrop())
                 .load(mCurrentSong.getAl().getPicUrl())
                 .apply(new RequestOptions().transform(new BlurTransformation(25)).override(100, 100))
                 .listener(new RequestListener<Bitmap>() {
@@ -236,7 +236,7 @@ public class PlayActivity extends BaseActivity {
         mPlayBinding.mProgressView.setSongPlayLength(0, 0);
         initSongPic();
         //播放歌曲、利用服务后台播放
-        AppManager.getInstance().getMusicAutoService().binder.setPrepare(false);
+        AppManager.Companion.getInstance().getMusicAutoService().binder.setPrepare(false);
         playCurrentSong(0);
     }
 
@@ -246,10 +246,10 @@ public class PlayActivity extends BaseActivity {
      * @param mCurrentTime
      */
     private void playCurrentSong(int mCurrentTime) {
-        if (AppManager.getInstance().getMusicAutoService().binder.isPrepare()) {
-            AppManager.getInstance().getMusicAutoService().binder.playOrPauseSong(-1);
+        if (AppManager.Companion.getInstance().getMusicAutoService().binder.isPrepare()) {
+            AppManager.Companion.getInstance().getMusicAutoService().binder.playOrPauseSong(-1);
         } else {
-            AppManager.getInstance().getMusicAutoService().binder.playCurrentSong(mCurrentSong, mCurrentTime);
+            AppManager.Companion.getInstance().getMusicAutoService().binder.playCurrentSong(mCurrentSong, mCurrentTime);
         }
     }
 
@@ -336,7 +336,7 @@ public class PlayActivity extends BaseActivity {
 
     @Override
     protected void onDestroy() {
-        AppManager.getInstance().getMusicAutoService().binder.unBindSongStatusListener(listener);
+        AppManager.Companion.getInstance().getMusicAutoService().binder.unBindSongStatusListener(listener);
         super.onDestroy();
     }
 }

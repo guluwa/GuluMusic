@@ -199,10 +199,10 @@ public class PlayButton extends View {
         super(context, attrs, defStyleAttr);
 
         TypedArray typedArray = context.getTheme().obtainStyledAttributes(attrs, R.styleable.PlayButton, defStyleAttr, 0);
-        mLineWidth = AppUtils.dp2px(getContext(), typedArray.getInt(R.styleable.PlayButton_lineWidth, 2));
-        mTriangleWidth = AppUtils.dp2px(getContext(), typedArray.getInt(R.styleable.PlayButton_triangleWidth, 20));
-        mLineXOffset = AppUtils.dp2px(getContext(), typedArray.getInt(R.styleable.PlayButton_lineXOffset, 8));
-        mLineYOffset = AppUtils.dp2px(getContext(), typedArray.getInt(R.styleable.PlayButton_lineYOffset, 12));
+        mLineWidth = AppUtils.INSTANCE.dp2px(getContext(), typedArray.getInt(R.styleable.PlayButton_lineWidth, 2));
+        mTriangleWidth = AppUtils.INSTANCE.dp2px(getContext(), typedArray.getInt(R.styleable.PlayButton_triangleWidth, 20));
+        mLineXOffset = AppUtils.INSTANCE.dp2px(getContext(), typedArray.getInt(R.styleable.PlayButton_lineXOffset, 8));
+        mLineYOffset = AppUtils.INSTANCE.dp2px(getContext(), typedArray.getInt(R.styleable.PlayButton_lineYOffset, 12));
         typedArray.recycle();
 
         initPaint();

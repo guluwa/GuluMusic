@@ -74,9 +74,9 @@ public class DownBackButton extends View {
     private void initPaint() {
         mBackColor = getResources().getColor(R.color.black);
         mLineColor = Color.WHITE;
-        width = AppUtils.dp2px(getContext(), 2);
-        mViewWidth = mViewHeight = AppUtils.dp2px(getContext(), 24);
-        mRadius = AppUtils.dp2px(getContext(), 12);
+        width = AppUtils.INSTANCE.dp2px(getContext(), 2);
+        mViewWidth = mViewHeight = AppUtils.INSTANCE.dp2px(getContext(), 24);
+        mRadius = AppUtils.INSTANCE.dp2px(getContext(), 12);
 
         paint = new Paint(Paint.ANTI_ALIAS_FLAG);
         paint.setStrokeWidth(width);
@@ -84,9 +84,9 @@ public class DownBackButton extends View {
         paint.setStrokeJoin(Paint.Join.ROUND);
 
         mViewPath = new Path();
-        mViewPath.moveTo(AppUtils.dp2px(getContext(), 8), AppUtils.dp2px(getContext(), 12));
-        mViewPath.lineTo(AppUtils.dp2px(getContext(), 12), AppUtils.dp2px(getContext(), 15));
-        mViewPath.lineTo(AppUtils.dp2px(getContext(), 16), AppUtils.dp2px(getContext(), 12));
+        mViewPath.moveTo(AppUtils.INSTANCE.dp2px(getContext(), 8), AppUtils.INSTANCE.dp2px(getContext(), 12));
+        mViewPath.lineTo(AppUtils.INSTANCE.dp2px(getContext(), 12), AppUtils.INSTANCE.dp2px(getContext(), 15));
+        mViewPath.lineTo(AppUtils.INSTANCE.dp2px(getContext(), 16), AppUtils.INSTANCE.dp2px(getContext(), 12));
     }
 
     @Override

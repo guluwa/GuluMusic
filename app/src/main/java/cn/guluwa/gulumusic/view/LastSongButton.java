@@ -63,8 +63,8 @@ public class LastSongButton extends View {
 
     private void initPaint() {
         color = getResources().getColor(R.color.play_view_black);
-        width = AppUtils.dp2px(getContext(), 2);
-        mViewWidth = mViewHeight = AppUtils.dp2px(getContext(), 20);
+        width = AppUtils.INSTANCE.dp2px(getContext(), 2);
+        mViewWidth = mViewHeight = AppUtils.INSTANCE.dp2px(getContext(), 20);
 
         paint = new Paint(Paint.ANTI_ALIAS_FLAG);
         paint.setStyle(Paint.Style.STROKE);

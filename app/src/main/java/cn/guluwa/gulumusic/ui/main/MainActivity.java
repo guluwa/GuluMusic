@@ -103,7 +103,7 @@ public class MainActivity extends BaseActivity {
         setSupportActionBar(mMainBinding.mToolBar);
         getSupportActionBar().setHomeButtonEnabled(true); //设置返回键可用
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
-        getWindow().setStatusBarColor(AppUtils.deepenColor(Color.rgb(85, 160, 122)));
+        getWindow().setStatusBarColor(AppUtils.INSTANCE.deepenColor(Color.rgb(85, 160, 122)));
     }
 
     /**
@@ -111,10 +111,10 @@ public class MainActivity extends BaseActivity {
      */
     private void initData() {
         isFirstComing = true;
-        mCurrentSong = new Gson().fromJson(AppUtils.getString("mCurrentSong", ""), TracksBean.class);
+        mCurrentSong = new Gson().fromJson(AppUtils.INSTANCE.getString("mCurrentSong", ""), TracksBean.class);
         time = new SimpleDateFormat("mm:ss");
         if (mCurrentSong != null) {
-            String mSongPath = AppUtils.isExistFile(String.format("%s_%s.mp3", mCurrentSong.getName(), mCurrentSong.getId()), 1);
+            String mSongPath = AppUtils.INSTANCE.isExistFile(String.format("%s_%s.mp3", mCurrentSong.getName(), mCurrentSong.getId()), 1);
             if (!"".equals(mSongPath)) {
                 mMainBinding.setSong(mCurrentSong);
                 mMainBinding.tvCurrentSongProgress.setText(time.format(mCurrentSong.getCurrentTime()));
@@ -131,8 +131,8 @@ public class MainActivity extends BaseActivity {
             switch (view.getId()) {
                 case R.id.mBottomPlayInfo:
                     Intent intent = new Intent(MainActivity.this, PlayActivity.class);
-                    if (AppManager.getInstance().getMusicAutoService().binder.getMediaPlayer().isPlaying()) {
-                        mCurrentSong.setCurrentTime(AppManager.getInstance().getMusicAutoService().binder.getMediaPlayer().getCurrentPosition());
+                    if (AppManager.Companion.getInstance().getMusicAutoService().binder.getMediaPlayer().isPlaying()) {
+                        mCurrentSong.setCurrentTime(AppManager.Companion.getInstance().getMusicAutoService().binder.getMediaPlayer().getCurrentPosition());
                     }
                     intent.putExtra("song", mCurrentSong);
                     intent.putExtra("status", mMainBinding.mPlayBtn.getIsPlaying());
@@ -140,9 +140,9 @@ public class MainActivity extends BaseActivity {
                     ActivityCompat.startActivityForResult(this, intent, Contacts.REQUEST_CODE_PLAY, options.toBundle());
                     break;
                 case R.id.mPlayBtn:
-                    if (AppManager.getInstance().getMusicAutoService() != null &&
-                            AppManager.getInstance().getMusicAutoService().binder.getMediaPlayer() != null) {
-                        if (AppManager.getInstance().getMusicAutoService().binder.getMediaPlayer().isPlaying()) {
+                    if (AppManager.Companion.getInstance().getMusicAutoService() != null &&
+                            AppManager.Companion.getInstance().getMusicAutoService().binder.getMediaPlayer() != null) {
+                        if (AppManager.Companion.getInstance().getMusicAutoService().binder.getMediaPlayer().isPlaying()) {
                             mMainBinding.mPlayBtn.setPlaying(-1);
                         } else {
                             mMainBinding.mPlayBtn.setPlaying(1);
@@ -152,14 +152,14 @@ public class MainActivity extends BaseActivity {
                     break;
                 case R.id.flNetCloudSongs:
                     mMainBinding.mDrawerLayout.closeDrawer(Gravity.START);
-                    if ("hot".equals(AppManager.getInstance().getPlayStatus())) {
+                    if ("hot".equals(AppManager.Companion.getInstance().getPlayStatus())) {
                         return;
                     }
                     getSongListData("hot");
                     break;
                 case R.id.flLocalSongs:
                     mMainBinding.mDrawerLayout.closeDrawer(Gravity.START);
-                    if ("local".equals(AppManager.getInstance().getPlayStatus())) {
+                    if ("local".equals(AppManager.Companion.getInstance().getPlayStatus())) {
                         return;
                     }
                     getSongListData("local");
@@ -200,7 +200,7 @@ public class MainActivity extends BaseActivity {
         mMainBinding.mSwipeRefreshLayout.setColorSchemeColors(
                 getResources().getColor(R.color.yellow),
                 getResources().getColor(R.color.green));
-        mMainBinding.mSwipeRefreshLayout.setOnRefreshListener(() -> getSongListData(AppManager.getInstance().getPlayStatus()));
+        mMainBinding.mSwipeRefreshLayout.setOnRefreshListener(() -> getSongListData(AppManager.Companion.getInstance().getPlayStatus()));
     }
 
     /**
@@ -213,8 +213,8 @@ public class MainActivity extends BaseActivity {
                     return;
                 }
             }
-            if (AppManager.getInstance().getMusicAutoService().binder.getMediaPlayer().isPlaying()) {
-                AppManager.getInstance().getMusicAutoService().binder.stop();
+            if (AppManager.Companion.getInstance().getMusicAutoService().binder.getMediaPlayer().isPlaying()) {
+                AppManager.Companion.getInstance().getMusicAutoService().binder.stop();
             }
             playCurrentSong(song);
         }, song -> {
@@ -275,10 +275,10 @@ public class MainActivity extends BaseActivity {
                 .observeOn(Schedulers.io())
                 .map(o -> {
                     if (!isChecked) {
-                        AppUtils.deleteFile(String.format("%s_%s.mp3", song.getName(), song.getId()), 1);
-                        AppUtils.deleteFile(String.format("%s_%s.txt", song.getName(), song.getId()), 2);
+                        AppUtils.INSTANCE.deleteFile(String.format("%s_%s.mp3", song.getName(), song.getId()), 1);
+                        AppUtils.INSTANCE.deleteFile(String.format("%s_%s.txt", song.getName(), song.getId()), 2);
                     }
-                    LocalSongsDataSource.getInstance().deleteLocalSong(song);
+                    LocalSongsDataSource.Companion.getInstance().deleteLocalSong(song);
                     return isChecked;
                 })
                 .observeOn(AndroidSchedulers.mainThread())
@@ -300,13 +300,13 @@ public class MainActivity extends BaseActivity {
                 mMainBinding.mSwipeRefreshLayout.setRefreshing(false);
                 return;
             }
-            switch (data.status) {
+            switch (data.getStatus()) {
                 case Loading:
                     mMainBinding.mSwipeRefreshLayout.setRefreshing(true);
                     break;
                 case Error:
                     mViewModel.refreshHot(false, isFirstComing);
-                    showSnackBar(data.throwable.getMessage());
+                    showSnackBar(data.getThrowable().getMessage());
                     mMainBinding.mSwipeRefreshLayout.setRefreshing(false);
                     break;
                 case Empty:
@@ -315,12 +315,12 @@ public class MainActivity extends BaseActivity {
                     mMainBinding.mSwipeRefreshLayout.setRefreshing(false);
                     break;
                 case Content:
-                    AppManager.getInstance().setPlayStatus("hot");
+                    AppManager.Companion.getInstance().setPlayStatus("hot");
                     showSnackBar("热门");
                     isFirstComing = false;
                     mViewModel.refreshHot(false, false);
                     mMainBinding.mSwipeRefreshLayout.setRefreshing(false);
-                    setData(data.data);
+                    setData(data.getData());
                     break;
             }
         });
@@ -331,13 +331,13 @@ public class MainActivity extends BaseActivity {
                 mMainBinding.mSwipeRefreshLayout.setRefreshing(false);
                 return;
             }
-            switch (listViewDataBean.status) {
+            switch (listViewDataBean.getStatus()) {
                 case Loading:
                     mMainBinding.mSwipeRefreshLayout.setRefreshing(true);
                     break;
                 case Error:
                     mViewModel.refreshLocal(false);
-                    showSnackBar(listViewDataBean.throwable.getMessage());
+                    showSnackBar(listViewDataBean.getThrowable().getMessage());
                     mMainBinding.mSwipeRefreshLayout.setRefreshing(false);
                     break;
                 case Empty:
@@ -346,10 +346,10 @@ public class MainActivity extends BaseActivity {
                     mMainBinding.mSwipeRefreshLayout.setRefreshing(false);
                     break;
                 case Content:
-                    AppManager.getInstance().setPlayStatus("local");
+                    AppManager.Companion.getInstance().setPlayStatus("local");
                     mViewModel.refreshLocal(false);
                     mMainBinding.mSwipeRefreshLayout.setRefreshing(false);
-                    setData(listViewDataBean.data);
+                    setData(listViewDataBean.getData());
                     break;
             }
         });
@@ -366,12 +366,12 @@ public class MainActivity extends BaseActivity {
         //列表滚动到顶部
         mMainBinding.mRecyclerView.scrollTo(0, 0);
         //更新service数据
-        AppManager.getInstance().getMusicAutoService().binder.setSongList(data);
+        AppManager.Companion.getInstance().getMusicAutoService().binder.setSongList(data);
         if (mCurrentSong == null) {
             if (data.get(0) instanceof TracksBean) {
                 mCurrentSong = (TracksBean) data.get(0);
             } else {
-                mCurrentSong = AppUtils.getSongBean((LocalSongBean) data.get(0));
+                mCurrentSong = AppUtils.INSTANCE.getSongBean((LocalSongBean) data.get(0));
             }
             mMainBinding.setSong(mCurrentSong);
             mMainBinding.tvCurrentSongProgress.setText("00:00");
@@ -387,7 +387,7 @@ public class MainActivity extends BaseActivity {
     private void playCurrentSong(TracksBean song) {
         reFreshLayout(song);
         //播放歌曲、利用服务后台播放
-        AppManager.getInstance().getMusicAutoService().binder.setPrepare(false);
+        AppManager.Companion.getInstance().getMusicAutoService().binder.setPrepare(false);
         playCurrentSong(0);
     }
 
@@ -397,10 +397,10 @@ public class MainActivity extends BaseActivity {
      * @param mCurrentTime
      */
     private void playCurrentSong(int mCurrentTime) {
-        if (AppManager.getInstance().getMusicAutoService().binder.isPrepare()) {
-            AppManager.getInstance().getMusicAutoService().binder.playOrPauseSong(-1);
+        if (AppManager.Companion.getInstance().getMusicAutoService().binder.isPrepare()) {
+            AppManager.Companion.getInstance().getMusicAutoService().binder.playOrPauseSong(-1);
         } else {
-            AppManager.getInstance().getMusicAutoService().binder.playCurrentSong(mCurrentSong, mCurrentTime);
+            AppManager.Companion.getInstance().getMusicAutoService().binder.playCurrentSong(mCurrentSong, mCurrentTime);
         }
     }
 
@@ -432,15 +432,15 @@ public class MainActivity extends BaseActivity {
         @Override
         public void onServiceConnected(ComponentName name, IBinder service) {
             MusicAutoService mMusicService = ((MusicBinder) (service)).getService();
-            AppManager.getInstance().setMusicAutoService(mMusicService);
+            AppManager.Companion.getInstance().setMusicAutoService(mMusicService);
             System.out.println("MusicAutoService 初始化完成");
-            getSongListData(AppManager.getInstance().getPlayStatus());
+            getSongListData(AppManager.Companion.getInstance().getPlayStatus());
             //销毁serviceConnection
             if (serviceConnection != null) {
                 unbindService(serviceConnection);
                 serviceConnection = null;
             }
-            AppManager.getInstance().getMusicAutoService().binder.bindSongStatusListener(listener);
+            AppManager.Companion.getInstance().getMusicAutoService().binder.bindSongStatusListener(listener);
         }
 
         @Override
@@ -471,8 +471,8 @@ public class MainActivity extends BaseActivity {
         @Override
         public void start() {
             mMainBinding.mPlayBtn.setPlaying(1);
-            if (!mCurrentSong.getId().equals(AppManager.getInstance().getMusicAutoService().binder.getCurrentSong().getId())) {
-                reFreshLayout(AppManager.getInstance().getMusicAutoService().binder.getCurrentSong());
+            if (!mCurrentSong.getId().equals(AppManager.Companion.getInstance().getMusicAutoService().binder.getCurrentSong().getId())) {
+                reFreshLayout(AppManager.Companion.getInstance().getMusicAutoService().binder.getCurrentSong());
             }
         }
 
@@ -511,7 +511,7 @@ public class MainActivity extends BaseActivity {
             }
         } else if (requestCode == Contacts.REQUEST_CODE_SEARCH && resultCode == Contacts.RESULT_SONG_CODE) {
             boolean isDownLoadSong = data.getBooleanExtra("isDownLoadSong", false);
-            if (isDownLoadSong && "local".equals(AppManager.getInstance().getPlayStatus())) {
+            if (isDownLoadSong && "local".equals(AppManager.Companion.getInstance().getPlayStatus())) {
                 mViewModel.refreshLocal(true);
             }
         }
@@ -519,24 +519,24 @@ public class MainActivity extends BaseActivity {
 
     @Override
     protected void onStop() {
-        if (AppManager.getInstance().getMusicAutoService() != null &&
-                AppManager.getInstance().getMusicAutoService().binder.getMediaPlayer() != null && mCurrentSong != null) {
-            if (AppManager.getInstance().getMusicAutoService().binder.getMediaPlayer().isPlaying()) {
-                mCurrentSong.setDuration(AppManager.getInstance().getMusicAutoService().binder.getMediaPlayer().getDuration());
-                mCurrentSong.setCurrentTime(AppManager.getInstance().getMusicAutoService().binder.getMediaPlayer().getCurrentPosition());
-                AppUtils.setString("mCurrentSong", new Gson().toJson(mCurrentSong));
+        if (AppManager.Companion.getInstance().getMusicAutoService() != null &&
+                AppManager.Companion.getInstance().getMusicAutoService().binder.getMediaPlayer() != null && mCurrentSong != null) {
+            if (AppManager.Companion.getInstance().getMusicAutoService().binder.getMediaPlayer().isPlaying()) {
+                mCurrentSong.setDuration(AppManager.Companion.getInstance().getMusicAutoService().binder.getMediaPlayer().getDuration());
+                mCurrentSong.setCurrentTime(AppManager.Companion.getInstance().getMusicAutoService().binder.getMediaPlayer().getCurrentPosition());
+                AppUtils.INSTANCE.setString("mCurrentSong", new Gson().toJson(mCurrentSong));
             }
         }
-        AppUtils.setInteger(Contacts.PLAY_MODE, AppManager.getInstance().getPlayMode());
-        AppUtils.setString(Contacts.PLAY_STATUS, AppManager.getInstance().getPlayStatus());
+        AppUtils.INSTANCE.setInteger(Contacts.PLAY_MODE, AppManager.Companion.getInstance().getPlayMode());
+        AppUtils.INSTANCE.setString(Contacts.PLAY_STATUS, AppManager.Companion.getInstance().getPlayStatus());
         super.onStop();
     }
 
     @Override
     protected void onDestroy() {
-        if (AppManager.getInstance().getMusicAutoService() != null) {
-            AppManager.getInstance().getMusicAutoService().binder.unBindSongStatusListener(listener);
-            AppManager.getInstance().getMusicAutoService().quit();
+        if (AppManager.Companion.getInstance().getMusicAutoService() != null) {
+            AppManager.Companion.getInstance().getMusicAutoService().binder.unBindSongStatusListener(listener);
+            AppManager.Companion.getInstance().getMusicAutoService().quit();
             System.out.println("onDestroy");
         }
         super.onDestroy();
@@ -564,8 +564,8 @@ public class MainActivity extends BaseActivity {
         switch (id) {
             case R.id.action_search:
                 Intent intent = new Intent(MainActivity.this, SearchActivity.class);
-                if (AppManager.getInstance().getMusicAutoService().binder.getMediaPlayer().isPlaying()) {
-                    mCurrentSong.setCurrentTime(AppManager.getInstance().getMusicAutoService().binder.getMediaPlayer().getCurrentPosition());
+                if (AppManager.Companion.getInstance().getMusicAutoService().binder.getMediaPlayer().isPlaying()) {
+                    mCurrentSong.setCurrentTime(AppManager.Companion.getInstance().getMusicAutoService().binder.getMediaPlayer().getCurrentPosition());
                 }
                 intent.putExtra("song", mCurrentSong);
                 intent.putExtra("status", mMainBinding.mPlayBtn.getIsPlaying());

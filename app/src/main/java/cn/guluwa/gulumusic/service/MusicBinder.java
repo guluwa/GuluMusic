@@ -35,8 +35,6 @@ public class MusicBinder<T> extends Binder {
 
     private MusicAutoService musicAutoService;
 
-    private SongsRepository songsRepository = SongsRepository.getInstance();
-
     /**
      * 歌曲路径
      */
@@ -90,7 +88,7 @@ public class MusicBinder<T> extends Binder {
             isPrepare = true;
         });
         mediaPlayer.setOnCompletionListener(mediaPlayer -> {
-            switch (AppManager.getInstance().getPlayMode()) {
+            switch (AppManager.Companion.getInstance().getPlayMode()) {
                 case 0://单曲循环
                     break;
                 case 1://顺序播放
@@ -139,7 +137,7 @@ public class MusicBinder<T> extends Binder {
     public void playCurrentSong(TracksBean song, int mCurrentTime) {
         mCurrentSong = song;
         //本地不存在，则去下载
-        if ("".equals(mSongPath = AppUtils.isExistFile(String.format("%s_%s.mp3", mCurrentSong.getName(), mCurrentSong.getId()), 1))) {
+        if ("".equals(mSongPath = AppUtils.INSTANCE.isExistFile(String.format("%s_%s.mp3", mCurrentSong.getName(), mCurrentSong.getId()), 1))) {
             isLoading = true;
             querySongPath();
             if (listeners.size() != 0) {
@@ -155,7 +153,7 @@ public class MusicBinder<T> extends Binder {
             }
             playOrPauseSong(mCurrentTime);
         }
-        if ("".equals(AppUtils.isExistFile(String.format("%s_%s.txt", mCurrentSong.getName(), mCurrentSong.getId()), 2))) {
+        if ("".equals(AppUtils.INSTANCE.isExistFile(String.format("%s_%s.txt", mCurrentSong.getName(), mCurrentSong.getId()), 2))) {
             querySongWord();
         }
         if ("".equals(song.getAl().getPicUrl())) {
@@ -167,7 +165,7 @@ public class MusicBinder<T> extends Binder {
      * 查询歌曲路径(首页、搜索)
      */
     private void querySongPath() {
-        songsRepository.querySongPath(mCurrentSong, new OnResultListener<SongPathBean>() {
+        SongsRepository.Companion.getInstance().querySongPath(mCurrentSong, new OnResultListener<SongPathBean>() {
             @Override
             public void success(SongPathBean result) {
                 if ("".equals(result.getUrl())) {
@@ -177,7 +175,7 @@ public class MusicBinder<T> extends Binder {
                         listeners.get(listeners.size() - 1).end(mCurrentSong);
                     }
                 } else {
-                    songsRepository.downloadSongFile(result, String.format("%s_%s.mp3", result.getSong().getName(), result.getSong().getId()),
+                    SongsRepository.Companion.getInstance().downloadSongFile(result, String.format("%s_%s.mp3", result.getSong().getName(), result.getSong().getId()),
                             new OnResultListener<File>() {
                                 @Override
                                 public void success(File file) {
@@ -222,10 +220,10 @@ public class MusicBinder<T> extends Binder {
      * 查询歌曲歌词(首页、搜索)
      */
     private void querySongWord() {
-        songsRepository.querySongWord(mCurrentSong, new OnResultListener<SongWordBean>() {
+        SongsRepository.Companion.getInstance().querySongWord(mCurrentSong, new OnResultListener<SongWordBean>() {
             @Override
             public void success(SongWordBean result) {
-                AppUtils.writeWord2Disk(result.getLyric(), String.format("%s_%s.txt", result.getSong().getName(), result.getSong().getId()));
+                AppUtils.INSTANCE.writeWord2Disk(result.getLyric(), String.format("%s_%s.txt", result.getSong().getName(), result.getSong().getId()));
             }
 
             @Override
@@ -241,7 +239,7 @@ public class MusicBinder<T> extends Binder {
      * 查询歌曲封面图（首页、搜索）
      */
     private void querySongPic() {
-        songsRepository.querySongPic(mCurrentSong, new OnResultListener<SongPathBean>() {
+        SongsRepository.Companion.getInstance().querySongPic(mCurrentSong, new OnResultListener<SongPathBean>() {
             @Override
             public void success(SongPathBean result) {
                 System.out.println(result.getUrl());
@@ -318,8 +316,8 @@ public class MusicBinder<T> extends Binder {
      */
     public TracksBean getNextSong(TracksBean song) {
         int index = song.getIndex();
-        if (AppManager.getInstance().getPlayMode() == 0 ||
-                AppManager.getInstance().getPlayMode() == 1) {
+        if (AppManager.Companion.getInstance().getPlayMode() == 0 ||
+                AppManager.Companion.getInstance().getPlayMode() == 1) {
             if (index + 1 >= mSongList.size()) {
                 index = 0;
             } else {
@@ -328,7 +326,7 @@ public class MusicBinder<T> extends Binder {
             if (mSongList.get(index) instanceof TracksBean) {
                 mCurrentSong = (TracksBean) mSongList.get(index);
             } else {
-                mCurrentSong = AppUtils.getSongBean((LocalSongBean) mSongList.get(index));
+                mCurrentSong = AppUtils.INSTANCE.getSongBean((LocalSongBean) mSongList.get(index));
             }
         } else {
             if (mRandomPicker == null) {
@@ -341,7 +339,7 @@ public class MusicBinder<T> extends Binder {
             if (mSongList.get(index) instanceof TracksBean) {
                 mCurrentSong = (TracksBean) mSongList.get(index);
             } else {
-                mCurrentSong = AppUtils.getSongBean((LocalSongBean) mSongList.get(index));
+                mCurrentSong = AppUtils.INSTANCE.getSongBean((LocalSongBean) mSongList.get(index));
             }
         }
         Log.d(MusicAutoService.TAG, mCurrentSong.getName());
@@ -355,8 +353,8 @@ public class MusicBinder<T> extends Binder {
      */
     public TracksBean getLastSong(TracksBean song) {
         int index = song.getIndex();
-        if (AppManager.getInstance().getPlayMode() == 0 ||
-                AppManager.getInstance().getPlayMode() == 1) {
+        if (AppManager.Companion.getInstance().getPlayMode() == 0 ||
+                AppManager.Companion.getInstance().getPlayMode() == 1) {
             if (index - 1 < 0) {
                 index = mSongList.size() - 1;
             } else {
@@ -365,7 +363,7 @@ public class MusicBinder<T> extends Binder {
             if (mSongList.get(index) instanceof TracksBean) {
                 mCurrentSong = (TracksBean) mSongList.get(index);
             } else {
-                mCurrentSong = AppUtils.getSongBean((LocalSongBean) mSongList.get(index));
+                mCurrentSong = AppUtils.INSTANCE.getSongBean((LocalSongBean) mSongList.get(index));
             }
         } else {
             if (mRandomPicker == null) {
@@ -378,7 +376,7 @@ public class MusicBinder<T> extends Binder {
             if (mSongList.get(index) instanceof TracksBean) {
                 mCurrentSong = (TracksBean) mSongList.get(index);
             } else {
-                mCurrentSong = AppUtils.getSongBean((LocalSongBean) mSongList.get(index));
+                mCurrentSong = AppUtils.INSTANCE.getSongBean((LocalSongBean) mSongList.get(index));
             }
         }
         Log.d(MusicAutoService.TAG, mCurrentSong.getName());
