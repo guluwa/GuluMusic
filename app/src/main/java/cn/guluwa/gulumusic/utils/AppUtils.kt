@@ -140,7 +140,7 @@ object AppUtils {
      *
      * @return
      */
-    fun deepenMoreColor(RGBValues: Int): Int {
+    private fun deepenMoreColor(RGBValues: Int): Int {
         val alpha = RGBValues shr 24
         var red = RGBValues shr 16 and 0xFF
         var green = RGBValues shr 8 and 0xFF

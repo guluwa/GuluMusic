@@ -6,7 +6,7 @@ import cn.guluwa.gulumusic.data.bean.TracksBean
  * Created by guluwa on 2018/1/19.
  */
 
-interface OnClickListener<T> {
+interface OnClickListener {
 
-    fun click(song: T)
+    fun click(song: Any)
 }

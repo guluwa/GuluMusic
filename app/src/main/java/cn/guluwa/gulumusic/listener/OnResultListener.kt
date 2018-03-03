@@ -5,6 +5,7 @@ package cn.guluwa.gulumusic.listener
  */
 
 interface OnResultListener<T> {
+
     fun success(result: T)
 
     fun failed(error: String)
