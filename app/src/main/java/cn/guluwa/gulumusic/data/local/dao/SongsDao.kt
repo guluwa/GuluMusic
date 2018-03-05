@@ -6,13 +6,11 @@ import android.arch.persistence.room.Delete
 import android.arch.persistence.room.Insert
 import android.arch.persistence.room.OnConflictStrategy
 import android.arch.persistence.room.Query
+import cn.guluwa.gulumusic.data.bean.*
 
-import cn.guluwa.gulumusic.data.bean.LocalSongBean
-import cn.guluwa.gulumusic.data.bean.SongPathBean
-import cn.guluwa.gulumusic.data.bean.SongWordBean
-import cn.guluwa.gulumusic.data.bean.TracksBean
 import io.reactivex.Flowable
 import io.reactivex.Maybe
+import io.reactivex.Single
 
 /**
  * Created by guluwa on 2018/1/12.
@@ -44,7 +42,7 @@ interface SongsDao {
      * @return
      */
     @Query("select * from songs_path where id=:id")
-    fun querySongPath(id: String): Flowable<List<SongPathBean>>
+    fun querySongPath(id: String): Single<List<SongPathBean>>
 
     /**
      * 查询歌曲歌词
@@ -53,7 +51,7 @@ interface SongsDao {
      * @return
      */
     @Query("select * from songs_words where id=:id")
-    fun querySongWord(id: String): Flowable<List<SongWordBean>>
+    fun querySongWord(id: String): Single<List<SongWordBean>>
 
     /**
      * 查询本地歌曲（单曲）
@@ -104,4 +102,20 @@ interface SongsDao {
      */
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     fun addSongWord(songWordBean: SongWordBean)
+
+    /**
+     * 添加新搜索记录
+     *
+     * @param searchHistoryBean
+     */
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    fun addSearchHistory(searchHistoryBean: SearchHistoryBean)
+
+    /**
+     * 查询搜索记录
+     *
+     * @return
+     */
+    @Query("select * from search_history order by `date` desc limit 5")
+    fun querySearchRecord(): Single<List<SearchHistoryBean>>
 }

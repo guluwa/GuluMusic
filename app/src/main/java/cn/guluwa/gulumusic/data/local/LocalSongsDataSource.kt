@@ -3,19 +3,17 @@ package cn.guluwa.gulumusic.data.local
 import android.arch.lifecycle.LiveData
 import android.arch.lifecycle.MediatorLiveData
 import android.view.View
+import cn.guluwa.gulumusic.data.bean.*
 
-import cn.guluwa.gulumusic.data.bean.LocalSongBean
-import cn.guluwa.gulumusic.data.bean.SearchResultSongBean
-import cn.guluwa.gulumusic.data.bean.SongPathBean
-import cn.guluwa.gulumusic.data.bean.SongWordBean
-import cn.guluwa.gulumusic.data.bean.TracksBean
-import cn.guluwa.gulumusic.data.bean.ViewDataBean
 import cn.guluwa.gulumusic.data.total.SongDataSource
 import cn.guluwa.gulumusic.data.total.SongsRepository
 import cn.guluwa.gulumusic.listener.OnResultListener
 import io.reactivex.Flowable
+import io.reactivex.Scheduler
+import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.functions.Action
 import io.reactivex.functions.Consumer
+import io.reactivex.schedulers.Schedulers
 
 /**
  * Created by guluwa on 2018/1/12.
@@ -61,7 +59,7 @@ class LocalSongsDataSource : SongDataSource {
                     } else {
                         listener.success(songPathBeans[0])
                     }
-                }, { listener.failed(it.message!!)})
+                }, { listener.failed(it.message!!) })
     }
 
     /**
@@ -78,7 +76,7 @@ class LocalSongsDataSource : SongDataSource {
                     } else {
                         listener.success(songWordBeans[0])
                     }
-                }, { listener.failed(it.message!!)})
+                }, { listener.failed(it.message!!) })
     }
 
     /**
@@ -156,6 +154,27 @@ class LocalSongsDataSource : SongDataSource {
         songsService.deleteLocalSong(localSongBean)
     }
 
+    /**
+     * 添加新搜索记录
+     *
+     * @param searchHistoryBean
+     */
+    fun addSearchHistory(searchHistoryBean: SearchHistoryBean) {
+        songsService.addSearchHistory(searchHistoryBean)
+    }
+
+    /**
+     * 查询搜索记录
+     *
+     * @return
+     */
+    fun querySearchRecord(listener: OnResultListener<List<SearchHistoryBean>>) {
+        songsService.querySearchRecord()
+                .subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe({ listener.success(it) }, { listener.failed(it.message!!) })
+    }
+
     object SingletonHolder {
         //单例（静态内部类）
         val instance = LocalSongsDataSource()
@@ -163,6 +182,6 @@ class LocalSongsDataSource : SongDataSource {
 
     companion object {
 
-        fun getInstance()=SingletonHolder.instance
+        fun getInstance() = SingletonHolder.instance
     }
 }

@@ -43,4 +43,11 @@ interface OnSongStatusListener {
      * @param progress
      */
     fun progress(progress: Int, duration: Int)
+
+    /**
+     * 歌曲封面图
+     *
+     * @param url
+     */
+    fun pic(url: String)
 }

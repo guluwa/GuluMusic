@@ -22,7 +22,8 @@ import cn.guluwa.gulumusic.utils.AppUtils
  * Created by guluwa on 2018/1/11.
  */
 
-class PlayListAdapter(private val listener: OnClickListener, private val longListener: OnLongClickListener) : RecyclerView.Adapter<PlayListAdapter.ViewHolder>() {
+class PlayListAdapter(private val listener: OnClickListener, private val longListener: OnLongClickListener) :
+        RecyclerView.Adapter<PlayListAdapter.ViewHolder>() {
 
     var data: List<BaseSongBean>? = ArrayList()
         set(data) {
@@ -37,28 +38,26 @@ class PlayListAdapter(private val listener: OnClickListener, private val longLis
     }
 
     override fun onBindViewHolder(holder: PlayListAdapter.ViewHolder, position: Int) {
-        holder.viewBinder.song = this.data!![position]
+        holder.mViewBinder.song = this.data!![position]
     }
 
     override fun getItemCount(): Int {
         return if (this.data == null) 0 else this.data!!.size
     }
 
-    inner class ViewHolder(mViewBinder: PlayListItemLayoutBinding) : RecyclerView.ViewHolder(mViewBinder.root) {
-
-        var viewBinder: PlayListItemLayoutBinding = mViewBinder
+    inner class ViewHolder(val mViewBinder: PlayListItemLayoutBinding) : RecyclerView.ViewHolder(mViewBinder.root) {
 
         init {
             mViewBinder.setClickListener {
-                if (this@PlayListAdapter.data!!.get(adapterPosition) is TracksBean) {
-                    listener.click(this@PlayListAdapter.data!!.get(adapterPosition) as TracksBean)
+                if (this@PlayListAdapter.data!![adapterPosition] is TracksBean) {
+                    listener.click(this@PlayListAdapter.data!![adapterPosition] as TracksBean)
                 } else {
-                    listener.click(AppUtils.getSongBean(this@PlayListAdapter.data!!.get(adapterPosition) as LocalSongBean))
+                    listener.click(AppUtils.getSongBean(this@PlayListAdapter.data!![adapterPosition] as LocalSongBean))
                 }
             }
             mViewBinder.setLongClickListener {
-                if (this@PlayListAdapter.data!!.get(adapterPosition) is LocalSongBean) {
-                    longListener.click(this@PlayListAdapter.data!!.get(adapterPosition) as LocalSongBean)
+                if (this@PlayListAdapter.data!![adapterPosition] is LocalSongBean) {
+                    longListener.click(this@PlayListAdapter.data!![adapterPosition] as LocalSongBean)
                 }
                 true
             }

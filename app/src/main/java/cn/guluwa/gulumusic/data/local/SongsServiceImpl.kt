@@ -1,16 +1,14 @@
 package cn.guluwa.gulumusic.data.local
 
 import android.arch.lifecycle.LiveData
+import cn.guluwa.gulumusic.data.bean.*
 
-import cn.guluwa.gulumusic.data.bean.LocalSongBean
-import cn.guluwa.gulumusic.data.bean.SongPathBean
-import cn.guluwa.gulumusic.data.bean.SongWordBean
-import cn.guluwa.gulumusic.data.bean.TracksBean
 import cn.guluwa.gulumusic.data.local.dao.SongsDao
 import cn.guluwa.gulumusic.data.local.db.DBHelper
 import cn.guluwa.gulumusic.data.remote.RemoteSongsDataSource
 import io.reactivex.Flowable
 import io.reactivex.Maybe
+import io.reactivex.Single
 
 /**
  * Created by guluwa on 2018/1/12.
@@ -59,7 +57,7 @@ class SongsServiceImpl : SongsService {
      * @param id
      * @return
      */
-    override fun querySongPath(id: String): Flowable<List<SongPathBean>> {
+    override fun querySongPath(id: String): Single<List<SongPathBean>> {
         return songsDao.querySongPath(id)
     }
 
@@ -69,7 +67,7 @@ class SongsServiceImpl : SongsService {
      * @param id
      * @return
      */
-    override fun querySongWord(id: String): Flowable<List<SongWordBean>> {
+    override fun querySongWord(id: String): Single<List<SongWordBean>> {
         return songsDao.querySongWord(id)
     }
 
@@ -116,6 +114,24 @@ class SongsServiceImpl : SongsService {
      */
     override fun addSongWord(songWordBean: SongWordBean) {
         songsDao.addSongWord(songWordBean)
+    }
+
+    /**
+     * 添加新搜索记录
+     *
+     * @param searchHistoryBean
+     */
+    override fun addSearchHistory(searchHistoryBean: SearchHistoryBean) {
+        songsDao.addSearchHistory(searchHistoryBean)
+    }
+
+    /**
+     * 查询搜索记录
+     *
+     * @return
+     */
+    override fun querySearchRecord(): Single<List<SearchHistoryBean>> {
+        return songsDao.querySearchRecord()
     }
 
     object SingletonHolder {

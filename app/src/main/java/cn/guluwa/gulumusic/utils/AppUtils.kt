@@ -11,6 +11,7 @@ import android.net.NetworkInfo
 import android.os.Environment
 import android.preference.PreferenceManager
 import android.support.v7.graphics.Palette
+import android.support.v7.widget.RecyclerView
 import android.telephony.TelephonyManager
 import android.util.DisplayMetrics
 import android.util.Log
@@ -407,5 +408,22 @@ object AppUtils {
         Log.e("gulu", "Network Type : " + strNetworkType)
 
         return strNetworkType
+    }
+
+    //当前歌曲定位
+    fun locationCurrentSongShow(currentSong: TracksBean?, data: List<BaseSongBean>?): Int {
+        for ((index, song) in data!!.withIndex()) {
+            if (song is TracksBean && currentSong!!.id == song.id && currentSong.name == song.name) {
+                return index
+            } else if (song is LocalSongBean && currentSong!!.id == song.id && currentSong.name == song.name) {
+                return index
+            }
+        }
+        return -1
+    }
+
+    //当前时间戳
+    fun getCurrentDate(): Long {
+        return System.currentTimeMillis() / 1000
     }
 }

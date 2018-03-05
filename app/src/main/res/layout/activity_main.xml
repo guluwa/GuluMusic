@@ -3,6 +3,8 @@
 
     <data>
 
+        <import type="android.view.View" />
+
         <variable
             name="song"
             type="cn.guluwa.gulumusic.data.bean.BaseSongBean" />
@@ -10,6 +12,10 @@
         <variable
             name="clickListener"
             type="android.view.View.OnClickListener" />
+
+        <variable
+            name="currentSongShow"
+            type="Boolean" />
     </data>
 
     <android.support.v4.widget.DrawerLayout xmlns:android="http://schemas.android.com/apk/res/android"
@@ -59,6 +65,24 @@
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content" />
                 </android.support.v4.widget.SwipeRefreshLayout>
+
+                <android.support.design.widget.FloatingActionButton
+                    android:id="@+id/fabLocationMusic"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="bottom|end"
+                    android:layout_marginBottom="20dp"
+                    android:layout_marginEnd="25dp"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:foreground="?android:attr/selectableItemBackground"
+                    android:onClick="@{clickListener}"
+                    android:padding="3dp"
+                    android:src="@drawable/ic_location_music"
+                    android:visibility="@{currentSongShow? View.VISIBLE : View.GONE}"
+                    app:borderWidth="0dp"
+                    app:fabSize="mini" />
+
             </android.support.design.widget.CoordinatorLayout>
 
             <android.support.constraint.ConstraintLayout

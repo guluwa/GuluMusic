@@ -48,7 +48,7 @@ class PlayActivity : BaseActivity() {
     /**
      * ViewBinder
      */
-    private var mPlayBinding: ActivityPlayBinding? = null
+    private lateinit var mPlayBinding: ActivityPlayBinding
 
     /**
      * 歌词list
@@ -69,16 +69,16 @@ class PlayActivity : BaseActivity() {
     private val listener = object : OnSongStatusListener {
 
         override fun loading() {
-            mPlayBinding!!.mPlayBtn.isPlaying = 0
+            mPlayBinding.mPlayBtn.isPlaying = 0
         }
 
         override fun start() {
-            mPlayBinding!!.mPlayBtn.isPlaying = 1
+            mPlayBinding.mPlayBtn.isPlaying = 1
             initSongLrc()
         }
 
         override fun pause() {
-            mPlayBinding!!.mPlayBtn.isPlaying = -1
+            mPlayBinding.mPlayBtn.isPlaying = -1
         }
 
         override fun end(tracksBean: TracksBean) {
@@ -103,8 +103,8 @@ class PlayActivity : BaseActivity() {
                             } else {
                                 mLrcPosition = 0
                             }
-                            if (mPlayBinding!!.mPlayBtn.isPlaying != 0) {
-                                mPlayBinding!!.tvSongWord.text = mLrcList!![mLrcPosition].word
+                            if (mPlayBinding.mPlayBtn.isPlaying != 0) {
+                                mPlayBinding.tvSongWord.text = mLrcList!![mLrcPosition].word
                             }
                             break
                         }
@@ -114,8 +114,8 @@ class PlayActivity : BaseActivity() {
                         if (mLrcList!![mLrcPosition + 1].time < progress) {
                             mLrcPosition++
                             if (mLrcList!!.size > mLrcPosition) {
-                                if (mPlayBinding!!.mPlayBtn.isPlaying != 0) {
-                                    mPlayBinding!!.tvSongWord.text = mLrcList!![mLrcPosition].word
+                                if (mPlayBinding.mPlayBtn.isPlaying != 0) {
+                                    mPlayBinding.tvSongWord.text = mLrcList!![mLrcPosition].word
                                     println(progress.toString() + ";" + mLrcList!![mLrcPosition].word)
                                 }
                             }
@@ -123,9 +123,14 @@ class PlayActivity : BaseActivity() {
                     }
                 }
             }
-            if (mPlayBinding!!.mPlayBtn.isPlaying != 0) {
-                mPlayBinding!!.mProgressView.setSongPlayLength(progress, duration)
+            if (mPlayBinding.mPlayBtn.isPlaying != 0) {
+                mPlayBinding.mProgressView.setSongPlayLength(progress, duration)
             }
+        }
+
+        override fun pic(url: String) {
+            mCurrentSong!!.al!!.picUrl = url
+            mPlayBinding.song = mCurrentSong
         }
     }
 
@@ -145,13 +150,13 @@ class PlayActivity : BaseActivity() {
      * 点击事件初始化
      */
     private fun initClickListener() {
-        mPlayBinding!!.setClickListener { view ->
+        mPlayBinding.setClickListener { view ->
             when (view.id) {
                 R.id.mPlayBtn -> if (AppManager.getInstance().musicAutoService != null && AppManager.getInstance().musicAutoService!!.binder.mediaPlayer != null) {
                     if (AppManager.getInstance().musicAutoService!!.binder.mediaPlayer!!.isPlaying) {
-                        mPlayBinding!!.mPlayBtn.isPlaying = -1
+                        mPlayBinding.mPlayBtn.isPlaying = -1
                     } else {
-                        mPlayBinding!!.mPlayBtn.isPlaying = 1
+                        mPlayBinding.mPlayBtn.isPlaying = 1
                     }
                     playCurrentSong(mCurrentSong!!.currentTime)
                 }
@@ -181,11 +186,11 @@ class PlayActivity : BaseActivity() {
      */
     private fun showPlayModeImg(mode: Int) {
         if (mode == 0) {
-            mPlayBinding!!.ivPlayMode.setImageResource(R.drawable.ic_single_circle)
+            mPlayBinding.ivPlayMode.setImageResource(R.drawable.ic_single_circle)
         } else if (mode == 1) {
-            mPlayBinding!!.ivPlayMode.setImageResource(R.drawable.ic_list_circle)
+            mPlayBinding.ivPlayMode.setImageResource(R.drawable.ic_list_circle)
         } else {
-            mPlayBinding!!.ivPlayMode.setImageResource(R.drawable.ic_list_random)
+            mPlayBinding.ivPlayMode.setImageResource(R.drawable.ic_list_random)
         }
     }
 
@@ -195,9 +200,9 @@ class PlayActivity : BaseActivity() {
     private fun initData() {
         mLrcPosition = -1
         mCurrentSong = intent.getSerializableExtra("song") as TracksBean
-        mPlayBinding!!.mPlayBtn.isPlaying = intent.getIntExtra("status", -1)
-        mPlayBinding!!.mProgressView.setSongPlayLength(mCurrentSong!!.currentTime, mCurrentSong!!.duration)
-        mPlayBinding!!.song = mCurrentSong
+        mPlayBinding.mPlayBtn.isPlaying = intent.getIntExtra("status", -1)
+        mPlayBinding.mProgressView.setSongPlayLength(mCurrentSong!!.currentTime, mCurrentSong!!.duration)
+        mPlayBinding.song = mCurrentSong
         showPlayModeImg(AppManager.getInstance().playMode)
         initSongLrc()
         AppManager.getInstance().musicAutoService!!.binder.bindSongStatusListener(listener)
@@ -217,15 +222,15 @@ class PlayActivity : BaseActivity() {
                         } else {
                             mLrcPosition = 0
                         }
-                        if (mPlayBinding!!.mPlayBtn.isPlaying != 0) {
-                            mPlayBinding!!.tvSongWord.text = mLrcList!![mLrcPosition].word
+                        if (mPlayBinding.mPlayBtn.isPlaying != 0) {
+                            mPlayBinding.tvSongWord.text = mLrcList!![mLrcPosition].word
                         }
                         break
                     }
                 }
             } catch (e: Exception) {
                 mLrcList = null
-                mPlayBinding!!.tvSongWord.text = "暂无歌词"
+                mPlayBinding.tvSongWord.text = "暂无歌词"
                 e.printStackTrace()
             }
 
@@ -244,19 +249,19 @@ class PlayActivity : BaseActivity() {
                         Glide.with(this@PlayActivity).asBitmap()
                                 .apply(RequestOptions().transform(BlurTransformation(25)).override(100, 100))
                                 .load(R.mipmap.ic_launcher)
-                                .into(mPlayBinding!!.ivBackGround)
+                                .into(mPlayBinding.ivBackGround)
                         return true
                     }
 
                     override fun onResourceReady(resource: Bitmap?, model: Any, target: Target<Bitmap>, dataSource: DataSource, isFirstResource: Boolean): Boolean {
                         if (resource != null) {
-                            mPlayBinding!!.ivBackGround.setImageBitmap(resource)
+                            mPlayBinding.ivBackGround.setImageBitmap(resource)
                             return true
                         }
                         return false
                     }
                 })
-                .into(mPlayBinding!!.ivBackGround)
+                .into(mPlayBinding.ivBackGround)
     }
 
     /**
@@ -283,9 +288,9 @@ class PlayActivity : BaseActivity() {
     private fun playCurrentSong(song: TracksBean) {
         //更新页面
         mCurrentSong = song
-        mPlayBinding!!.song = mCurrentSong
-        mPlayBinding!!.tvSongWord.text = ""
-        mPlayBinding!!.mProgressView.setSongPlayLength(0, 0)
+        mPlayBinding.song = mCurrentSong
+        mPlayBinding.tvSongWord.text = ""
+        mPlayBinding.mProgressView.setSongPlayLength(0, 0)
         initSongPic()
         //播放歌曲、利用服务后台播放
         AppManager.getInstance().musicAutoService!!.binder.isPrepare = false
@@ -307,7 +312,7 @@ class PlayActivity : BaseActivity() {
 
     override fun onBackPressed() {
         val intent = Intent(this, MainActivity::class.java)
-        intent.putExtra("status", mPlayBinding!!.mPlayBtn.isPlaying)
+        intent.putExtra("status", mPlayBinding.mPlayBtn.isPlaying)
         intent.putExtra("song", mCurrentSong)
         setResult(Contacts.RESULT_SONG_CODE, intent)
         super.onBackPressed()

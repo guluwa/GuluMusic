@@ -1,17 +1,11 @@
 package cn.guluwa.gulumusic.data.remote
 
 import android.arch.lifecycle.LiveData
+import cn.guluwa.gulumusic.data.bean.*
 
 import java.io.File
 import java.util.HashMap
 
-import cn.guluwa.gulumusic.data.bean.FreshBean
-import cn.guluwa.gulumusic.data.bean.LocalSongBean
-import cn.guluwa.gulumusic.data.bean.SearchResultSongBean
-import cn.guluwa.gulumusic.data.bean.SongPathBean
-import cn.guluwa.gulumusic.data.bean.SongWordBean
-import cn.guluwa.gulumusic.data.bean.TracksBean
-import cn.guluwa.gulumusic.data.bean.ViewDataBean
 import cn.guluwa.gulumusic.data.local.LocalSongsDataSource
 import cn.guluwa.gulumusic.data.remote.LiveDataObservableAdapter.fromObservableViewData
 import cn.guluwa.gulumusic.data.remote.retrofit.RetrofitWorker
@@ -88,9 +82,9 @@ class RemoteSongsDataSource : SongDataSource {
                             for (i in searchResultSongBeans.indices) {
                                 val queryLocalSong = LocalSongsDataSource.getInstance().queryLocalSong(
                                         searchResultSongBeans[i].id, searchResultSongBeans[i].name)
-                                println(queryLocalSong)
                                 searchResultSongBeans[i].isDownLoad = queryLocalSong != null
                             }
+                            LocalSongsDataSource.getInstance().addSearchHistory(SearchHistoryBean(AppUtils.getCurrentDate(), freshBean.key))
                             searchResultSongBeans
                         }
                         .observeOn(AndroidSchedulers.mainThread())
@@ -211,6 +205,6 @@ class RemoteSongsDataSource : SongDataSource {
 
     companion object {
 
-        fun getInstance()= SingletonHolder.instance
+        fun getInstance() = SingletonHolder.instance
     }
 }

@@ -83,8 +83,8 @@ class MusicBinder(val service: MusicAutoService) : Binder() {
         isLoading = false
         listeners = ArrayList()
         mediaPlayer = MediaPlayer()
-        mediaPlayer!!.setOnPreparedListener { mediaPlayer -> isPrepare = true }
-        mediaPlayer!!.setOnCompletionListener { mediaPlayer ->
+        mediaPlayer!!.setOnPreparedListener { isPrepare = true }
+        mediaPlayer!!.setOnCompletionListener {
             when (AppManager.getInstance().playMode) {
                 0//单曲循环
                 -> {
@@ -94,7 +94,7 @@ class MusicBinder(val service: MusicAutoService) : Binder() {
                 2//随机播放
                 -> getNextSong(currentSong!!)
             }
-            if (listeners.size != 0) {
+            if (listeners.isNotEmpty()) {
                 listeners[listeners.size - 1].end(currentSong!!)
             }
         }
@@ -132,12 +132,12 @@ class MusicBinder(val service: MusicAutoService) : Binder() {
         if ("" == mSongPath) {
             isLoading = true
             querySongPath()
-            if (listeners.size != 0) {
+            if (listeners.isNotEmpty()) {
                 listeners[listeners.size - 1].loading()
             }
         } else {
             isLoading = false
-            if (listeners.size != 0) {
+            if (listeners.isNotEmpty()) {
                 listeners[listeners.size - 1].start()
             }
             if (mediaPlayer!!.isPlaying) {
@@ -160,7 +160,7 @@ class MusicBinder(val service: MusicAutoService) : Binder() {
         SongsRepository.getInstance().querySongPath(currentSong!!, object : OnResultListener<SongPathBean> {
             override fun success(result: SongPathBean) {
                 if ("" == result.url) {
-                    if (listeners.size != 0) {
+                    if (listeners.isNotEmpty()) {
                         listeners[listeners.size - 1].error(service.getString(R.string.song_cant_plsy_tip))
                         getNextSong(currentSong!!)
                         listeners[listeners.size - 1].end(currentSong!!)
@@ -177,14 +177,14 @@ class MusicBinder(val service: MusicAutoService) : Binder() {
                                             stop()
                                         }
                                         playOrPauseSong(0)
-                                        if (listeners.size != 0) {
+                                        if (listeners.isNotEmpty()) {
                                             listeners[listeners.size - 1].start()
                                         }
                                     }
                                 }
 
                                 override fun failed(error: String) {
-                                    if (listeners.size != 0) {
+                                    if (listeners.isNotEmpty()) {
                                         listeners[listeners.size - 1].error(error)
                                         getNextSong(currentSong!!)
                                         listeners[listeners.size - 1].end(currentSong!!)
@@ -195,7 +195,7 @@ class MusicBinder(val service: MusicAutoService) : Binder() {
             }
 
             override fun failed(error: String) {
-                if (listeners.size != 0) {
+                if (listeners.isNotEmpty()) {
                     listeners[listeners.size - 1].error(error)
                     getNextSong(currentSong!!)
                     listeners[listeners.size - 1].end(currentSong!!)
@@ -214,7 +214,7 @@ class MusicBinder(val service: MusicAutoService) : Binder() {
             }
 
             override fun failed(error: String) {
-                if (listeners.size != 0) {
+                if (listeners.isNotEmpty()) {
                     listeners[listeners.size - 1].error(error)
                 }
             }
@@ -230,10 +230,13 @@ class MusicBinder(val service: MusicAutoService) : Binder() {
                 println(result.url)
                 currentSong!!.al!!.picUrl = result.url
                 mSongList!!.add(currentSong!!)
+                if (listeners.isNotEmpty()) {
+                    listeners[listeners.size - 1].pic(result.url)
+                }
             }
 
             override fun failed(error: String) {
-                if (listeners.size != 0) {
+                if (listeners.isNotEmpty()) {
                     listeners[listeners.size - 1].error(error)
                 }
             }
@@ -247,7 +250,7 @@ class MusicBinder(val service: MusicAutoService) : Binder() {
         if (mediaPlayer != null) {
             mediaPlayer!!.stop()
             isPrepare = false
-            if (listeners.size != 0) {
+            if (listeners.isNotEmpty()) {
                 listeners[listeners.size - 1].pause()
             }
         }
@@ -268,7 +271,7 @@ class MusicBinder(val service: MusicAutoService) : Binder() {
                         mediaPlayer!!.prepare()
                         mediaPlayer!!.seekTo(currentTime)
                         mediaPlayer!!.start()
-                        if (listeners.size != 0) {
+                        if (listeners.isNotEmpty()) {
                             listeners[listeners.size - 1].start()
                         }
                     } catch (e: IOException) {
@@ -281,12 +284,12 @@ class MusicBinder(val service: MusicAutoService) : Binder() {
             if (mediaPlayer != null) {
                 if (mediaPlayer!!.isPlaying) {
                     mediaPlayer!!.pause()
-                    if (listeners.size != 0) {
+                    if (listeners.isNotEmpty()) {
                         listeners[listeners.size - 1].pause()
                     }
                 } else {
                     mediaPlayer!!.start()
-                    if (listeners.size != 0) {
+                    if (listeners.isNotEmpty()) {
                         listeners[listeners.size - 1].start()
                     }
                 }
@@ -343,10 +346,10 @@ class MusicBinder(val service: MusicAutoService) : Binder() {
             } else {
                 index--
             }
-            if (mSongList!![index] is TracksBean) {
-                currentSong = mSongList!![index] as TracksBean
+            currentSong = if (mSongList!![index] is TracksBean) {
+                mSongList!![index] as TracksBean
             } else {
-                currentSong = AppUtils.getSongBean(mSongList!![index] as LocalSongBean)
+                AppUtils.getSongBean(mSongList!![index] as LocalSongBean)
             }
         } else {
             if (mRandomPicker == null) {
@@ -356,10 +359,10 @@ class MusicBinder(val service: MusicAutoService) : Binder() {
             if (index >= mSongList!!.size) {
                 index = 0
             }
-            if (mSongList!![index] is TracksBean) {
-                currentSong = mSongList!![index] as TracksBean
+            currentSong = if (mSongList!![index] is TracksBean) {
+                mSongList!![index] as TracksBean
             } else {
-                currentSong = AppUtils.getSongBean(mSongList!![index] as LocalSongBean)
+                AppUtils.getSongBean(mSongList!![index] as LocalSongBean)
             }
         }
         Log.d(MusicAutoService.TAG, currentSong!!.name)
@@ -369,13 +372,13 @@ class MusicBinder(val service: MusicAutoService) : Binder() {
     /**
      * 开始轮询
      */
-    fun bindProgressQuery() {
+    private fun bindProgressQuery() {
         if (disposable == null) {
             disposable = Observable.interval(0, 150, TimeUnit.MILLISECONDS)
                     .observeOn(AndroidSchedulers.mainThread())
-                    .subscribe { aLong ->
+                    .subscribe {
                         if (mediaPlayer!!.isPlaying) {
-                            if (listeners.size != 0) {
+                            if (listeners.isNotEmpty()) {
                                 listeners[listeners.size - 1].progress(mediaPlayer!!.currentPosition, mediaPlayer!!.duration)
                             }
                         }
