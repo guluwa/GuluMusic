@@ -27,4 +27,5 @@ class SearchResultSongBean {
     var artist: List<String>? = null
 
     var isDownLoad: Boolean = false
+    var index: Int = 0
 }

@@ -35,7 +35,7 @@
 
         <activity
             android:name=".ui.search.SearchActivity"
-            android:windowSoftInputMode="stateAlwaysHidden" />
+            android:windowSoftInputMode="stateAlwaysHidden|adjustPan" />
 
         <service
             android:name=".service.MusicAutoService"

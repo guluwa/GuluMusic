@@ -73,6 +73,7 @@
                         android:text='@{song.name}'
                         android:textColor="@color/black"
                         android:textSize="15sp"
+                        android:maxLength="30"
                         app:layout_constraintStart_toStartOf="parent"
                         app:layout_constraintTop_toTopOf="parent" />
 
@@ -106,13 +107,13 @@
 
                 <ImageView
                     android:id="@+id/ivMore"
-                    android:layout_width="30dp"
-                    android:layout_height="30dp"
+                    android:layout_width="40dp"
+                    android:layout_height="40dp"
                     android:clickable="true"
                     android:focusable="true"
                     android:foreground="?android:attr/selectableItemBackground"
                     android:onClick="@{clickListener}"
-                    android:padding="5dp"
+                    android:padding="10dp"
                     android:src="@drawable/ic_more_vertical"
                     app:layout_constraintBottom_toBottomOf="parent"
                     app:layout_constraintEnd_toEndOf="parent"

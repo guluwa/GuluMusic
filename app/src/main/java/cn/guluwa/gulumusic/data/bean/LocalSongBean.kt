@@ -1,6 +1,7 @@
 package cn.guluwa.gulumusic.data.bean
 
 import android.arch.persistence.room.Entity
+import android.arch.persistence.room.Ignore
 import android.arch.persistence.room.PrimaryKey
 
 import java.io.Serializable
@@ -18,6 +19,9 @@ class LocalSongBean : BaseSongBean(), Serializable {
     var index: Int = 0
 
     var id: String = ""
+
+    @Ignore
+    var position = 0
 
     companion object {
 

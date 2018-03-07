@@ -8,5 +8,5 @@ import cn.guluwa.gulumusic.data.bean.TracksBean
 
 interface OnClickListener {
 
-    fun click(song: Any)
+    fun click(arg1: Int, arg2: Any)
 }

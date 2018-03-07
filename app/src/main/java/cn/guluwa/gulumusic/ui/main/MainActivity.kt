@@ -1,6 +1,8 @@
 package cn.guluwa.gulumusic.ui.main
 
 import android.app.AlertDialog
+import android.app.Dialog
+import android.app.ProgressDialog.show
 import android.arch.lifecycle.Observer
 import android.content.ComponentName
 import android.content.Context
@@ -13,7 +15,6 @@ import android.support.v4.app.ActivityOptionsCompat
 import android.support.v4.util.Pair
 import android.support.v7.app.ActionBarDrawerToggle
 import android.support.v7.widget.LinearLayoutManager
-import android.support.v7.widget.RecyclerView
 import android.view.Gravity
 import android.view.KeyEvent
 import android.view.LayoutInflater
@@ -22,7 +23,6 @@ import android.view.MenuItem
 import android.widget.CheckBox
 import android.widget.TextView
 
-import com.bumptech.glide.Glide
 import com.google.gson.Gson
 
 import java.text.SimpleDateFormat
@@ -33,8 +33,10 @@ import cn.guluwa.gulumusic.base.BaseActivity
 import cn.guluwa.gulumusic.data.bean.*
 import cn.guluwa.gulumusic.data.local.LocalSongsDataSource
 import cn.guluwa.gulumusic.databinding.ActivityMainBinding
+import cn.guluwa.gulumusic.dialog.SongMoreOperationDialog
 import cn.guluwa.gulumusic.listener.OnClickListener
 import cn.guluwa.gulumusic.listener.OnLongClickListener
+import cn.guluwa.gulumusic.listener.OnSelectListener
 import cn.guluwa.gulumusic.listener.OnSongStatusListener
 import cn.guluwa.gulumusic.manage.AppManager
 import cn.guluwa.gulumusic.manage.Contacts
@@ -47,9 +49,8 @@ import cn.guluwa.gulumusic.utils.AppUtils
 import io.reactivex.Observable
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.schedulers.Schedulers
-import kotlinx.android.synthetic.main.activity_main.*
 
-class MainActivity : BaseActivity() {
+class MainActivity<T> : BaseActivity() {
 
     /**
      * ViewBinder
@@ -75,11 +76,6 @@ class MainActivity : BaseActivity() {
      * 是否第一次进入
      */
     private var isFirstComing: Boolean = false
-
-    /**
-     * 是否显示定位当前歌曲按钮
-     */
-    private var currentSongShow: Boolean = false
 
     override val viewLayoutId: Int
         get() = R.layout.activity_main
@@ -138,6 +134,11 @@ class MainActivity : BaseActivity() {
         override fun pic(url: String) {
             mCurrentSong!!.al!!.picUrl = url
             mMainBinding.song = mCurrentSong
+        }
+
+        override fun download(position: Int) {
+            if ((mMainBinding.mRecyclerView.adapter as PlayListAdapter).data[position] is TracksBean)
+                ((mMainBinding.mRecyclerView.adapter as PlayListAdapter).data[position] as TracksBean).local = true
         }
     }
 
@@ -221,7 +222,7 @@ class MainActivity : BaseActivity() {
                     mMainBinding.mDrawerLayout.closeDrawer(Gravity.START)
                 }
                 R.id.fabLocationMusic -> {
-                    val index = AppUtils.locationCurrentSongShow(mCurrentSong, (mMainBinding.mRecyclerView.adapter as PlayListAdapter).data!!)
+                    val index = AppUtils.locationCurrentSongShow(mCurrentSong, (mMainBinding.mRecyclerView.adapter as PlayListAdapter).data)
                     mMainBinding.mRecyclerView.smoothScrollToPosition(index)
                 }
             }
@@ -254,17 +255,24 @@ class MainActivity : BaseActivity() {
      */
     private fun initRecyclerView() {
         val mAdapter = PlayListAdapter(object : OnClickListener {
-            override fun click(song: Any) {
-                if (song is TracksBean) {
-                    if (mCurrentSong != null) {
-                        if (song.id == mCurrentSong!!.id && mMainBinding.mPlayBtn.isPlaying == 1) {
-                            return
+            override fun click(arg1: Int, arg2: Any) {
+                when (arg1) {
+                    1 -> {
+                        if (arg2 is TracksBean) {
+                            if (mCurrentSong != null) {
+                                if (arg2.id == mCurrentSong!!.id && mMainBinding.mPlayBtn.isPlaying == 1) {
+                                    return
+                                }
+                            }
+                            if (AppManager.getInstance().musicAutoService!!.binder.mediaPlayer!!.isPlaying) {
+                                AppManager.getInstance().musicAutoService!!.binder.stop()
+                            }
+                            playCurrentSong(arg2)
                         }
                     }
-                    if (AppManager.getInstance().musicAutoService!!.binder.mediaPlayer!!.isPlaying) {
-                        AppManager.getInstance().musicAutoService!!.binder.stop()
+                    2 -> {
+                        showSongMoreOperation(arg2 is LocalSongBean, arg2)
                     }
-                    playCurrentSong(song)
                 }
             }
         }, object : OnLongClickListener {
@@ -274,20 +282,30 @@ class MainActivity : BaseActivity() {
         })
         mMainBinding.mRecyclerView.layoutManager = LinearLayoutManager(this)
         mMainBinding.mRecyclerView.adapter = mAdapter
-        mMainBinding.mRecyclerView.addOnScrollListener(object : RecyclerView.OnScrollListener() {
-            override fun onScrollStateChanged(recyclerView: RecyclerView?, newState: Int) {
-                super.onScrollStateChanged(recyclerView, newState)
-                if (newState == RecyclerView.SCROLL_STATE_DRAGGING || newState == RecyclerView.SCROLL_STATE_SETTLING) {
-                    sIsScrolling = true
-                    Glide.with(this@MainActivity).pauseRequests()
-                } else if (newState == RecyclerView.SCROLL_STATE_IDLE) {
-                    if (sIsScrolling) {
-                        Glide.with(this@MainActivity).resumeRequests()
+    }
+
+    var dialog: Dialog? = null
+
+    /**
+     * 歌曲更多操作对话框
+     */
+    private fun showSongMoreOperation(isLocal: Boolean, song: Any) {
+        dialog = SongMoreOperationDialog(this, R.style.DialogStyle, object : OnSelectListener {
+            override fun select(index: Int) {
+                dialog!!.dismiss()
+                when (index) {
+                    0 -> if (isLocal) {
+                        showDeleteDialog(song as LocalSongBean)
+                    } else {
+                        AppManager.getInstance().musicAutoService!!.binder.playCurrentSong(song as TracksBean, 0, true)
                     }
-                    sIsScrolling = false
+                    1 -> {
+                        println((song as BaseSongBean).singer!!.name)
+                    }
                 }
             }
-        })
+        }, arrayListOf(if (isLocal) "删除歌曲" else "缓存歌曲", "查看歌手"))
+        dialog!!.show()
     }
 
     /**
@@ -299,7 +317,7 @@ class MainActivity : BaseActivity() {
         val view = LayoutInflater.from(this).inflate(R.layout.song_delete_tip_dialog, null, false)
         val tvDialogMessage = view.findViewById<TextView>(R.id.tvDialogMessage)
         tvDialogMessage.text = String.format("亲，您确定要删除「%s」吗？",
-                if (song.name.length <= 8) song.name else String.format("%s…", song.name.substring(0, 7)))
+                if (song.name.length < 8) song.name else String.format("%s…", song.name.substring(0, 6)))
         val cbDeleteSongFile = view.findViewById<CheckBox>(R.id.cbDeleteSongFile)
         builder.setView(view)
         builder.setNegativeButton("取消") { dialog, _ -> dialog.dismiss() }
@@ -324,13 +342,24 @@ class MainActivity : BaseActivity() {
                         AppUtils.deleteFile(String.format("%s_%s.mp3", song.name, song.id), 1)
                         AppUtils.deleteFile(String.format("%s_%s.txt", song.name, song.id), 2)
                     }
-                    LocalSongsDataSource.getInstance().deleteLocalSong(song)
+                    LocalSongsDataSource.getInstance().deleteLocalSong(LocalSongsDataSource.getInstance().queryLocalSong(song.id, song.name))
                     isChecked
                 }
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribe({
                     showSnackBar("删除成功")
-                    mViewModel.refreshLocal(true)
+                    if (AppManager.getInstance().playStatus == "local") {
+                        (mMainBinding.mRecyclerView.adapter as PlayListAdapter).removeSong(song.position)
+                        if (mCurrentSong!!.id == song.id && mCurrentSong!!.name == song.name) {
+                            val mNextSong = if ((mMainBinding.mRecyclerView.adapter as PlayListAdapter).data[song.position - 1] is TracksBean) {
+                                (mMainBinding.mRecyclerView.adapter as PlayListAdapter).data[song.position - 1] as TracksBean
+                            } else {
+                                AppUtils.getSongBean((mMainBinding.mRecyclerView.adapter as PlayListAdapter).data[song.position - 1] as LocalSongBean)
+                            }
+                            AppManager.getInstance().musicAutoService!!.binder.playCurrentSong(mNextSong, 0, false)
+                        }
+                    } else
+                        ((mMainBinding.mRecyclerView.adapter as PlayListAdapter).data[song.position] as TracksBean).local = false
                 }) { showSnackBar("删除失败") }
     }
 
@@ -363,7 +392,7 @@ class MainActivity : BaseActivity() {
                     isFirstComing = false
                     mViewModel.refreshHot(false, false)
                     mMainBinding.mSwipeRefreshLayout.isRefreshing = false
-                    setData(data.data as MutableList<BaseSongBean>)
+                    setData(data.data as ArrayList<BaseSongBean>)
                 }
             }
         })
@@ -390,7 +419,7 @@ class MainActivity : BaseActivity() {
                     AppManager.getInstance().playStatus = "local"
                     mViewModel.refreshLocal(false)
                     mMainBinding.mSwipeRefreshLayout.isRefreshing = false
-                    setData(listViewDataBean.data as MutableList<BaseSongBean>)
+                    setData(listViewDataBean.data as ArrayList<BaseSongBean>)
                 }
             }
         })
@@ -401,7 +430,7 @@ class MainActivity : BaseActivity() {
      *
      * @param data
      */
-    private fun setData(data: MutableList<BaseSongBean>) {
+    private fun setData(data: ArrayList<BaseSongBean>) {
         //填充列表数据
         (mMainBinding.mRecyclerView.adapter as PlayListAdapter).data = data
         //列表滚动到顶部
@@ -442,7 +471,7 @@ class MainActivity : BaseActivity() {
         if (AppManager.getInstance().musicAutoService!!.binder.isPrepare) {
             AppManager.getInstance().musicAutoService!!.binder.playOrPauseSong(-1)
         } else {
-            AppManager.getInstance().musicAutoService!!.binder.playCurrentSong(this.mCurrentSong!!, mCurrentTime)
+            AppManager.getInstance().musicAutoService!!.binder.playCurrentSong(this.mCurrentSong!!, mCurrentTime, false)
         }
     }
 
@@ -491,7 +520,7 @@ class MainActivity : BaseActivity() {
             if (isDownLoadSong && "local" == AppManager.getInstance().playStatus) {
                 mViewModel.refreshLocal(true)
             }
-            mCurrentSong = data.getSerializableExtra ("song") as TracksBean
+            mCurrentSong = data.getSerializableExtra("song") as TracksBean
             mMainBinding.song = mCurrentSong
             val status = data.getIntExtra("status", -1)
             if (mMainBinding.mPlayBtn.isPlaying != status) {

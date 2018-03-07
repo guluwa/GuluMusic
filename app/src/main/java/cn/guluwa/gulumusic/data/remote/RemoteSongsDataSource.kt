@@ -52,6 +52,11 @@ class RemoteSongsDataSource : SongDataSource {
                                             playListBean.playlist!!.tracks!![i].alia!![0]
                                 playListBean.playlist!!.tracks!![i].source = "netease"
                                 playListBean.playlist!!.tracks!![i].index = i
+                                if (LocalSongsDataSource.getInstance().queryLocalSong(
+                                                playListBean.playlist!!.tracks!![i].id,
+                                                playListBean.playlist!!.tracks!![i].name) != null) {
+                                    playListBean.playlist!!.tracks!![i].local = true
+                                }
                             }
                             LocalSongsDataSource.getInstance().addSongs(playListBean.playlist!!.tracks!!)
                             playListBean.playlist!!.tracks

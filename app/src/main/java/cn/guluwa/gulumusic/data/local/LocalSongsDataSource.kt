@@ -8,7 +8,9 @@ import cn.guluwa.gulumusic.data.bean.*
 import cn.guluwa.gulumusic.data.total.SongDataSource
 import cn.guluwa.gulumusic.data.total.SongsRepository
 import cn.guluwa.gulumusic.listener.OnResultListener
+import cn.guluwa.gulumusic.utils.AppUtils
 import io.reactivex.Flowable
+import io.reactivex.Observable
 import io.reactivex.Scheduler
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.functions.Action
@@ -39,7 +41,18 @@ class LocalSongsDataSource : SongDataSource {
             if (null == tracksBeans || tracksBeans.isEmpty()) {
                 data.setValue(ViewDataBean.empty())
             } else {
-                data.setValue(ViewDataBean.content(tracksBeans))
+                Observable.just("")
+                        .subscribeOn(Schedulers.io())
+                        .observeOn(Schedulers.io())
+                        .map {
+                            for (i in 0 until tracksBeans.size) {
+                                if (LocalSongsDataSource.getInstance().queryLocalSong(tracksBeans[i].id, tracksBeans[i].name) != null) {
+                                    tracksBeans[i].local = true
+                                }
+                            }
+                        }
+                        .observeOn(AndroidSchedulers.mainThread())
+                        .subscribe({ data.setValue(ViewDataBean.content(tracksBeans)) })
             }
         }
         return data

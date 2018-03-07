@@ -25,11 +25,18 @@ import cn.guluwa.gulumusic.utils.AppUtils
 class PlayListAdapter(private val listener: OnClickListener, private val longListener: OnLongClickListener) :
         RecyclerView.Adapter<PlayListAdapter.ViewHolder>() {
 
-    var data: List<BaseSongBean>? = ArrayList()
+    var data = arrayListOf<BaseSongBean>()
         set(data) {
             field = data
             notifyDataSetChanged()
         }
+
+    fun removeSong(position: Int) {
+        if (data.size > position) {
+            data.removeAt(position)
+            notifyItemRemoved(position)
+        }
+    }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): PlayListAdapter.ViewHolder {
         val mDataBinding = DataBindingUtil.inflate<ViewDataBinding>(
@@ -38,26 +45,45 @@ class PlayListAdapter(private val listener: OnClickListener, private val longLis
     }
 
     override fun onBindViewHolder(holder: PlayListAdapter.ViewHolder, position: Int) {
-        holder.mViewBinder.song = this.data!![position]
+        holder.mViewBinder.song = this.data[position]
     }
 
     override fun getItemCount(): Int {
-        return if (this.data == null) 0 else this.data!!.size
+        return this.data.size
     }
 
     inner class ViewHolder(val mViewBinder: PlayListItemLayoutBinding) : RecyclerView.ViewHolder(mViewBinder.root) {
 
         init {
-            mViewBinder.setClickListener {
-                if (this@PlayListAdapter.data!![adapterPosition] is TracksBean) {
-                    listener.click(this@PlayListAdapter.data!![adapterPosition] as TracksBean)
-                } else {
-                    listener.click(AppUtils.getSongBean(this@PlayListAdapter.data!![adapterPosition] as LocalSongBean))
+            mViewBinder.setClickListener({ view ->
+                when (view.id) {
+                    R.id.mCardView -> {
+                        if (this@PlayListAdapter.data[adapterPosition] is TracksBean) {
+                            listener.click(1, this@PlayListAdapter.data[adapterPosition])
+                        } else {
+                            listener.click(1, AppUtils.getSongBean(this@PlayListAdapter.data[adapterPosition] as LocalSongBean))
+                        }
+                    }
+                    R.id.ivMore -> {
+                        if (this@PlayListAdapter.data[adapterPosition] is TracksBean) {
+                            if ((this@PlayListAdapter.data[adapterPosition] as TracksBean).local) {
+                                val localSongBean = AppUtils.getLocalSongBean(this@PlayListAdapter.data[adapterPosition] as TracksBean)
+                                localSongBean.position = adapterPosition
+                                listener.click(2, (localSongBean))
+                            } else {
+                                listener.click(2, this@PlayListAdapter.data[adapterPosition])
+                            }
+                        } else {
+                            (this@PlayListAdapter.data[adapterPosition] as LocalSongBean).position = adapterPosition
+                            listener.click(2, this@PlayListAdapter.data[adapterPosition] as LocalSongBean)
+                        }
+                    }
                 }
-            }
+            })
             mViewBinder.setLongClickListener {
-                if (this@PlayListAdapter.data!![adapterPosition] is LocalSongBean) {
-                    longListener.click(this@PlayListAdapter.data!![adapterPosition] as LocalSongBean)
+                if (this@PlayListAdapter.data[adapterPosition] is LocalSongBean) {
+                    (this@PlayListAdapter.data[adapterPosition] as LocalSongBean).position = adapterPosition
+                    longListener.click(this@PlayListAdapter.data[adapterPosition] as LocalSongBean)
                 }
                 true
             }

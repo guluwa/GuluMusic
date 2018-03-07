@@ -1,9 +1,11 @@
 package cn.guluwa.gulumusic.ui.search
 
-import android.annotation.SuppressLint
+import android.app.AlertDialog
+import android.app.Dialog
 import android.arch.lifecycle.Observer
 import android.content.Context
 import android.content.Intent
+import android.graphics.Color
 import android.support.v4.app.ActivityCompat
 import android.support.v4.app.ActivityOptionsCompat
 import android.support.v4.util.Pair
@@ -12,18 +14,20 @@ import android.support.v7.widget.LinearLayoutManager
 import android.support.v7.widget.SearchView
 import android.view.*
 import android.view.inputmethod.InputMethodManager
+import android.widget.CheckBox
+import android.widget.TextView
 import cn.guluwa.gulumusic.R
+import cn.guluwa.gulumusic.adapter.PlayListAdapter
 import cn.guluwa.gulumusic.adapter.SearchResultListAdapter
 import cn.guluwa.gulumusic.base.BaseActivity
-import cn.guluwa.gulumusic.data.bean.PageStatus
-import cn.guluwa.gulumusic.data.bean.SearchHistoryBean
-import cn.guluwa.gulumusic.data.bean.SearchResultSongBean
-import cn.guluwa.gulumusic.data.bean.TracksBean
+import cn.guluwa.gulumusic.data.bean.*
 import cn.guluwa.gulumusic.data.local.LocalSongsDataSource
 import cn.guluwa.gulumusic.data.remote.retrofit.exception.BaseException
 import cn.guluwa.gulumusic.databinding.ActivitySearchBinding
+import cn.guluwa.gulumusic.dialog.SongMoreOperationDialog
 import cn.guluwa.gulumusic.listener.OnClickListener
 import cn.guluwa.gulumusic.listener.OnResultListener
+import cn.guluwa.gulumusic.listener.OnSelectListener
 import cn.guluwa.gulumusic.listener.OnSongStatusListener
 import cn.guluwa.gulumusic.manage.AppManager
 import cn.guluwa.gulumusic.manage.Contacts
@@ -33,6 +37,7 @@ import cn.guluwa.gulumusic.utils.AppUtils
 import io.reactivex.Observable
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.schedulers.Schedulers
+import org.json.JSONObject
 import java.text.SimpleDateFormat
 
 
@@ -118,6 +123,12 @@ class SearchActivity : BaseActivity() {
         override fun pic(url: String) {
             mCurrentSong!!.al!!.picUrl = url
             mSearchBinding.song = mCurrentSong
+        }
+
+        override fun download(position: Int) {
+            if ((mSearchBinding.mRecyclerView.adapter as SearchResultListAdapter).data[position] is SearchResultSongBean) {
+                ((mSearchBinding.mRecyclerView.adapter as SearchResultListAdapter).data[position] as SearchResultSongBean).isDownLoad = true
+            }
         }
     }
 
@@ -243,31 +254,34 @@ class SearchActivity : BaseActivity() {
     /**
      * 列表初始化
      */
-    @SuppressLint("ClickableViewAccessibility")
     private fun initRecyclerView() {
         val mAdapter = SearchResultListAdapter(object : OnClickListener {
-            override fun click(song: Any) {
-                if (song is SearchResultSongBean) {
-                    if (AppManager.getInstance().musicAutoService!!.binder.mediaPlayer!!.isPlaying) {
-                        if (song.id == AppManager.getInstance().musicAutoService!!.binder.currentSong!!.id) {
-                            return
+            override fun click(arg1: Int, arg2: Any) {
+                when (arg1) {
+                    1 -> if (arg2 is SearchResultSongBean) {
+                        if (AppManager.getInstance().musicAutoService!!.binder.mediaPlayer!!.isPlaying) {
+                            if (arg2.id == AppManager.getInstance().musicAutoService!!.binder.currentSong!!.id) {
+                                return
+                            }
+                            AppManager.getInstance().musicAutoService!!.binder.stop()
                         }
-                        AppManager.getInstance().musicAutoService!!.binder.stop()
-                    }
-                    playCurrentSong(song)
-                } else if (song is SearchHistoryBean) {
-                    mSearchAutoComplete!!.setText(song.text)
-                    mSearchAutoComplete!!.setSelection(song.text.length)
-                    searchView!!.setQuery(song.text, true)
-                } else {
-                    if (!isLoadMoreIng) {
+                        playCurrentSong(arg2)
+                    } else if (arg2 is SearchHistoryBean) {
+                        if (arg2.date != 0L) {
+                            mSearchAutoComplete!!.setText(arg2.text)
+                            mSearchAutoComplete!!.setSelection(arg2.text.length)
+                            searchView!!.setQuery(arg2.text, true)
+                        }
+                    } else if (!isLoadMoreIng) {
                         isLoadMoreIng = true
                         mViewModel.refreshSearchSongs(keyWord, page, true)
                         (mSearchBinding.mRecyclerView.adapter as SearchResultListAdapter).setLoadMoreTip(getString(R.string.load_moreing_tip))
                     }
+                    2 -> showSongMoreOperation((arg2 as SearchResultSongBean).isDownLoad, arg2)
                 }
             }
         })
+
         mAdapter.setColor(color)
         mSearchBinding.mRecyclerView.layoutManager = LinearLayoutManager(this)
         mSearchBinding.mRecyclerView.adapter = mAdapter
@@ -334,7 +348,7 @@ class SearchActivity : BaseActivity() {
         if (AppManager.getInstance().musicAutoService!!.binder.isPrepare) {
             AppManager.getInstance().musicAutoService!!.binder.playOrPauseSong(-1)
         } else {
-            AppManager.getInstance().musicAutoService!!.binder.playCurrentSong(mCurrentSong!!, mCurrentTime)
+            AppManager.getInstance().musicAutoService!!.binder.playCurrentSong(mCurrentSong!!, mCurrentTime, false)
         }
     }
 
@@ -375,8 +389,8 @@ class SearchActivity : BaseActivity() {
                     } else {
                         msg = listViewDataBean.throwable!!.message!!
                     }
-                    if ((mSearchBinding.mRecyclerView.adapter as SearchResultListAdapter).dataList.size == 1 &&
-                            (mSearchBinding.mRecyclerView.adapter as SearchResultListAdapter).dataList[0] is String) {
+                    if ((mSearchBinding.mRecyclerView.adapter as SearchResultListAdapter).data.size == 1 &&
+                            (mSearchBinding.mRecyclerView.adapter as SearchResultListAdapter).data[0] is String) {
                         (mSearchBinding.mRecyclerView.adapter as SearchResultListAdapter).setSearchHistory(msg, null)
                     } else {
                         showSnackBar(msg)
@@ -387,8 +401,8 @@ class SearchActivity : BaseActivity() {
                     isLoadMoreIng = false
                     mViewModel.refreshSearchSongs(keyWord, page, false)
                     mSearchBinding.mSwipeRefreshLayout.isRefreshing = false
-                    if ((mSearchBinding.mRecyclerView.adapter as SearchResultListAdapter).dataList.size == 1 &&
-                            (mSearchBinding.mRecyclerView.adapter as SearchResultListAdapter).dataList[0] is String) {
+                    if ((mSearchBinding.mRecyclerView.adapter as SearchResultListAdapter).data.size == 1 &&
+                            (mSearchBinding.mRecyclerView.adapter as SearchResultListAdapter).data[0] is String) {
                         (mSearchBinding.mRecyclerView.adapter as SearchResultListAdapter).setSearchHistory(getString(R.string.search_result_empty_tip), null)
                     } else {
                         showSnackBar(getString(R.string.search_result_no_more_tip))
@@ -433,6 +447,7 @@ class SearchActivity : BaseActivity() {
                 keyWord = query
                 page = 1
                 mViewModel.refreshSearchSongs(keyWord, page, true)
+                searchView!!.clearFocus()
                 disAppearKeyBoard(searchView!!)
                 return true
             }
@@ -486,9 +501,9 @@ class SearchActivity : BaseActivity() {
     private fun setData(data: List<SearchResultSongBean>?) {
         if (data != null && data.isNotEmpty()) {
             if (page == 1) {
-                (mSearchBinding.mRecyclerView.adapter as SearchResultListAdapter).setData(data as MutableList<Any>, getString(R.string.load_more_tip))
+                (mSearchBinding.mRecyclerView.adapter as SearchResultListAdapter).setSongs(data, getString(R.string.load_more_tip))
             } else {
-                (mSearchBinding.mRecyclerView.adapter as SearchResultListAdapter).addData(data as MutableList<Any>, getString(R.string.load_more_tip))
+                (mSearchBinding.mRecyclerView.adapter as SearchResultListAdapter).addSongs(data, getString(R.string.load_more_tip))
             }
             page++
         } else {
@@ -514,12 +529,78 @@ class SearchActivity : BaseActivity() {
     }
 
     override fun onBackPressed() {
-        if (isDownLoadSong) {
-            val intent = Intent(this@SearchActivity, MainActivity::class.java)
-            intent.putExtra("isDownLoadSong", isDownLoadSong)
-            intent.putExtra("song", mCurrentSong)
-            setResult(Contacts.RESULT_SONG_CODE, intent)
-        }
+        val intent = Intent(this@SearchActivity, MainActivity::class.java)
+        intent.putExtra("isDownLoadSong", isDownLoadSong)
+        intent.putExtra("song", mCurrentSong)
+        setResult(Contacts.RESULT_SONG_CODE, intent)
         super.onBackPressed()
+    }
+
+    var dialog: Dialog? = null
+
+    /**
+     * 歌曲更多操作对话框
+     */
+    private fun showSongMoreOperation(isLocal: Boolean, song: Any) {
+        dialog = SongMoreOperationDialog(this, R.style.DialogStyle, object : OnSelectListener {
+            override fun select(index: Int) {
+                dialog!!.dismiss()
+                when (index) {
+                    0 -> if (isLocal) {
+                        showDeleteDialog(song as SearchResultSongBean)
+                    } else {
+                        AppManager.getInstance().musicAutoService!!.binder.playCurrentSong(AppUtils.getSongBean(song as SearchResultSongBean), 0, true)
+                    }
+                    1 -> {
+                        println((song as BaseSongBean).singer!!.name)
+                    }
+                }
+            }
+        }, arrayListOf(if (isLocal) "删除歌曲" else "缓存歌曲", "查看歌手"))
+        dialog!!.show()
+    }
+
+    /**
+     * 删除本地歌曲确认对话框
+     */
+    private fun showDeleteDialog(song: SearchResultSongBean) {
+        val builder = AlertDialog.Builder(this)
+        builder.setTitle("提示")
+        val view = LayoutInflater.from(this).inflate(R.layout.song_delete_tip_dialog, null, false)
+        val tvDialogMessage = view.findViewById<TextView>(R.id.tvDialogMessage)
+        tvDialogMessage.text = String.format("亲，您确定要删除「%s」吗？",
+                if (song.name.length < 8) song.name else String.format("%s…", song.name.substring(0, 6)))
+        val cbDeleteSongFile = view.findViewById<CheckBox>(R.id.cbDeleteSongFile)
+        builder.setView(view)
+        builder.setNegativeButton("取消") { dialog, _ -> dialog.dismiss() }
+        builder.setPositiveButton("删除") { dialog, _ ->
+            deleteLocalSong(cbDeleteSongFile.isChecked, song)
+            dialog.dismiss()
+        }
+        builder.setCancelable(false)
+        val dialog = builder.show()
+        dialog.getButton(AlertDialog.BUTTON_NEGATIVE).setTextColor(Color.BLACK)
+        dialog.getButton(AlertDialog.BUTTON_POSITIVE).setTextColor(Color.BLACK)
+    }
+
+    /**
+     * 删除本地歌曲
+     */
+    private fun deleteLocalSong(isChecked: Boolean, song: SearchResultSongBean) {
+        Observable.just(isChecked)
+                .observeOn(Schedulers.io())
+                .map {
+                    if (!isChecked) {
+                        AppUtils.deleteFile(String.format("%s_%s.mp3", song.name, song.id), 1)
+                        AppUtils.deleteFile(String.format("%s_%s.txt", song.name, song.id), 2)
+                    }
+                    LocalSongsDataSource.getInstance().deleteLocalSong(LocalSongsDataSource.getInstance().queryLocalSong(song.id, song.name))
+                    isChecked
+                }
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe({
+                    showSnackBar("删除成功")
+                    ((mSearchBinding.mRecyclerView.adapter as SearchResultListAdapter).data[song.index] as SearchResultSongBean).isDownLoad = false
+                }) { showSnackBar("删除失败") }
     }
 }

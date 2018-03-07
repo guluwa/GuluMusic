@@ -50,4 +50,9 @@ interface OnSongStatusListener {
      * @param url
      */
     fun pic(url: String)
+
+    /**
+     * 歌曲缓存完成
+     */
+    fun download(position:Int)
 }

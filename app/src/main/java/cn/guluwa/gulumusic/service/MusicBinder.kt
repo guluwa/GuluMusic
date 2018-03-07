@@ -26,6 +26,7 @@ import cn.guluwa.gulumusic.utils.RandomPicker
 import io.reactivex.Observable
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.disposables.Disposable
+import io.reactivex.schedulers.Schedulers
 
 /**
  * Created by guluwa on 2018/2/2.
@@ -125,42 +126,59 @@ class MusicBinder(val service: MusicAutoService) : Binder() {
      * @param song
      * @param mCurrentTime
      */
-    fun playCurrentSong(song: TracksBean, mCurrentTime: Int) {
-        currentSong = song
+    fun playCurrentSong(song: TracksBean, mCurrentTime: Int, onlyDownload: Boolean) {
+        if (!onlyDownload)
+            currentSong = song
         //本地不存在，则去下载
         mSongPath = AppUtils.isExistFile(String.format("%s_%s.mp3", currentSong!!.name, currentSong!!.id), 1)
         if ("" == mSongPath) {
             isLoading = true
-            querySongPath()
-            if (listeners.isNotEmpty()) {
+            querySongPath(song, onlyDownload)
+            if (listeners.isNotEmpty() && !onlyDownload) {
                 listeners[listeners.size - 1].loading()
             }
         } else {
             isLoading = false
-            if (listeners.isNotEmpty()) {
+            if (listeners.isNotEmpty() && !onlyDownload) {
                 listeners[listeners.size - 1].start()
             }
-            if (mediaPlayer!!.isPlaying) {
+            if (mediaPlayer!!.isPlaying && !onlyDownload) {
                 stop()
             }
-            playOrPauseSong(mCurrentTime)
+            if (listeners.isNotEmpty()) {
+                listeners[listeners.size - 1].download(song.index)
+            }
+            Observable.just("")
+                    .subscribeOn(Schedulers.io())
+                    .observeOn(Schedulers.io())
+                    .map {
+                        if (LocalSongsDataSource.getInstance().queryLocalSong(song.id, song.name) == null) {
+                            LocalSongsDataSource.getInstance().addLocalSong(AppUtils.getLocalSongBean(song))
+                        } else {
+                            println("歌曲已存在")
+                        }
+                    }
+                    .observeOn(AndroidSchedulers.mainThread())
+                    .subscribe()
+            if (!onlyDownload)
+                playOrPauseSong(mCurrentTime)
         }
         if ("" == AppUtils.isExistFile(String.format("%s_%s.txt", currentSong!!.name, currentSong!!.id), 2)) {
-            querySongWord()
+            querySongWord(onlyDownload)
         }
         if ("" == song.al!!.picUrl) {
-            querySongPic()
+            querySongPic(onlyDownload)
         }
     }
 
     /**
      * 查询歌曲路径(首页、搜索)
      */
-    private fun querySongPath() {
+    private fun querySongPath(song: TracksBean, onlyDownload: Boolean) {
         SongsRepository.getInstance().querySongPath(currentSong!!, object : OnResultListener<SongPathBean> {
             override fun success(result: SongPathBean) {
                 if ("" == result.url) {
-                    if (listeners.isNotEmpty()) {
+                    if (listeners.isNotEmpty() && !onlyDownload) {
                         listeners[listeners.size - 1].error(service.getString(R.string.song_cant_plsy_tip))
                         getNextSong(currentSong!!)
                         listeners[listeners.size - 1].end(currentSong!!)
@@ -169,9 +187,12 @@ class MusicBinder(val service: MusicAutoService) : Binder() {
                     SongsRepository.getInstance().downloadSongFile(result, String.format("%s_%s.mp3", result.song!!.name, result.song!!.id),
                             object : OnResultListener<File> {
                                 override fun success(file: File) {
+                                    if (listeners.isNotEmpty()) {
+                                        listeners[listeners.size - 1].download(song.index)
+                                    }
                                     println(file.absolutePath)
                                     mSongPath = file.absolutePath
-                                    if (result.id == currentSong!!.id) {//下载完成的歌曲和当前播放歌曲是同一首
+                                    if (result.id == currentSong!!.id && !onlyDownload) {//下载完成的歌曲和当前播放歌曲是同一首
                                         isLoading = true
                                         if (mediaPlayer!!.isPlaying) {
                                             stop()
@@ -184,7 +205,7 @@ class MusicBinder(val service: MusicAutoService) : Binder() {
                                 }
 
                                 override fun failed(error: String) {
-                                    if (listeners.isNotEmpty()) {
+                                    if (listeners.isNotEmpty() && !onlyDownload) {
                                         listeners[listeners.size - 1].error(error)
                                         getNextSong(currentSong!!)
                                         listeners[listeners.size - 1].end(currentSong!!)
@@ -195,7 +216,7 @@ class MusicBinder(val service: MusicAutoService) : Binder() {
             }
 
             override fun failed(error: String) {
-                if (listeners.isNotEmpty()) {
+                if (listeners.isNotEmpty() && !onlyDownload) {
                     listeners[listeners.size - 1].error(error)
                     getNextSong(currentSong!!)
                     listeners[listeners.size - 1].end(currentSong!!)
@@ -207,14 +228,14 @@ class MusicBinder(val service: MusicAutoService) : Binder() {
     /**
      * 查询歌曲歌词(首页、搜索)
      */
-    private fun querySongWord() {
+    private fun querySongWord(onlyDownload: Boolean) {
         SongsRepository.getInstance().querySongWord(currentSong!!, object : OnResultListener<SongWordBean> {
             override fun success(result: SongWordBean) {
                 AppUtils.writeWord2Disk(result.lyric!!, String.format("%s_%s.txt", result.song!!.name, result.song!!.id))
             }
 
             override fun failed(error: String) {
-                if (listeners.isNotEmpty()) {
+                if (listeners.isNotEmpty() && !onlyDownload) {
                     listeners[listeners.size - 1].error(error)
                 }
             }
@@ -224,19 +245,19 @@ class MusicBinder(val service: MusicAutoService) : Binder() {
     /**
      * 查询歌曲封面图（首页、搜索）
      */
-    private fun querySongPic() {
+    private fun querySongPic(onlyDownload: Boolean) {
         SongsRepository.getInstance().querySongPic(currentSong!!, object : OnResultListener<SongPathBean> {
             override fun success(result: SongPathBean) {
                 println(result.url)
                 currentSong!!.al!!.picUrl = result.url
                 mSongList!!.add(currentSong!!)
-                if (listeners.isNotEmpty()) {
+                if (listeners.isNotEmpty() && !onlyDownload) {
                     listeners[listeners.size - 1].pic(result.url)
                 }
             }
 
             override fun failed(error: String) {
-                if (listeners.isNotEmpty()) {
+                if (listeners.isNotEmpty() && !onlyDownload) {
                     listeners[listeners.size - 1].error(error)
                 }
             }

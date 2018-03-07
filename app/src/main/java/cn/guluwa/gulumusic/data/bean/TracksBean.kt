@@ -25,6 +25,8 @@ class TracksBean : BaseSongBean(), Serializable {
     var url_id = ""
     @Ignore
     var lyric_id = ""
+    @Ignore
+    var local = false
 
     companion object {
 

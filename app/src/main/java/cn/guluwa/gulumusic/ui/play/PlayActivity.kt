@@ -132,6 +132,9 @@ class PlayActivity : BaseActivity() {
             mCurrentSong!!.al!!.picUrl = url
             mPlayBinding.song = mCurrentSong
         }
+
+        override fun download(position: Int) {
+        }
     }
 
     override fun initViews() {
@@ -306,7 +309,7 @@ class PlayActivity : BaseActivity() {
         if (AppManager.getInstance().musicAutoService!!.binder.isPrepare) {
             AppManager.getInstance().musicAutoService!!.binder.playOrPauseSong(-1)
         } else {
-            AppManager.getInstance().musicAutoService!!.binder.playCurrentSong(mCurrentSong!!, mCurrentTime)
+            AppManager.getInstance().musicAutoService!!.binder.playCurrentSong(mCurrentSong!!, mCurrentTime,false)
         }
     }
 

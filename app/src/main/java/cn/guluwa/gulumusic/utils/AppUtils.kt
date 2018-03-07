@@ -320,9 +320,10 @@ object AppUtils {
     fun getSongBean(songBean: SearchResultSongBean): TracksBean {
         val tracksBean = TracksBean()
         tracksBean.id = songBean.id
+        tracksBean.index=songBean.index
         tracksBean.name = songBean.name
         val singer = ArBean()
-        singer.name = if (songBean.artist!!.size != 0) songBean.artist!![0] else ""
+        singer.name = if (songBean.artist!!.isNotEmpty()) songBean.artist!![0] else ""
         tracksBean.singer = singer
         val alBean = AlBean()
         alBean.name = songBean.name

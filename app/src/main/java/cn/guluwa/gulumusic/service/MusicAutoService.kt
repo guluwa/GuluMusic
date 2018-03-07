@@ -24,10 +24,6 @@ class MusicAutoService : Service() {
     //  通过 Binder 来保持 Activity 和 Service 的通信
     var binder = MusicBinder(this)
 
-    override fun onUnbind(intent: Intent): Boolean {
-        return super.onUnbind(intent)
-    }
-
     override fun onBind(intent: Intent): IBinder? {
         return binder
     }
