@@ -1,5 +1,6 @@
 package cn.guluwa.gulumusic.utils
 
+import android.annotation.SuppressLint
 import android.app.Activity
 import android.content.Context
 import android.content.SharedPreferences
@@ -33,6 +34,7 @@ import cn.guluwa.gulumusic.data.bean.TracksBean
 import cn.guluwa.gulumusic.listener.OnColorListener
 import cn.guluwa.gulumusic.manage.MyApplication
 import okhttp3.ResponseBody
+import java.text.SimpleDateFormat
 
 
 /**
@@ -320,7 +322,7 @@ object AppUtils {
     fun getSongBean(songBean: SearchResultSongBean): TracksBean {
         val tracksBean = TracksBean()
         tracksBean.id = songBean.id
-        tracksBean.index=songBean.index
+        tracksBean.index = songBean.index
         tracksBean.name = songBean.name
         val singer = ArBean()
         singer.name = if (songBean.artist!!.isNotEmpty()) songBean.artist!![0] else ""
@@ -426,5 +428,10 @@ object AppUtils {
     //当前时间戳
     fun getCurrentDate(): Long {
         return System.currentTimeMillis() / 1000
+    }
+
+    @SuppressLint("SimpleDateFormat")
+    fun formatTime(progress:Int):String {
+        return SimpleDateFormat("mm:ss").format(progress)
     }
 }

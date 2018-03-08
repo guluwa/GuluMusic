@@ -153,11 +153,9 @@ class SearchResultListAdapter(private val listener: OnClickListener) :
         init {
             when (mViewBinder) {
                 is SearchResultListItemLayoutBinding -> mViewBinder.setClickListener({ view ->
+                    (data[adapterPosition] as SearchResultSongBean).index = adapterPosition
                     when (view.id) {
-                        R.id.mSongContainer -> {
-                            (data[adapterPosition] as SearchResultSongBean).index=adapterPosition
-                            listener.click(1, data[adapterPosition])
-                        }
+                        R.id.mSongContainer -> listener.click(1, data[adapterPosition])
                         R.id.ivMore -> listener.click(2, data[adapterPosition])
                     }
                 })

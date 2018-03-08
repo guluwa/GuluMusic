@@ -6,6 +6,7 @@ import android.arch.lifecycle.Observer
 import android.content.Context
 import android.content.Intent
 import android.graphics.Color
+import android.os.Bundle
 import android.support.v4.app.ActivityCompat
 import android.support.v4.app.ActivityOptionsCompat
 import android.support.v4.util.Pair
@@ -23,12 +24,10 @@ import cn.guluwa.gulumusic.base.BaseActivity
 import cn.guluwa.gulumusic.data.bean.*
 import cn.guluwa.gulumusic.data.local.LocalSongsDataSource
 import cn.guluwa.gulumusic.data.remote.retrofit.exception.BaseException
+import cn.guluwa.gulumusic.databinding.ActivityPlayBinding
 import cn.guluwa.gulumusic.databinding.ActivitySearchBinding
 import cn.guluwa.gulumusic.dialog.SongMoreOperationDialog
-import cn.guluwa.gulumusic.listener.OnClickListener
-import cn.guluwa.gulumusic.listener.OnResultListener
-import cn.guluwa.gulumusic.listener.OnSelectListener
-import cn.guluwa.gulumusic.listener.OnSongStatusListener
+import cn.guluwa.gulumusic.listener.*
 import cn.guluwa.gulumusic.manage.AppManager
 import cn.guluwa.gulumusic.manage.Contacts
 import cn.guluwa.gulumusic.ui.main.MainActivity
@@ -74,17 +73,29 @@ class SearchActivity : BaseActivity() {
     private var isDownLoadSong: Boolean = false
 
     /**
-     * 当前播放歌曲
+     * 页面是否来自恢复
      */
-    private var mCurrentSong: TracksBean? = null
+    private var mActivityFromRestore: Boolean = false
 
     /**
-     * 格式化时间
+     * 歌曲播放状态
      */
-    private var time: SimpleDateFormat? = null
+    private var mPlayStatus: Int = 0
 
-    override val viewLayoutId: Int
-        get() = R.layout.activity_search
+    /**
+     * 搜索输入框
+     */
+    private var mSearchAutoComplete: SearchView.SearchAutoComplete? = null
+
+    /**
+     * 搜索View
+     */
+    private var searchView: SearchView? = null
+
+    /**
+     * layout文件id
+     */
+    override val viewLayoutId: Int get() = R.layout.activity_search
 
     /**
      * 歌曲播放进度
@@ -116,7 +127,7 @@ class SearchActivity : BaseActivity() {
 
         override fun progress(progress: Int, duration: Int) {
             if (mSearchBinding.mPlayBtn.isPlaying != 0) {
-                mSearchBinding.tvCurrentSongProgress.text = time!!.format(progress)
+                mSearchBinding.tvCurrentSongProgress.text = AppUtils.formatTime(progress)
             }
         }
 
@@ -126,13 +137,17 @@ class SearchActivity : BaseActivity() {
         }
 
         override fun download(position: Int) {
-            if ((mSearchBinding.mRecyclerView.adapter as SearchResultListAdapter).data[position] is SearchResultSongBean) {
+            isDownLoadSong = true
+            if (position != -1 &&
+                    (mSearchBinding.mRecyclerView.adapter as SearchResultListAdapter).data[position] is SearchResultSongBean) {
                 ((mSearchBinding.mRecyclerView.adapter as SearchResultListAdapter).data[position] as SearchResultSongBean).isDownLoad = true
+                mSearchBinding.mRecyclerView.adapter.notifyItemChanged(position)
             }
         }
     }
 
     override fun initViews() {
+        initDataBinding()
         initData()
         initClickListener()
         initToolBar()
@@ -141,54 +156,10 @@ class SearchActivity : BaseActivity() {
     }
 
     /**
-     * 搜索平台切换动画
+     * DataBinding类型强转
      */
-    private fun initAnimation() {
-        when (AppManager.getInstance().searchPlatform) {
-            Contacts.TYPE_TENCENT -> {
-                color = R.color.tencent_music_color
-                mSearchBinding.mToolBar.setTitle(R.string.type_qq)
-            }
-            Contacts.TYPE_XIAMI -> {
-                color = R.color.xia_mi_music_color
-                mSearchBinding.mToolBar.setTitle(R.string.type_xia_mi)
-            }
-            Contacts.TYPE_KUGOU -> {
-                color = R.color.ku_gou_music_color
-                mSearchBinding.mToolBar.setTitle(R.string.type_ku_gou)
-            }
-            Contacts.TYPE_BAIDU -> {
-                color = R.color.bai_du_music_color
-                mSearchBinding.mToolBar.setTitle(R.string.type_bai_du)
-            }
-            else -> {
-                color = R.color.net_ease_music_color
-                mSearchBinding.mToolBar.setTitle(R.string.type_net_ease)
-            }
-        }
-        if (mSearchBinding.mRecyclerView.adapter != null) {
-            (mSearchBinding.mRecyclerView.adapter as SearchResultListAdapter).setColor(color)
-        }
-        window.statusBarColor = AppUtils.deepenColor(resources.getColor(color))
-        mSearchBinding.mToolBar.setBackgroundColor(resources.getColor(color))
-        mSearchBinding.mToolBar.post {
-            val cy = (mSearchBinding.mToolBar.top + mSearchBinding.mToolBar.bottom) / 2
-            val finalRadius = Math.max(mSearchBinding.mToolBar.width, mSearchBinding.mToolBar.height)
-            val animator = ViewAnimationUtils.createCircularReveal(
-                    mSearchBinding.mToolBar, mSearchBinding.mToolBar.right, cy, (finalRadius / 3).toFloat(), finalRadius.toFloat())
-            animator.start()
-        }
-    }
-
-    /**
-     * toolbar初始化
-     */
-    private fun initToolBar() {
-        mSearchBinding.mToolBar.setTitle(R.string.app_name)//设置Toolbar标题
-        setSupportActionBar(mSearchBinding.mToolBar)
-        supportActionBar!!.setHomeButtonEnabled(true) //设置返回键可用
-        supportActionBar!!.setDisplayHomeAsUpEnabled(true)
-        initAnimation()
+    private fun initDataBinding() {
+        mSearchBinding = mViewDataBinding as ActivitySearchBinding
     }
 
     /**
@@ -197,12 +168,9 @@ class SearchActivity : BaseActivity() {
     private fun initData() {
         keyWord = ""
         page = -1
-        mSearchBinding = mViewDataBinding as ActivitySearchBinding
         isDownLoadSong = false
-        time = SimpleDateFormat("mm:ss")
         reFreshLayout(intent.getSerializableExtra("song") as TracksBean)
         mSearchBinding.mPlayBtn.isPlaying = intent.getIntExtra("status", -1)
-        AppManager.getInstance().musicAutoService!!.binder.bindSongStatusListener(listener)
     }
 
     /**
@@ -231,6 +199,17 @@ class SearchActivity : BaseActivity() {
                 }
             }
         }
+    }
+
+    /**
+     * toolbar初始化
+     */
+    private fun initToolBar() {
+        mSearchBinding.mToolBar.setTitle(R.string.app_name)//设置Toolbar标题
+        setSupportActionBar(mSearchBinding.mToolBar)
+        supportActionBar!!.setHomeButtonEnabled(true) //设置返回键可用
+        supportActionBar!!.setDisplayHomeAsUpEnabled(true)
+        initAnimation()
     }
 
     /**
@@ -300,6 +279,46 @@ class SearchActivity : BaseActivity() {
     }
 
     /**
+     * 搜索平台切换动画
+     */
+    private fun initAnimation() {
+        when (AppManager.getInstance().searchPlatform) {
+            Contacts.TYPE_TENCENT -> {
+                color = R.color.tencent_music_color
+                mSearchBinding.mToolBar.setTitle(R.string.type_qq)
+            }
+            Contacts.TYPE_XIAMI -> {
+                color = R.color.xia_mi_music_color
+                mSearchBinding.mToolBar.setTitle(R.string.type_xia_mi)
+            }
+            Contacts.TYPE_KUGOU -> {
+                color = R.color.ku_gou_music_color
+                mSearchBinding.mToolBar.setTitle(R.string.type_ku_gou)
+            }
+            Contacts.TYPE_BAIDU -> {
+                color = R.color.bai_du_music_color
+                mSearchBinding.mToolBar.setTitle(R.string.type_bai_du)
+            }
+            else -> {
+                color = R.color.net_ease_music_color
+                mSearchBinding.mToolBar.setTitle(R.string.type_net_ease)
+            }
+        }
+        if (mSearchBinding.mRecyclerView.adapter != null) {
+            (mSearchBinding.mRecyclerView.adapter as SearchResultListAdapter).setColor(color)
+        }
+        window.statusBarColor = AppUtils.deepenColor(resources.getColor(color))
+        mSearchBinding.mToolBar.setBackgroundColor(resources.getColor(color))
+        mSearchBinding.mToolBar.post {
+            val cy = (mSearchBinding.mToolBar.top + mSearchBinding.mToolBar.bottom) / 2
+            val finalRadius = Math.max(mSearchBinding.mToolBar.width, mSearchBinding.mToolBar.height)
+            val animator = ViewAnimationUtils.createCircularReveal(
+                    mSearchBinding.mToolBar, mSearchBinding.mToolBar.right, cy, (finalRadius / 3).toFloat(), finalRadius.toFloat())
+            animator.start()
+        }
+    }
+
+    /**
      * 播放歌曲
      *
      * @param song
@@ -321,7 +340,6 @@ class SearchActivity : BaseActivity() {
                     }
         } else {
             reFreshLayout(AppUtils.getSongBean(song))
-            isDownLoadSong = true
             AppManager.getInstance().musicAutoService!!.binder.isPrepare = false
             playCurrentSong(0)
         }
@@ -352,7 +370,6 @@ class SearchActivity : BaseActivity() {
         }
     }
 
-
     /**
      * 更新页面
      *
@@ -362,6 +379,25 @@ class SearchActivity : BaseActivity() {
         mCurrentSong = song
         mSearchBinding.song = mCurrentSong
         mSearchBinding.tvCurrentSongProgress.text = "00:00"
+    }
+
+    /**
+     * Service 初始化、数据
+     */
+    override fun initService() {
+        AppManager.getInstance().musicAutoService!!.binder.bindSongStatusListener(listener)
+        if (mActivityFromRestore && mPlayStatus == 1) {
+            if (keyWord != "") {
+                mSearchAutoComplete!!.setText(keyWord)
+                mSearchAutoComplete!!.setSelection(keyWord.length)
+                searchView!!.setQuery(keyWord, true)
+            }
+            showSnackBarWithAction("播放被系统暂停，是否恢复播放", "是", object : OnActionListener {
+                override fun action() {
+                    playCurrentSong(mCurrentSong!!.currentTime)
+                }
+            })
+        }
     }
 
     /**
@@ -384,10 +420,10 @@ class SearchActivity : BaseActivity() {
                     mViewModel.refreshSearchSongs(keyWord, page, false)
                     mSearchBinding.mSwipeRefreshLayout.isRefreshing = false
                     val msg: String
-                    if (listViewDataBean.throwable is BaseException) {
-                        msg = (listViewDataBean.throwable as BaseException).msg
+                    msg = if (listViewDataBean.throwable is BaseException) {
+                        (listViewDataBean.throwable as BaseException).msg
                     } else {
-                        msg = listViewDataBean.throwable!!.message!!
+                        listViewDataBean.throwable!!.message!!
                     }
                     if ((mSearchBinding.mRecyclerView.adapter as SearchResultListAdapter).data.size == 1 &&
                             (mSearchBinding.mRecyclerView.adapter as SearchResultListAdapter).data[0] is String) {
@@ -418,12 +454,6 @@ class SearchActivity : BaseActivity() {
         })
     }
 
-    private var searchItem: MenuItem? = null
-
-    private var mSearchAutoComplete: SearchView.SearchAutoComplete? = null
-
-    private var searchView: SearchView? = null
-
     /**
      * 菜单
      *
@@ -433,7 +463,7 @@ class SearchActivity : BaseActivity() {
     override fun onCreateOptionsMenu(menu: Menu): Boolean {
         menuInflater.inflate(R.menu.search_activity_menu, menu)
         //找到searchView
-        searchItem = menu.findItem(R.id.action_search)
+        val searchItem = menu.findItem(R.id.action_search)
         searchView = MenuItemCompat.getActionView(searchItem) as SearchView
 //        searchView.setIconified(false);//一开始处于展开状态
         mSearchAutoComplete = searchView!!.findViewById(R.id.search_src_text)
@@ -531,6 +561,7 @@ class SearchActivity : BaseActivity() {
     override fun onBackPressed() {
         val intent = Intent(this@SearchActivity, MainActivity::class.java)
         intent.putExtra("isDownLoadSong", isDownLoadSong)
+        intent.putExtra("status", mSearchBinding.mPlayBtn.isPlaying)
         intent.putExtra("song", mCurrentSong)
         setResult(Contacts.RESULT_SONG_CODE, intent)
         super.onBackPressed()
@@ -549,7 +580,8 @@ class SearchActivity : BaseActivity() {
                     0 -> if (isLocal) {
                         showDeleteDialog(song as SearchResultSongBean)
                     } else {
-                        AppManager.getInstance().musicAutoService!!.binder.playCurrentSong(AppUtils.getSongBean(song as SearchResultSongBean), 0, true)
+                        AppManager.getInstance().musicAutoService!!.binder.playCurrentSong(
+                                AppUtils.getSongBean(song as SearchResultSongBean), 0, true)
                     }
                     1 -> {
                         println((song as BaseSongBean).singer!!.name)
@@ -601,6 +633,28 @@ class SearchActivity : BaseActivity() {
                 .subscribe({
                     showSnackBar("删除成功")
                     ((mSearchBinding.mRecyclerView.adapter as SearchResultListAdapter).data[song.index] as SearchResultSongBean).isDownLoad = false
+                    mSearchBinding.mRecyclerView.adapter.notifyItemChanged(song.index)
                 }) { showSnackBar("删除失败") }
+    }
+
+    override fun onSaveInstanceState(outState: Bundle?) {
+        super.onSaveInstanceState(outState)
+
+        outState!!.putInt("status", mSearchBinding.mPlayBtn.isPlaying)
+        mCurrentSong!!.currentTime = AppManager.getInstance().musicAutoService!!.binder.mediaPlayer!!.currentPosition
+        println(AppUtils.formatTime(AppManager.getInstance().musicAutoService!!.binder.mediaPlayer!!.currentPosition))
+        outState.putSerializable("song", mCurrentSong)
+        outState.putString("keyword", keyWord)
+    }
+
+    override fun onRestoreInstanceState(outState: Bundle?) {
+        super.onRestoreInstanceState(outState)
+
+        mActivityFromRestore = true
+        mPlayStatus = outState!!.getInt("status")
+        mSearchBinding.mPlayBtn.isPlaying = -1
+        mCurrentSong = outState.getSerializable("song") as TracksBean?
+        mSearchBinding.song = mCurrentSong
+        keyWord = outState.getString("keyword")
     }
 }

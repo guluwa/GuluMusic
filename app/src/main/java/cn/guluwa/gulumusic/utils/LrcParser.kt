@@ -30,14 +30,14 @@ object LrcParser {
 
     @Throws(Exception::class)
     fun parserLocal(name: String): List<LrcBean> {
-        val `in` = readLrcFile(Environment.getExternalStorageDirectory().absolutePath + "/gulu_music/word/" + name)
-        return parser(`in`)
+        val inputStream = readLrcFile(Environment.getExternalStorageDirectory().absolutePath + "/gulu_music/word/" + name)
+        return parser(inputStream)
     }
 
     @Throws(IOException::class)
     fun parserRemote(str: String): List<LrcBean> {
-        val `in` = ByteArrayInputStream(str.toByteArray())
-        return parser(`in`)
+        val inputStream = ByteArrayInputStream(str.toByteArray())
+        return parser(inputStream)
     }
 
     /**

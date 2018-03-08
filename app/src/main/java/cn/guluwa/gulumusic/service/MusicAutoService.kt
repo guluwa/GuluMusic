@@ -28,6 +28,10 @@ class MusicAutoService : Service() {
         return binder
     }
 
+    override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+        return Service.START_STICKY
+    }
+
     override fun onCreate() {
         super.onCreate()
         audioFocusManager = AudioFocusManager(this)

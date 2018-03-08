@@ -3,14 +3,14 @@ package cn.guluwa.gulumusic.base
 import android.Manifest
 import android.app.AlertDialog
 import android.arch.lifecycle.ViewModelProviders
-import android.content.ActivityNotFoundException
-import android.content.Intent
+import android.content.*
 import android.content.pm.PackageManager
 import android.databinding.DataBindingUtil
 import android.databinding.ViewDataBinding
 import android.graphics.Color
 import android.net.Uri
 import android.os.Bundle
+import android.os.IBinder
 import android.provider.Settings
 import android.support.design.widget.Snackbar
 import android.support.v4.app.ActivityCompat
@@ -20,6 +20,11 @@ import android.transition.Explode
 import android.transition.Fade
 
 import cn.guluwa.gulumusic.R
+import cn.guluwa.gulumusic.data.bean.TracksBean
+import cn.guluwa.gulumusic.listener.OnActionListener
+import cn.guluwa.gulumusic.manage.AppManager
+import cn.guluwa.gulumusic.service.MusicAutoService
+import cn.guluwa.gulumusic.service.MusicBinder
 import cn.guluwa.gulumusic.ui.viewmodel.MainViewModel
 
 /**
@@ -28,34 +33,92 @@ import cn.guluwa.gulumusic.ui.viewmodel.MainViewModel
 
 abstract class BaseActivity : AppCompatActivity() {
 
+    /**
+     * layout文件id
+     */
     abstract val viewLayoutId: Int
 
+    /**
+     * ViewDataBinding对象
+     */
     lateinit var mViewDataBinding: ViewDataBinding
 
+    /**
+     * MainViewModel(数据获取类)
+     */
     lateinit var mViewModel: MainViewModel
 
-    // 需要进行检测的权限数组
-    private var needPermissions = arrayOf(Manifest.permission.WRITE_EXTERNAL_STORAGE, Manifest.permission.READ_EXTERNAL_STORAGE)
+    /**
+     * 当前播放歌曲
+     */
+    protected var mCurrentSong: TracksBean? = null
 
+    /**
+     * 需要进行检测的权限数组
+     */
+    private var needPermissions = arrayOf(
+            Manifest.permission.WRITE_EXTERNAL_STORAGE,
+            Manifest.permission.READ_EXTERNAL_STORAGE)
+
+    /**
+     * 是否需要检测权限
+     */
     private var isNeedCheck = true
 
+    /**
+     * view初始化
+     */
     protected abstract fun initViews()
 
+    /**
+     * viewModel初始化
+     */
     protected abstract fun initViewModel()
+
+    /**
+     * Service 初始化、数据
+     */
+    protected abstract fun initService()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         mViewDataBinding = DataBindingUtil.setContentView(this, viewLayoutId)
         mViewModel = ViewModelProviders.of(this).get(MainViewModel::class.java)
-        bindServiceConnection()
         window.enterTransition = Explode()
         window.exitTransition = Fade()
-        initViews()
         initViewModel()
+        bindServiceConnection()
+        initViews()
     }
 
+    /**
+     * 开启服务，保持与 Service 的通信
+     */
     open fun bindServiceConnection() {
+        if (AppManager.getInstance().musicAutoService == null) {
+            val intent = Intent(this@BaseActivity, MusicAutoService::class.java)
+            startService(intent)
+            bindService(intent, serviceConnection, Context.BIND_AUTO_CREATE)
+        } else {
+            initService()
+        }
+    }
 
+    /**
+     * 回调onServiceConnected 函数，通过IBinder 获取 Service对象，实现Activity与 Service的绑定
+     */
+    private var serviceConnection: ServiceConnection? = object : ServiceConnection {
+        override fun onServiceConnected(name: ComponentName, service: IBinder) {
+            AppManager.getInstance().musicAutoService = (service as MusicBinder).service
+            initService()
+            //销毁serviceConnection
+            unbindService(this)
+            serviceConnection = null
+        }
+
+        override fun onServiceDisconnected(name: ComponentName) {
+            println(name.toString())
+        }
     }
 
     override fun onResume() {
@@ -108,7 +171,7 @@ abstract class BaseActivity : AppCompatActivity() {
 
     private fun startAppSettings() {
         val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS)
-        intent.data = Uri.parse("package:" + packageName)
+        intent.data = Uri.parse("package:$packageName")
         if (packageManager.resolveActivity(intent, PackageManager.MATCH_DEFAULT_ONLY) != null) {
             try {
                 startActivity(intent)
@@ -124,11 +187,11 @@ abstract class BaseActivity : AppCompatActivity() {
         snackBar.show()
     }
 
-    fun showSnackBarWithAction(msg: String, action: String) {
-        val snackBar = Snackbar.make(mViewDataBinding.root, msg, Snackbar.LENGTH_SHORT)
+    fun showSnackBarWithAction(msg: String, action: String, listener: OnActionListener) {
+        val snackBar = Snackbar.make(mViewDataBinding.root, msg, Snackbar.LENGTH_LONG)
         snackBar.view.setBackgroundColor(resources.getColor(R.color.green))
         snackBar.setAction(action) {
-            // TODO: 2018/1/24 可以加入回调接口
+            listener.action()
         }
         snackBar.show()
     }

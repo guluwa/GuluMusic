@@ -15,11 +15,8 @@ import android.support.v4.app.ActivityOptionsCompat
 import android.support.v4.util.Pair
 import android.support.v7.app.ActionBarDrawerToggle
 import android.support.v7.widget.LinearLayoutManager
-import android.view.Gravity
-import android.view.KeyEvent
-import android.view.LayoutInflater
-import android.view.Menu
-import android.view.MenuItem
+import android.support.v7.widget.RecyclerView
+import android.view.*
 import android.widget.CheckBox
 import android.widget.TextView
 
@@ -46,9 +43,12 @@ import cn.guluwa.gulumusic.ui.play.PlayActivity
 import cn.guluwa.gulumusic.ui.search.SearchActivity
 import cn.guluwa.gulumusic.ui.setting.SettingsActivity
 import cn.guluwa.gulumusic.utils.AppUtils
+import com.bumptech.glide.Glide
 import io.reactivex.Observable
 import io.reactivex.android.schedulers.AndroidSchedulers
+import io.reactivex.disposables.Disposable
 import io.reactivex.schedulers.Schedulers
+import java.util.concurrent.TimeUnit
 
 class MainActivity<T> : BaseActivity() {
 
@@ -63,40 +63,24 @@ class MainActivity<T> : BaseActivity() {
     private var sIsScrolling: Boolean = false
 
     /**
-     * 当前播放歌曲
-     */
-    private var mCurrentSong: TracksBean? = null
-
-    /**
-     * 格式化时间
-     */
-    private var time: SimpleDateFormat? = null
-
-    /**
      * 是否第一次进入
      */
     private var isFirstComing: Boolean = false
 
-    override val viewLayoutId: Int
-        get() = R.layout.activity_main
+    /**
+     * 当前播放的歌曲是否在列表中存在
+     */
+    private var isSongInList: Boolean = false
 
     /**
-     * 回调onServiceConnected 函数，通过IBinder 获取 Service对象，实现Activity与 Service的绑定
+     * 上一次点击时间
      */
-    private var serviceConnection: ServiceConnection? = object : ServiceConnection {
-        override fun onServiceConnected(name: ComponentName, service: IBinder) {
-            val mMusicService = (service as MusicBinder).service
-            AppManager.getInstance().musicAutoService = mMusicService
-            println("MusicAutoService 初始化完成")
-            getSongListData(AppManager.getInstance().playStatus)
-            //销毁serviceConnection
-            unbindService(this)
-            serviceConnection = null
-            AppManager.getInstance().musicAutoService!!.binder.bindSongStatusListener(listener)
-        }
+    private var mLastClickTime: Long = 0
 
-        override fun onServiceDisconnected(name: ComponentName) {}
-    }
+    /**
+     * layout文件id
+     */
+    override val viewLayoutId: Int get() = R.layout.activity_main
 
     /**
      * 歌曲播放进度
@@ -127,7 +111,7 @@ class MainActivity<T> : BaseActivity() {
 
         override fun progress(progress: Int, duration: Int) {
             if (mMainBinding.mPlayBtn.isPlaying != 0) {
-                mMainBinding.tvCurrentSongProgress.text = time!!.format(progress)
+                mMainBinding.tvCurrentSongProgress.text = AppUtils.formatTime(progress)
             }
         }
 
@@ -137,14 +121,14 @@ class MainActivity<T> : BaseActivity() {
         }
 
         override fun download(position: Int) {
-            if ((mMainBinding.mRecyclerView.adapter as PlayListAdapter).data[position] is TracksBean)
+            if (position != -1 && (mMainBinding.mRecyclerView.adapter as PlayListAdapter).data.size != 0 &&
+                    (mMainBinding.mRecyclerView.adapter as PlayListAdapter).data[position] is TracksBean)
                 ((mMainBinding.mRecyclerView.adapter as PlayListAdapter).data[position] as TracksBean).local = true
         }
     }
 
     override fun initViews() {
-        mMainBinding = mViewDataBinding as ActivityMainBinding
-        mMainBinding.currentSongShow = true
+        initDataBinding()
         initData()
         initClickListener()
         initToolBar()
@@ -154,14 +138,11 @@ class MainActivity<T> : BaseActivity() {
     }
 
     /**
-     * toolbar初始化
+     * DataBinding类型强转
      */
-    private fun initToolBar() {
-        mMainBinding.mToolBar.setTitle(R.string.app_name)//设置Toolbar标题
-        setSupportActionBar(mMainBinding.mToolBar)
-        supportActionBar!!.setHomeButtonEnabled(true) //设置返回键可用
-        supportActionBar!!.setDisplayHomeAsUpEnabled(true)
-        window.statusBarColor = AppUtils.deepenColor(Color.rgb(85, 160, 122))
+    private fun initDataBinding() {
+        mMainBinding = mViewDataBinding as ActivityMainBinding
+        mMainBinding.currentSongShow = true
     }
 
     /**
@@ -170,12 +151,11 @@ class MainActivity<T> : BaseActivity() {
     private fun initData() {
         isFirstComing = true
         mCurrentSong = Gson().fromJson(AppUtils.getString("mCurrentSong", ""), TracksBean::class.java)
-        time = SimpleDateFormat("mm:ss")
         if (mCurrentSong != null) {
             val mSongPath = AppUtils.isExistFile(String.format("%s_%s.mp3", mCurrentSong!!.name, mCurrentSong!!.id), 1)
             if ("" != mSongPath) {
                 mMainBinding.song = mCurrentSong
-                mMainBinding.tvCurrentSongProgress.text = time!!.format(mCurrentSong!!.currentTime)
+                mMainBinding.tvCurrentSongProgress.text = AppUtils.formatTime(mCurrentSong!!.currentTime)
             }
         }
         mMainBinding.mPlayBtn.isPlaying = -1
@@ -225,8 +205,27 @@ class MainActivity<T> : BaseActivity() {
                     val index = AppUtils.locationCurrentSongShow(mCurrentSong, (mMainBinding.mRecyclerView.adapter as PlayListAdapter).data)
                     mMainBinding.mRecyclerView.smoothScrollToPosition(index)
                 }
+                R.id.mToolBar -> {
+                    if (System.currentTimeMillis() - mLastClickTime > 2000) {
+                        showSnackBar("再按一次返回顶部")
+                        mLastClickTime = System.currentTimeMillis()
+                    } else {
+                        mMainBinding.mRecyclerView.smoothScrollToPosition(0)
+                    }
+                }
             }
         }
+    }
+
+    /**
+     * toolbar初始化
+     */
+    private fun initToolBar() {
+        mMainBinding.mToolBar.setTitle(R.string.app_name)//设置Toolbar标题
+        setSupportActionBar(mMainBinding.mToolBar)
+        supportActionBar!!.setHomeButtonEnabled(true) //设置返回键可用
+        supportActionBar!!.setDisplayHomeAsUpEnabled(true)
+        window.statusBarColor = AppUtils.deepenColor(Color.rgb(85, 160, 122))
     }
 
     /**
@@ -282,7 +281,40 @@ class MainActivity<T> : BaseActivity() {
         })
         mMainBinding.mRecyclerView.layoutManager = LinearLayoutManager(this)
         mMainBinding.mRecyclerView.adapter = mAdapter
+        mMainBinding.mRecyclerView.addOnScrollListener(object : RecyclerView.OnScrollListener() {
+            override fun onScrollStateChanged(recyclerView: RecyclerView?, newState: Int) {
+                super.onScrollStateChanged(recyclerView, newState)
+                if (newState == RecyclerView.SCROLL_STATE_DRAGGING || newState == RecyclerView.SCROLL_STATE_SETTLING) {
+                    sIsScrolling = true
+//                    Glide.with(this@MainActivity).pauseRequests()
+                    if (disposable != null && !disposable!!.isDisposed) {
+                        disposable!!.dispose()
+                        disposable = null
+                    }
+                } else if (newState == RecyclerView.SCROLL_STATE_IDLE) {
+                    if (sIsScrolling) {
+//                        Glide.with(this@MainActivity).resumeRequests()
+                        if (isSongInList) {
+                            mMainBinding.currentSongShow = true
+                            startCountDown()
+                        }
+                    }
+                }
+            }
+        })
     }
+
+    /**
+     * 开始倒计时
+     */
+    private fun startCountDown() {
+        disposable = Observable.interval(0, 1, TimeUnit.SECONDS)
+                .subscribeOn(AndroidSchedulers.mainThread())
+                .observeOn(AndroidSchedulers.mainThread())
+                .take(3).subscribe({ if (it == 2L) mMainBinding.currentSongShow = false })
+    }
+
+    var disposable: Disposable? = null
 
     var dialog: Dialog? = null
 
@@ -361,6 +393,14 @@ class MainActivity<T> : BaseActivity() {
                     } else
                         ((mMainBinding.mRecyclerView.adapter as PlayListAdapter).data[song.position] as TracksBean).local = false
                 }) { showSnackBar("删除失败") }
+    }
+
+    /**
+     * Service 初始化、数据
+     */
+    override fun initService() {
+        getSongListData(AppManager.getInstance().playStatus)
+        AppManager.getInstance().musicAutoService!!.binder.bindSongStatusListener(listener)
     }
 
     /**
@@ -444,10 +484,11 @@ class MainActivity<T> : BaseActivity() {
                 AppUtils.getSongBean(data[0] as LocalSongBean)
             }
             mMainBinding.song = mCurrentSong
-            mMainBinding.tvCurrentSongProgress.text = "00:00"
+            mMainBinding.tvCurrentSongProgress.text = getString(R.string.song_start_time)
             mMainBinding.mPlayBtn.isPlaying = -1
         }
-        mMainBinding.currentSongShow = AppUtils.locationCurrentSongShow(mCurrentSong, data) != -1
+        isSongInList = AppUtils.locationCurrentSongShow(mCurrentSong, data) != -1
+        mMainBinding.currentSongShow = isSongInList
     }
 
     /**
@@ -483,17 +524,9 @@ class MainActivity<T> : BaseActivity() {
     private fun reFreshLayout(song: TracksBean) {
         mCurrentSong = song
         mMainBinding.song = mCurrentSong
-        mMainBinding.tvCurrentSongProgress.text = "00:00"
+        mMainBinding.tvCurrentSongProgress.text = getString(R.string.song_start_time)
     }
 
-    /**
-     * 在Activity中调用 bindService 保持与 Service 的通信
-     */
-    override fun bindServiceConnection() {
-        val intent = Intent(this@MainActivity, MusicAutoService::class.java)
-        startService(intent)
-        bindService(intent, serviceConnection, Context.BIND_AUTO_CREATE)
-    }
 
     /**
      * 刷新列表数据
@@ -549,6 +582,10 @@ class MainActivity<T> : BaseActivity() {
             AppManager.getInstance().musicAutoService!!.quit()
             println("onDestroy")
         }
+        if (disposable != null && disposable!!.isDisposed) {
+            disposable!!.dispose()
+            disposable = null
+        }
         super.onDestroy()
     }
 
@@ -561,6 +598,9 @@ class MainActivity<T> : BaseActivity() {
         return super.onKeyDown(keyCode, event)
     }
 
+    /**
+     * 菜单
+     */
     override fun onCreateOptionsMenu(menu: Menu): Boolean {
         menuInflater.inflate(R.menu.main_activity_menu, menu)
         return super.onCreateOptionsMenu(menu)

@@ -95,11 +95,6 @@ class ProgressView @JvmOverloads constructor(context: Context, attrs: AttributeS
      */
     private var mProgress: Float = 0.toFloat()
 
-    /**
-     * 时间转化
-     */
-    private var time: SimpleDateFormat? = null
-
     init {
         initPaint()
     }
@@ -112,7 +107,7 @@ class ProgressView @JvmOverloads constructor(context: Context, attrs: AttributeS
         mSongPlayLength = "00:00"
         mSongTotalLength = "00:00"
         mProgress = 0f
-        time = SimpleDateFormat("mm:ss")
+
 
         mTopProgressPaint = Paint(Paint.ANTI_ALIAS_FLAG)
         mTopProgressPaint!!.strokeWidth = AppUtils.dp2px(context, 2f).toFloat()
@@ -169,13 +164,13 @@ class ProgressView @JvmOverloads constructor(context: Context, attrs: AttributeS
         canvas.drawText(mSongTotalLength!!, (mViewWidth - mTextSize * mSongTotalLength!!.length / 2).toFloat(), mViewHeight / 2 + yOffset, mTextPaint!!)
     }
 
-    fun setProgress(mProgress: Float) {
+    private fun setProgress(mProgress: Float) {
         this.mProgress = mProgress
     }
 
     fun setSongPlayLength(playMillisecond: Int, totalMillisecond: Int) {
-        this.mSongPlayLength = time!!.format(playMillisecond)
-        this.mSongTotalLength = time!!.format(totalMillisecond)
+        this.mSongPlayLength = AppUtils.formatTime(playMillisecond)
+        this.mSongTotalLength = AppUtils.formatTime(totalMillisecond)
         setProgress((playMillisecond * 1.0 / totalMillisecond).toFloat())
         invalidate()
     }

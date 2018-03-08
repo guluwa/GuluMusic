@@ -17,7 +17,7 @@ class TracksBean : BaseSongBean(), Serializable {
 
     @PrimaryKey
     var id: String = ""
-    var index: Int = 0
+    var index: Int = -1
 
     @Ignore
     var pic_id = ""
