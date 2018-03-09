@@ -1,6 +1,5 @@
-package cn.guluwa.gulumusic.view
+package cn.guluwa.gulumusic.ui.view
 
-import android.content.res.TypedArray
 import android.graphics.RectF
 import android.view.View
 

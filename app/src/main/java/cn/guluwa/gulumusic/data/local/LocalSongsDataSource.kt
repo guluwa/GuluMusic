@@ -2,19 +2,12 @@ package cn.guluwa.gulumusic.data.local
 
 import android.arch.lifecycle.LiveData
 import android.arch.lifecycle.MediatorLiveData
-import android.view.View
 import cn.guluwa.gulumusic.data.bean.*
 
 import cn.guluwa.gulumusic.data.total.SongDataSource
-import cn.guluwa.gulumusic.data.total.SongsRepository
-import cn.guluwa.gulumusic.listener.OnResultListener
-import cn.guluwa.gulumusic.utils.AppUtils
-import io.reactivex.Flowable
+import cn.guluwa.gulumusic.utils.listener.OnResultListener
 import io.reactivex.Observable
-import io.reactivex.Scheduler
 import io.reactivex.android.schedulers.AndroidSchedulers
-import io.reactivex.functions.Action
-import io.reactivex.functions.Consumer
 import io.reactivex.schedulers.Schedulers
 
 /**

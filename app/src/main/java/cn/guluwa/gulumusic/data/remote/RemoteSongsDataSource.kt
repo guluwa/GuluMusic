@@ -10,7 +10,7 @@ import cn.guluwa.gulumusic.data.local.LocalSongsDataSource
 import cn.guluwa.gulumusic.data.remote.LiveDataObservableAdapter.fromObservableViewData
 import cn.guluwa.gulumusic.data.remote.retrofit.RetrofitWorker
 import cn.guluwa.gulumusic.data.total.SongDataSource
-import cn.guluwa.gulumusic.listener.OnResultListener
+import cn.guluwa.gulumusic.utils.listener.OnResultListener
 import cn.guluwa.gulumusic.manage.AppManager
 import cn.guluwa.gulumusic.manage.Contacts
 import cn.guluwa.gulumusic.utils.AppUtils

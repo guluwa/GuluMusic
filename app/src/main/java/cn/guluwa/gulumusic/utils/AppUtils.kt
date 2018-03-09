@@ -3,16 +3,12 @@ package cn.guluwa.gulumusic.utils
 import android.annotation.SuppressLint
 import android.app.Activity
 import android.content.Context
-import android.content.SharedPreferences
-import android.graphics.Bitmap
 import android.graphics.Color
 import android.graphics.drawable.BitmapDrawable
 import android.net.ConnectivityManager
-import android.net.NetworkInfo
 import android.os.Environment
 import android.preference.PreferenceManager
 import android.support.v7.graphics.Palette
-import android.support.v7.widget.RecyclerView
 import android.telephony.TelephonyManager
 import android.util.DisplayMetrics
 import android.util.Log
@@ -22,7 +18,6 @@ import java.io.File
 import java.io.FileOutputStream
 import java.io.FileWriter
 import java.io.IOException
-import java.io.InputStream
 import java.io.OutputStream
 
 import cn.guluwa.gulumusic.data.bean.AlBean
@@ -31,7 +26,7 @@ import cn.guluwa.gulumusic.data.bean.BaseSongBean
 import cn.guluwa.gulumusic.data.bean.LocalSongBean
 import cn.guluwa.gulumusic.data.bean.SearchResultSongBean
 import cn.guluwa.gulumusic.data.bean.TracksBean
-import cn.guluwa.gulumusic.listener.OnColorListener
+import cn.guluwa.gulumusic.utils.listener.OnColorListener
 import cn.guluwa.gulumusic.manage.MyApplication
 import okhttp3.ResponseBody
 import java.text.SimpleDateFormat

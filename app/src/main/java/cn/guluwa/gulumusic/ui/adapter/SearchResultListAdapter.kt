@@ -1,11 +1,10 @@
-package cn.guluwa.gulumusic.adapter
+package cn.guluwa.gulumusic.ui.adapter
 
 import android.databinding.DataBindingUtil
 import android.databinding.ViewDataBinding
 import android.support.graphics.drawable.VectorDrawableCompat
 import android.support.v7.widget.RecyclerView
 import android.view.LayoutInflater
-import android.view.MotionEvent
 import android.view.View
 import android.view.ViewGroup
 import cn.guluwa.gulumusic.R
@@ -15,7 +14,7 @@ import cn.guluwa.gulumusic.databinding.ListEmptyLayoutBinding
 import cn.guluwa.gulumusic.databinding.LoadMoreLayoutBinding
 import cn.guluwa.gulumusic.databinding.SearchHistoryListItemLayoutBinding
 import cn.guluwa.gulumusic.databinding.SearchResultListItemLayoutBinding
-import cn.guluwa.gulumusic.listener.OnClickListener
+import cn.guluwa.gulumusic.utils.listener.OnClickListener
 
 /**
  * Created by guluwa on 2018/2/5.

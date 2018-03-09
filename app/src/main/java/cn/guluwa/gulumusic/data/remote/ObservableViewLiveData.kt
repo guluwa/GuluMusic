@@ -36,6 +36,7 @@ class ObservableViewLiveData<T>(private val mObservable: Observable<T>) : LiveDa
             }
 
             override fun onError(e: Throwable) {
+                println(e.message)
                 synchronized(mLock) {
                     mDisposableRef = null
                 }

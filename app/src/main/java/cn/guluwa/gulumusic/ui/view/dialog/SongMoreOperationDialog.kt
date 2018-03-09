@@ -1,12 +1,12 @@
-package cn.guluwa.gulumusic.dialog
+package cn.guluwa.gulumusic.ui.view.dialog
 
 import android.app.Dialog
 import android.content.Context
 import android.os.Bundle
 import android.support.v7.widget.LinearLayoutManager
 import cn.guluwa.gulumusic.R
-import cn.guluwa.gulumusic.adapter.SongMoreOperationAdapter
-import cn.guluwa.gulumusic.listener.OnSelectListener
+import cn.guluwa.gulumusic.ui.adapter.SongMoreOperationAdapter
+import cn.guluwa.gulumusic.utils.listener.OnSelectListener
 import kotlinx.android.synthetic.main.song_more_operation_dialog.*
 
 /**

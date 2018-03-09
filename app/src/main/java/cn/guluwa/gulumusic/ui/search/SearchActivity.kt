@@ -18,16 +18,14 @@ import android.view.inputmethod.InputMethodManager
 import android.widget.CheckBox
 import android.widget.TextView
 import cn.guluwa.gulumusic.R
-import cn.guluwa.gulumusic.adapter.PlayListAdapter
-import cn.guluwa.gulumusic.adapter.SearchResultListAdapter
+import cn.guluwa.gulumusic.ui.adapter.SearchResultListAdapter
 import cn.guluwa.gulumusic.base.BaseActivity
 import cn.guluwa.gulumusic.data.bean.*
 import cn.guluwa.gulumusic.data.local.LocalSongsDataSource
 import cn.guluwa.gulumusic.data.remote.retrofit.exception.BaseException
-import cn.guluwa.gulumusic.databinding.ActivityPlayBinding
 import cn.guluwa.gulumusic.databinding.ActivitySearchBinding
-import cn.guluwa.gulumusic.dialog.SongMoreOperationDialog
-import cn.guluwa.gulumusic.listener.*
+import cn.guluwa.gulumusic.ui.view.dialog.SongMoreOperationDialog
+import cn.guluwa.gulumusic.utils.listener.*
 import cn.guluwa.gulumusic.manage.AppManager
 import cn.guluwa.gulumusic.manage.Contacts
 import cn.guluwa.gulumusic.ui.main.MainActivity
@@ -36,8 +34,6 @@ import cn.guluwa.gulumusic.utils.AppUtils
 import io.reactivex.Observable
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.schedulers.Schedulers
-import org.json.JSONObject
-import java.text.SimpleDateFormat
 
 
 class SearchActivity : BaseActivity() {

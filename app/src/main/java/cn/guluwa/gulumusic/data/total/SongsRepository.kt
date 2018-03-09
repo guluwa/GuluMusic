@@ -1,7 +1,6 @@
 package cn.guluwa.gulumusic.data.total
 
 import android.arch.lifecycle.LiveData
-import android.view.View
 
 import java.io.File
 
@@ -13,10 +12,8 @@ import cn.guluwa.gulumusic.data.bean.SongWordBean
 import cn.guluwa.gulumusic.data.bean.TracksBean
 import cn.guluwa.gulumusic.data.bean.ViewDataBean
 import cn.guluwa.gulumusic.data.local.LocalSongsDataSource
-import cn.guluwa.gulumusic.data.local.db.DBHelper
 import cn.guluwa.gulumusic.data.remote.RemoteSongsDataSource
-import cn.guluwa.gulumusic.listener.OnResultListener
-import cn.guluwa.gulumusic.manage.AppManager
+import cn.guluwa.gulumusic.utils.listener.OnResultListener
 import cn.guluwa.gulumusic.utils.AppUtils
 
 /**

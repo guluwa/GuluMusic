@@ -1,4 +1,4 @@
-package cn.guluwa.gulumusic.listener
+package cn.guluwa.gulumusic.utils.listener
 
 /**
  * Created by guluwa on 2018/1/13.

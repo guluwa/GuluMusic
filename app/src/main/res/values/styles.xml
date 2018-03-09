@@ -50,4 +50,8 @@
         <item name="@android:windowEnterAnimation">@anim/right_menu_enter</item>
         <item name="@android:windowExitAnimation">@anim/right_menu_exit</item>
     </style>
+
+    <style name="Theme.RetroMusic.Notification" parent="@android:style/TextAppearance.StatusBar.EventContent" />
+
+    <style name="Theme.RetroMusic.Notification.Title" parent="@android:style/TextAppearance.StatusBar.EventContent.Title" />
 </resources>

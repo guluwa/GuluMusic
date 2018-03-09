@@ -56,8 +56,9 @@ class AudioFocusManager(private val mPlayService: MusicAutoService) : AudioManag
                 volume = mAudioManager.getStreamVolume(AudioManager.STREAM_MUSIC)
                 if (willPlay() && volume > 0) {
                     mVolumeWhenFocusLossTransientCanDuck = volume
-                    mAudioManager.setStreamVolume(AudioManager.STREAM_MUSIC, mVolumeWhenFocusLossTransientCanDuck / 2,
-                            AudioManager.FLAG_REMOVE_SOUND_AND_VIBRATE)
+                    mAudioManager.setStreamVolume(AudioManager.STREAM_MUSIC,
+                                    mVolumeWhenFocusLossTransientCanDuck / 2,
+                                    AudioManager.FLAG_REMOVE_SOUND_AND_VIBRATE)
                 }
             }
         }

@@ -12,15 +12,15 @@ import java.util.concurrent.TimeUnit
 import cn.guluwa.gulumusic.R
 import cn.guluwa.gulumusic.data.bean.BaseSongBean
 import cn.guluwa.gulumusic.data.bean.LocalSongBean
-import cn.guluwa.gulumusic.data.bean.SearchResultSongBean
 import cn.guluwa.gulumusic.data.bean.SongPathBean
 import cn.guluwa.gulumusic.data.bean.SongWordBean
 import cn.guluwa.gulumusic.data.bean.TracksBean
 import cn.guluwa.gulumusic.data.local.LocalSongsDataSource
 import cn.guluwa.gulumusic.data.total.SongsRepository
-import cn.guluwa.gulumusic.listener.OnResultListener
-import cn.guluwa.gulumusic.listener.OnSongStatusListener
+import cn.guluwa.gulumusic.utils.listener.OnResultListener
+import cn.guluwa.gulumusic.utils.listener.OnSongStatusListener
 import cn.guluwa.gulumusic.manage.AppManager
+import cn.guluwa.gulumusic.service.notification.MyNotificationManager
 import cn.guluwa.gulumusic.utils.AppUtils
 import cn.guluwa.gulumusic.utils.RandomPicker
 import io.reactivex.Observable
@@ -131,8 +131,7 @@ class MusicBinder(val service: MusicAutoService) : Binder() {
             currentSong = song
         //本地不存在，则去下载
         mSongPath = AppUtils.isExistFile(String.format("%s_%s.mp3", song.name, song.id), 1)
-        println(mSongPath
-        )
+        println(mSongPath)
         if ("" == mSongPath) {
             isLoading = true
             querySongPath(song, onlyDownload)
@@ -296,6 +295,7 @@ class MusicBinder(val service: MusicAutoService) : Binder() {
                         mediaPlayer!!.start()
                         if (listeners.isNotEmpty()) {
                             listeners[listeners.size - 1].start()
+                            service.initNotification()
                         }
                     } catch (e: IOException) {
                         e.printStackTrace()
@@ -309,11 +309,13 @@ class MusicBinder(val service: MusicAutoService) : Binder() {
                     mediaPlayer!!.pause()
                     if (listeners.isNotEmpty()) {
                         listeners[listeners.size - 1].pause()
+                        MyNotificationManager.getInstance().setPauseStatus()
                     }
                 } else {
                     mediaPlayer!!.start()
                     if (listeners.isNotEmpty()) {
                         listeners[listeners.size - 1].start()
+                        service.initNotification()
                     }
                 }
             }
@@ -327,6 +329,9 @@ class MusicBinder(val service: MusicAutoService) : Binder() {
      */
     fun getNextSong(song: TracksBean) {
         if (mSongList != null && mSongList!!.size != 0) {
+            if (listeners.isNotEmpty()) {
+                listeners[listeners.size - 1].end(currentSong!!)
+            }
             var index = song.index
             if (AppManager.getInstance().playMode == 0 || AppManager.getInstance().playMode == 1) {
                 if (index + 1 >= mSongList!!.size) {
@@ -364,6 +369,9 @@ class MusicBinder(val service: MusicAutoService) : Binder() {
      */
     fun getLastSong(song: TracksBean) {
         if (mSongList != null && mSongList!!.size != 0) {
+            if (listeners.isNotEmpty()) {
+                listeners[listeners.size - 1].end(currentSong!!)
+            }
             var index = song.index
             if (AppManager.getInstance().playMode == 0 || AppManager.getInstance().playMode == 1) {
                 if (index - 1 < 0) {

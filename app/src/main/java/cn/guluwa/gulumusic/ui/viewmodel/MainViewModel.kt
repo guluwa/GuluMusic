@@ -4,19 +4,13 @@ import android.arch.lifecycle.LiveData
 import android.arch.lifecycle.MutableLiveData
 import android.arch.lifecycle.Transformations
 import android.arch.lifecycle.ViewModel
-import android.view.View
-
-import java.io.File
 
 import cn.guluwa.gulumusic.data.bean.FreshBean
 import cn.guluwa.gulumusic.data.bean.LocalSongBean
 import cn.guluwa.gulumusic.data.bean.SearchResultSongBean
-import cn.guluwa.gulumusic.data.bean.SongPathBean
-import cn.guluwa.gulumusic.data.bean.SongWordBean
 import cn.guluwa.gulumusic.data.bean.TracksBean
 import cn.guluwa.gulumusic.data.bean.ViewDataBean
 import cn.guluwa.gulumusic.data.total.SongsRepository
-import cn.guluwa.gulumusic.listener.OnResultListener
 
 /**
  * Created by guluwa on 2018/1/12.

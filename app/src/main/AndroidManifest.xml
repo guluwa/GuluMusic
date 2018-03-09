@@ -41,6 +41,16 @@
             android:name=".service.MusicAutoService"
             android:enabled="true"
             android:exported="true" />
+
+        <receiver android:name="cn.guluwa.gulumusic.service.receiver.HeadsetPlugReceiver"/>
+
+        <receiver android:name="cn.guluwa.gulumusic.service.receiver.SongOperationReceiver">
+            <intent-filter>
+                <action android:name="play" />
+                <action android:name="previous" />
+                <action android:name="next" />
+            </intent-filter>
+        </receiver>
     </application>
 
 </manifest>

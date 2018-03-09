@@ -1,4 +1,4 @@
-package cn.guluwa.gulumusic.adapter
+package cn.guluwa.gulumusic.ui.adapter
 
 import android.databinding.DataBindingUtil
 import android.databinding.ViewDataBinding
@@ -7,15 +7,13 @@ import android.support.v7.widget.RecyclerView
 import android.view.LayoutInflater
 import android.view.ViewGroup
 
-import java.util.ArrayList
-
 import cn.guluwa.gulumusic.R
 import cn.guluwa.gulumusic.data.bean.BaseSongBean
 import cn.guluwa.gulumusic.data.bean.LocalSongBean
 import cn.guluwa.gulumusic.data.bean.TracksBean
 import cn.guluwa.gulumusic.databinding.PlayListItemLayoutBinding
-import cn.guluwa.gulumusic.listener.OnClickListener
-import cn.guluwa.gulumusic.listener.OnLongClickListener
+import cn.guluwa.gulumusic.utils.listener.OnClickListener
+import cn.guluwa.gulumusic.utils.listener.OnLongClickListener
 import cn.guluwa.gulumusic.utils.AppUtils
 
 /**

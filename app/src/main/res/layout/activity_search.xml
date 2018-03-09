@@ -86,7 +86,9 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginStart="25dp"
+                android:maxLength="30"
                 android:text="@{song.name}"
+                android:maxLines="1"
                 android:textColor="@color/play_view_black"
                 android:textSize="13sp"
                 app:layout_constraintBottom_toBottomOf="parent"
@@ -104,7 +106,7 @@
                 app:layout_constraintRight_toLeftOf="@+id/mPlayBtn"
                 app:layout_constraintTop_toTopOf="parent" />
 
-            <cn.guluwa.gulumusic.view.PlayButton
+            <cn.guluwa.gulumusic.ui.view.PlayButton
                 android:id="@+id/mPlayBtn"
                 android:layout_width="32dp"
                 android:layout_height="32dp"

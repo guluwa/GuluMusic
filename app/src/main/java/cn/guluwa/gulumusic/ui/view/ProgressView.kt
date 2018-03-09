@@ -1,15 +1,11 @@
-package cn.guluwa.gulumusic.view
+package cn.guluwa.gulumusic.ui.view
 
 import android.content.Context
 import android.graphics.Canvas
-import android.graphics.Color
 import android.graphics.Paint
 import android.graphics.Typeface
 import android.util.AttributeSet
 import android.view.View
-
-import java.sql.Time
-import java.text.SimpleDateFormat
 
 import cn.guluwa.gulumusic.R
 import cn.guluwa.gulumusic.utils.AppUtils

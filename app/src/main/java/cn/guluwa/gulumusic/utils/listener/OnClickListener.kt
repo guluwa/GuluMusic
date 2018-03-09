@@ -1,6 +1,4 @@
-package cn.guluwa.gulumusic.listener
-
-import cn.guluwa.gulumusic.data.bean.TracksBean
+package cn.guluwa.gulumusic.utils.listener
 
 /**
  * Created by guluwa on 2018/1/19.

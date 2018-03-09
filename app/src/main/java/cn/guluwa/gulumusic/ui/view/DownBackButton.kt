@@ -1,4 +1,4 @@
-package cn.guluwa.gulumusic.view
+package cn.guluwa.gulumusic.ui.view
 
 import android.content.Context
 import android.graphics.Canvas

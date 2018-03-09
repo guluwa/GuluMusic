@@ -2,14 +2,9 @@ package cn.guluwa.gulumusic.ui.main
 
 import android.app.AlertDialog
 import android.app.Dialog
-import android.app.ProgressDialog.show
 import android.arch.lifecycle.Observer
-import android.content.ComponentName
-import android.content.Context
 import android.content.Intent
-import android.content.ServiceConnection
 import android.graphics.Color
-import android.os.IBinder
 import android.support.v4.app.ActivityCompat
 import android.support.v4.app.ActivityOptionsCompat
 import android.support.v4.util.Pair
@@ -22,28 +17,23 @@ import android.widget.TextView
 
 import com.google.gson.Gson
 
-import java.text.SimpleDateFormat
-
 import cn.guluwa.gulumusic.R
-import cn.guluwa.gulumusic.adapter.PlayListAdapter
+import cn.guluwa.gulumusic.ui.adapter.PlayListAdapter
 import cn.guluwa.gulumusic.base.BaseActivity
 import cn.guluwa.gulumusic.data.bean.*
 import cn.guluwa.gulumusic.data.local.LocalSongsDataSource
 import cn.guluwa.gulumusic.databinding.ActivityMainBinding
-import cn.guluwa.gulumusic.dialog.SongMoreOperationDialog
-import cn.guluwa.gulumusic.listener.OnClickListener
-import cn.guluwa.gulumusic.listener.OnLongClickListener
-import cn.guluwa.gulumusic.listener.OnSelectListener
-import cn.guluwa.gulumusic.listener.OnSongStatusListener
+import cn.guluwa.gulumusic.ui.view.dialog.SongMoreOperationDialog
+import cn.guluwa.gulumusic.utils.listener.OnClickListener
+import cn.guluwa.gulumusic.utils.listener.OnLongClickListener
+import cn.guluwa.gulumusic.utils.listener.OnSelectListener
+import cn.guluwa.gulumusic.utils.listener.OnSongStatusListener
 import cn.guluwa.gulumusic.manage.AppManager
 import cn.guluwa.gulumusic.manage.Contacts
-import cn.guluwa.gulumusic.service.MusicAutoService
-import cn.guluwa.gulumusic.service.MusicBinder
 import cn.guluwa.gulumusic.ui.play.PlayActivity
 import cn.guluwa.gulumusic.ui.search.SearchActivity
 import cn.guluwa.gulumusic.ui.setting.SettingsActivity
 import cn.guluwa.gulumusic.utils.AppUtils
-import com.bumptech.glide.Glide
 import io.reactivex.Observable
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.disposables.Disposable
@@ -401,6 +391,7 @@ class MainActivity<T> : BaseActivity() {
     override fun initService() {
         getSongListData(AppManager.getInstance().playStatus)
         AppManager.getInstance().musicAutoService!!.binder.bindSongStatusListener(listener)
+//        initNotification()
     }
 
     /**

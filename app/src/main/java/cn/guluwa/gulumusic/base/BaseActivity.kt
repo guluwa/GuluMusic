@@ -8,6 +8,7 @@ import android.content.pm.PackageManager
 import android.databinding.DataBindingUtil
 import android.databinding.ViewDataBinding
 import android.graphics.Color
+import android.media.AudioManager
 import android.net.Uri
 import android.os.Bundle
 import android.os.IBinder
@@ -18,14 +19,16 @@ import android.support.v4.content.ContextCompat
 import android.support.v7.app.AppCompatActivity
 import android.transition.Explode
 import android.transition.Fade
-
 import cn.guluwa.gulumusic.R
 import cn.guluwa.gulumusic.data.bean.TracksBean
-import cn.guluwa.gulumusic.listener.OnActionListener
+import cn.guluwa.gulumusic.utils.listener.OnActionListener
 import cn.guluwa.gulumusic.manage.AppManager
+import cn.guluwa.gulumusic.service.receiver.HeadsetPlugReceiver
 import cn.guluwa.gulumusic.service.MusicAutoService
 import cn.guluwa.gulumusic.service.MusicBinder
+import cn.guluwa.gulumusic.service.notification.MyNotificationManager
 import cn.guluwa.gulumusic.ui.viewmodel.MainViewModel
+
 
 /**
  * Created by guluwa on 2018/1/11.
@@ -66,6 +69,11 @@ abstract class BaseActivity : AppCompatActivity() {
     private var isNeedCheck = true
 
     /**
+     * 耳机插拔receiver
+     */
+    private var headsetPlugReceiver: HeadsetPlugReceiver? = null
+
+    /**
      * view初始化
      */
     protected abstract fun initViews()
@@ -88,6 +96,7 @@ abstract class BaseActivity : AppCompatActivity() {
         window.exitTransition = Fade()
         initViewModel()
         bindServiceConnection()
+        registerHeadsetPlugReceiver()
         initViews()
     }
 
@@ -121,11 +130,27 @@ abstract class BaseActivity : AppCompatActivity() {
         }
     }
 
+    private fun registerHeadsetPlugReceiver() {
+        headsetPlugReceiver = HeadsetPlugReceiver()
+        val intentFilter = IntentFilter()
+        intentFilter.addAction(AudioManager.ACTION_AUDIO_BECOMING_NOISY)
+        registerReceiver(headsetPlugReceiver, intentFilter)
+    }
+
+    protected fun initNotification() {
+        MyNotificationManager().showNotification(this)
+    }
+
     override fun onResume() {
         super.onResume()
         if (isNeedCheck) {
             checkPermissions(needPermissions)
         }
+    }
+
+    override fun onDestroy() {
+        unregisterReceiver(headsetPlugReceiver);
+        super.onDestroy()
     }
 
     private fun checkPermissions(permissions: Array<String>) {

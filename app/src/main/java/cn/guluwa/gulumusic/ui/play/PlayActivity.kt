@@ -1,15 +1,12 @@
 package cn.guluwa.gulumusic.ui.play
 
-import android.arch.lifecycle.ViewModelProviders
 import android.content.Intent
 import android.content.pm.ActivityInfo
 import android.graphics.Bitmap
 import android.graphics.Color
 import android.os.Build
 import android.os.Bundle
-import android.os.PersistableBundle
 import android.view.View
-import android.view.Window
 import android.view.WindowManager
 
 import com.bumptech.glide.Glide
@@ -19,26 +16,19 @@ import com.bumptech.glide.request.RequestListener
 import com.bumptech.glide.request.RequestOptions
 import com.bumptech.glide.request.target.Target
 
-import java.io.File
-import java.util.concurrent.TimeUnit
-
 import cn.guluwa.gulumusic.R
 import cn.guluwa.gulumusic.base.BaseActivity
 import cn.guluwa.gulumusic.data.bean.LrcBean
 import cn.guluwa.gulumusic.data.bean.TracksBean
 import cn.guluwa.gulumusic.databinding.ActivityPlayBinding
-import cn.guluwa.gulumusic.listener.OnActionListener
-import cn.guluwa.gulumusic.listener.OnResultListener
-import cn.guluwa.gulumusic.listener.OnSongStatusListener
+import cn.guluwa.gulumusic.utils.listener.OnActionListener
+import cn.guluwa.gulumusic.utils.listener.OnSongStatusListener
 import cn.guluwa.gulumusic.manage.AppManager
 import cn.guluwa.gulumusic.manage.Contacts
 import cn.guluwa.gulumusic.manage.MyApplication
 import cn.guluwa.gulumusic.ui.main.MainActivity
 import cn.guluwa.gulumusic.utils.AppUtils
 import cn.guluwa.gulumusic.utils.LrcParser
-import io.reactivex.Observable
-import io.reactivex.android.schedulers.AndroidSchedulers
-import io.reactivex.disposables.Disposable
 import jp.wasabeef.glide.transformations.BlurTransformation
 
 class PlayActivity : BaseActivity() {
@@ -84,6 +74,9 @@ class PlayActivity : BaseActivity() {
 
         override fun start() {
             mPlayBinding.mPlayBtn.isPlaying = 1
+            if (mCurrentSong!!.id != AppManager.getInstance().musicAutoService!!.binder.currentSong!!.id) {
+                reFreshLayout(AppManager.getInstance().musicAutoService!!.binder.currentSong!!)
+            }
             initSongLrc()
         }
 
@@ -108,10 +101,10 @@ class PlayActivity : BaseActivity() {
                 if (mLrcPosition == -1) {//说明是第一次
                     for (i in mLrcList!!.indices) {
                         if (mLrcList!![i].time > progress) {
-                            if (i != 0) {
-                                mLrcPosition = i - 1
+                            mLrcPosition = if (i != 0) {
+                                i - 1
                             } else {
-                                mLrcPosition = 0
+                                0
                             }
                             if (mPlayBinding.mPlayBtn.isPlaying != 0) {
                                 mPlayBinding.tvSongWord.text = mLrcList!![mLrcPosition].word
@@ -181,6 +174,7 @@ class PlayActivity : BaseActivity() {
     private fun initSongLrc() {
         if (mLrcList == null) {
             try {
+                println(mCurrentSong!!.name)
                 mLrcList = LrcParser.parserLocal(String.format("%s_%s.txt", mCurrentSong!!.name, mCurrentSong!!.id))
                 for (i in mLrcList!!.indices) {
                     if (mLrcList!![i].time > mCurrentSong!!.currentTime) {
@@ -200,7 +194,6 @@ class PlayActivity : BaseActivity() {
                 mPlayBinding.tvSongWord.text = "暂无歌词"
                 e.printStackTrace()
             }
-
         }
     }
 
@@ -320,15 +313,23 @@ class PlayActivity : BaseActivity() {
      * @param song
      */
     private fun playCurrentSong(song: TracksBean) {
-        //更新页面
+        reFreshLayout(song)
+        //播放歌曲、利用服务后台播放
+        AppManager.getInstance().musicAutoService!!.binder.isPrepare = false
+        playCurrentSong(0)
+    }
+
+    /**
+     * 更新页面
+     *
+     * @param song
+     */
+    private fun reFreshLayout(song: TracksBean) {
         mCurrentSong = song
         mPlayBinding.song = mCurrentSong
         mPlayBinding.tvSongWord.text = ""
         mPlayBinding.mProgressView.setSongPlayLength(0, 0)
         initSongPic()
-        //播放歌曲、利用服务后台播放
-        AppManager.getInstance().musicAutoService!!.binder.isPrepare = false
-        playCurrentSong(0)
     }
 
     /**

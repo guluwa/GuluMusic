@@ -64,7 +64,7 @@
             app:layout_constraintTop_toTopOf="parent"
             app:layout_constraintVertical_weight="0.5">
 
-            <cn.guluwa.gulumusic.view.DownBackButton
+            <cn.guluwa.gulumusic.ui.view.DownBackButton
                 android:id="@+id/ivDownBack"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
@@ -151,7 +151,7 @@
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toTopOf="@+id/tvSongSinger" />
 
-            <cn.guluwa.gulumusic.view.ProgressView
+            <cn.guluwa.gulumusic.ui.view.ProgressView
                 android:id="@+id/mProgressView"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -198,7 +198,7 @@
                     app:layout_constraintRight_toLeftOf="@+id/mPlayBtn"
                     app:layout_constraintTop_toTopOf="parent" />
 
-                <cn.guluwa.gulumusic.view.PlayButton
+                <cn.guluwa.gulumusic.ui.view.PlayButton
                     android:id="@+id/mPlayBtn"
                     android:layout_width="64dp"
                     android:layout_height="64dp"

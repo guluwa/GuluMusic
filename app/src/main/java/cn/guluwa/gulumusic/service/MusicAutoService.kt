@@ -3,10 +3,10 @@ package cn.guluwa.gulumusic.service
 import android.app.Service
 import android.content.Intent
 import android.os.IBinder
-import android.support.v4.content.LocalBroadcastManager
 import android.util.Log
 
 import cn.guluwa.gulumusic.manage.AppManager
+import cn.guluwa.gulumusic.service.notification.MyNotificationManager
 
 
 /**
@@ -38,13 +38,22 @@ class MusicAutoService : Service() {
         Log.w(TAG, "MusicAutoService in onCreate")
     }
 
+    fun initNotification() {
+        MyNotificationManager.getInstance().showNotification(this)
+    }
+
+    private fun destroyNotification() {
+        MyNotificationManager.getInstance().dismissNotification()
+    }
+
     override fun onDestroy() {
         binder.unbindProgressQuery()
         audioFocusManager!!.abandonAudioFocus()
         binder.mediaPlayer!!.reset()
         binder.mediaPlayer!!.release()
-        binder.mediaPlayer=null
+        binder.mediaPlayer = null
         AppManager.getInstance().musicAutoService = null
+        destroyNotification()
         super.onDestroy()
         Log.w(TAG, "MusicAutoService in onDestroy")
     }
