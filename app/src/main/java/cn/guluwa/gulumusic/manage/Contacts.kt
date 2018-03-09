@@ -43,7 +43,7 @@ object Contacts {
     /**
      * 服务器baseUrl
      */
-    const val BASEURL = "http://qxu1142030270.my3w.com/music/"
+    const val BASEURL = "http://lab.mkblog.cn/music/"
 
     /**
      * 网易云
