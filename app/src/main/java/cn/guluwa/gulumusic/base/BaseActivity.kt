@@ -52,11 +52,6 @@ abstract class BaseActivity : AppCompatActivity() {
     lateinit var mViewModel: MainViewModel
 
     /**
-     * 当前播放歌曲
-     */
-    protected var mCurrentSong: TracksBean? = null
-
-    /**
      * 需要进行检测的权限数组
      */
     private var needPermissions = arrayOf(

@@ -23,7 +23,7 @@ open class BaseSongBean : Serializable {
     var source: String = ""
 
     @Ignore
-    var currentTime = -1
+    var currentTime = 0
     @Ignore
     var duration: Int = 0
     @Ignore

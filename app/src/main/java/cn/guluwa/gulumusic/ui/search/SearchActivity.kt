@@ -34,6 +34,7 @@ import cn.guluwa.gulumusic.utils.AppUtils
 import io.reactivex.Observable
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.schedulers.Schedulers
+import kotlinx.android.synthetic.main.activity_search.*
 
 
 class SearchActivity : BaseActivity() {
@@ -62,6 +63,11 @@ class SearchActivity : BaseActivity() {
      * 搜索平台主题颜色
      */
     private var color: Int = 0
+
+    /**
+     * 是否改变了歌曲
+     */
+    private var isChangeSong: Boolean = false
 
     /**
      * 是否下载了歌曲
@@ -99,22 +105,25 @@ class SearchActivity : BaseActivity() {
     private val listener = object : OnSongStatusListener {
 
         override fun loading() {
-            mSearchBinding.mPlayBtn.isPlaying = 0
+            mPlayBtn.isPlaying = 0
         }
 
         override fun start() {
-            mSearchBinding.mPlayBtn.isPlaying = 1
-            if (mCurrentSong!!.id != AppManager.getInstance().musicAutoService!!.binder.currentSong!!.id) {
-                reFreshLayout(AppManager.getInstance().musicAutoService!!.binder.currentSong!!)
-            }
+            mPlayBtn.isPlaying = 1
+            reFreshLayout()
+            isChangeSong = true
         }
 
         override fun pause() {
-            mSearchBinding.mPlayBtn.isPlaying = -1
+            mPlayBtn.isPlaying = -1
+        }
+
+        override fun resume() {
+            mPlayBtn.isPlaying = 1
         }
 
         override fun end(tracksBean: TracksBean) {
-            playCurrentSong(tracksBean)
+
         }
 
         override fun error(msg: String) {
@@ -122,22 +131,21 @@ class SearchActivity : BaseActivity() {
         }
 
         override fun progress(progress: Int, duration: Int) {
-            if (mSearchBinding.mPlayBtn.isPlaying != 0) {
-                mSearchBinding.tvCurrentSongProgress.text = AppUtils.formatTime(progress)
+            if (mPlayBtn.isPlaying != 0) {
+                tvCurrentSongProgress.text = AppUtils.formatTime(progress)
             }
         }
 
         override fun pic(url: String) {
-            mCurrentSong!!.al!!.picUrl = url
-            mSearchBinding.song = mCurrentSong
+            mSearchBinding.song = AppManager.getInstance().musicAutoService!!.binder.currentSong!!
         }
 
         override fun download(position: Int) {
             isDownLoadSong = true
             if (position != -1 &&
-                    (mSearchBinding.mRecyclerView.adapter as SearchResultListAdapter).data[position] is SearchResultSongBean) {
-                ((mSearchBinding.mRecyclerView.adapter as SearchResultListAdapter).data[position] as SearchResultSongBean).isDownLoad = true
-                mSearchBinding.mRecyclerView.adapter.notifyItemChanged(position)
+                    (mRecyclerView.adapter as SearchResultListAdapter).data[position] is SearchResultSongBean) {
+                ((mRecyclerView.adapter as SearchResultListAdapter).data[position] as SearchResultSongBean).isDownLoad = true
+                mRecyclerView.adapter.notifyItemChanged(position)
             }
         }
     }
@@ -156,6 +164,8 @@ class SearchActivity : BaseActivity() {
      */
     private fun initDataBinding() {
         mSearchBinding = mViewDataBinding as ActivitySearchBinding
+        reFreshLayout()
+        mPlayBtn.isPlaying = if (AppManager.getInstance().musicAutoService!!.binder.mediaPlayer!!.isPlaying) 1 else -1
     }
 
     /**
@@ -165,8 +175,6 @@ class SearchActivity : BaseActivity() {
         keyWord = ""
         page = -1
         isDownLoadSong = false
-        reFreshLayout(intent.getSerializableExtra("song") as TracksBean)
-        mSearchBinding.mPlayBtn.isPlaying = intent.getIntExtra("status", -1)
     }
 
     /**
@@ -177,21 +185,16 @@ class SearchActivity : BaseActivity() {
             when (view.id) {
                 R.id.mBottomPlayInfo -> {
                     val intent = Intent(this@SearchActivity, PlayActivity::class.java)
-                    if (AppManager.getInstance().musicAutoService!!.binder.mediaPlayer!!.isPlaying) {
-                        mCurrentSong!!.currentTime = AppManager.getInstance().musicAutoService!!.binder.mediaPlayer!!.currentPosition
-                    }
-                    intent.putExtra("song", mCurrentSong)
-                    intent.putExtra("status", mSearchBinding.mPlayBtn.isPlaying)
-                    val options = ActivityOptionsCompat.makeSceneTransitionAnimation(this@SearchActivity, Pair(mSearchBinding.ivCurrentSongPic, "songImage"))
+                    val options = ActivityOptionsCompat.makeSceneTransitionAnimation(this@SearchActivity, Pair(ivCurrentSongPic, "songImage"))
                     ActivityCompat.startActivityForResult(this@SearchActivity, intent, Contacts.REQUEST_CODE_PLAY, options.toBundle())
                 }
                 R.id.mPlayBtn -> if (AppManager.getInstance().musicAutoService != null && AppManager.getInstance().musicAutoService!!.binder.mediaPlayer != null) {
                     if (AppManager.getInstance().musicAutoService!!.binder.mediaPlayer!!.isPlaying) {
-                        mSearchBinding.mPlayBtn.isPlaying = -1
+                        mPlayBtn.isPlaying = -1
                     } else {
-                        mSearchBinding.mPlayBtn.isPlaying = 1
+                        mPlayBtn.isPlaying = 1
                     }
-                    playCurrentSong(mCurrentSong!!.currentTime)
+                    playSong()
                 }
             }
         }
@@ -201,8 +204,8 @@ class SearchActivity : BaseActivity() {
      * toolbar初始化
      */
     private fun initToolBar() {
-        mSearchBinding.mToolBar.setTitle(R.string.app_name)//设置Toolbar标题
-        setSupportActionBar(mSearchBinding.mToolBar)
+        mToolBar.setTitle(R.string.app_name)//设置Toolbar标题
+        setSupportActionBar(mToolBar)
         supportActionBar!!.setHomeButtonEnabled(true) //设置返回键可用
         supportActionBar!!.setDisplayHomeAsUpEnabled(true)
         initAnimation()
@@ -212,13 +215,13 @@ class SearchActivity : BaseActivity() {
      * 下拉刷新初始化
      */
     private fun initSwipeRefreshLayout() {
-        mSearchBinding.mSwipeRefreshLayout.setColorSchemeColors(
+        mSwipeRefreshLayout.setColorSchemeColors(
                 resources.getColor(R.color.yellow),
                 resources.getColor(R.color.green))
-        mSearchBinding.mSwipeRefreshLayout.setOnRefreshListener {
+        mSwipeRefreshLayout.setOnRefreshListener {
             if ("" == keyWord) {
                 showSnackBar(resources.getString(R.string.search_view_hint))
-                mSearchBinding.mSwipeRefreshLayout.isRefreshing = false
+                mSwipeRefreshLayout.isRefreshing = false
             } else {
                 page = 1
                 mViewModel.refreshSearchSongs(keyWord, page, true)
@@ -250,7 +253,7 @@ class SearchActivity : BaseActivity() {
                     } else if (!isLoadMoreIng) {
                         isLoadMoreIng = true
                         mViewModel.refreshSearchSongs(keyWord, page, true)
-                        (mSearchBinding.mRecyclerView.adapter as SearchResultListAdapter).setLoadMoreTip(getString(R.string.load_moreing_tip))
+                        (mRecyclerView.adapter as SearchResultListAdapter).setLoadMoreTip(getString(R.string.load_moreing_tip))
                     }
                     2 -> showSongMoreOperation((arg2 as SearchResultSongBean).isDownLoad, arg2)
                 }
@@ -258,8 +261,8 @@ class SearchActivity : BaseActivity() {
         })
 
         mAdapter.setColor(color)
-        mSearchBinding.mRecyclerView.layoutManager = LinearLayoutManager(this)
-        mSearchBinding.mRecyclerView.adapter = mAdapter
+        mRecyclerView.layoutManager = LinearLayoutManager(this)
+        mRecyclerView.adapter = mAdapter
         //搜索记录
         LocalSongsDataSource.getInstance().querySearchRecord(object : OnResultListener<List<SearchHistoryBean>> {
             override fun success(result: List<SearchHistoryBean>) {
@@ -281,35 +284,35 @@ class SearchActivity : BaseActivity() {
         when (AppManager.getInstance().searchPlatform) {
             Contacts.TYPE_TENCENT -> {
                 color = R.color.tencent_music_color
-                mSearchBinding.mToolBar.setTitle(R.string.type_qq)
+                mToolBar.setTitle(R.string.type_qq)
             }
             Contacts.TYPE_XIAMI -> {
                 color = R.color.xia_mi_music_color
-                mSearchBinding.mToolBar.setTitle(R.string.type_xia_mi)
+                mToolBar.setTitle(R.string.type_xia_mi)
             }
             Contacts.TYPE_KUGOU -> {
                 color = R.color.ku_gou_music_color
-                mSearchBinding.mToolBar.setTitle(R.string.type_ku_gou)
+                mToolBar.setTitle(R.string.type_ku_gou)
             }
             Contacts.TYPE_BAIDU -> {
                 color = R.color.bai_du_music_color
-                mSearchBinding.mToolBar.setTitle(R.string.type_bai_du)
+                mToolBar.setTitle(R.string.type_bai_du)
             }
             else -> {
                 color = R.color.net_ease_music_color
-                mSearchBinding.mToolBar.setTitle(R.string.type_net_ease)
+                mToolBar.setTitle(R.string.type_net_ease)
             }
         }
-        if (mSearchBinding.mRecyclerView.adapter != null) {
-            (mSearchBinding.mRecyclerView.adapter as SearchResultListAdapter).setColor(color)
+        if (mRecyclerView.adapter != null) {
+            (mRecyclerView.adapter as SearchResultListAdapter).setColor(color)
         }
         window.statusBarColor = AppUtils.deepenColor(resources.getColor(color))
-        mSearchBinding.mToolBar.setBackgroundColor(resources.getColor(color))
-        mSearchBinding.mToolBar.post {
-            val cy = (mSearchBinding.mToolBar.top + mSearchBinding.mToolBar.bottom) / 2
-            val finalRadius = Math.max(mSearchBinding.mToolBar.width, mSearchBinding.mToolBar.height)
+        mToolBar.setBackgroundColor(resources.getColor(color))
+        mToolBar.post {
+            val cy = (mToolBar.top + mToolBar.bottom) / 2
+            val finalRadius = Math.max(mToolBar.width, mToolBar.height)
             val animator = ViewAnimationUtils.createCircularReveal(
-                    mSearchBinding.mToolBar, mSearchBinding.mToolBar.right, cy, (finalRadius / 3).toFloat(), finalRadius.toFloat())
+                    mToolBar, mToolBar.right, cy, (finalRadius / 3).toFloat(), finalRadius.toFloat())
             animator.start()
         }
     }
@@ -326,18 +329,12 @@ class SearchActivity : BaseActivity() {
                     .map { LocalSongsDataSource.getInstance().queryLocalSong(song.id, song.name) }
                     .observeOn(AndroidSchedulers.mainThread())
                     .subscribe({ localSongBean ->
-                        reFreshLayout(AppUtils.getSongBean(localSongBean))
-                        AppManager.getInstance().musicAutoService!!.binder.isPrepare = false
-                        playCurrentSong(0)
+                        playNewSong(AppUtils.getSongBean(localSongBean))
                     }) {
-                        reFreshLayout(AppUtils.getSongBean(song))
-                        AppManager.getInstance().musicAutoService!!.binder.isPrepare = false
-                        playCurrentSong(0)
+                        playNewSong(AppUtils.getSongBean(song))
                     }
         } else {
-            reFreshLayout(AppUtils.getSongBean(song))
-            AppManager.getInstance().musicAutoService!!.binder.isPrepare = false
-            playCurrentSong(0)
+            playNewSong(AppUtils.getSongBean(song))
         }
     }
 
@@ -346,35 +343,31 @@ class SearchActivity : BaseActivity() {
      *
      * @param song
      */
-    private fun playCurrentSong(song: TracksBean) {
-        reFreshLayout(song)
+    private fun playNewSong(song: TracksBean) {
+        reFreshLayout()
         //播放歌曲、利用服务后台播放
         AppManager.getInstance().musicAutoService!!.binder.isPrepare = false
-        playCurrentSong(0)
+        AppManager.getInstance().musicAutoService!!.binder.currentSong = song
+        playSong()
     }
 
     /**
      * 不换歌曲（第一次进入）
-     *
-     * @param mCurrentTime
      */
-    private fun playCurrentSong(mCurrentTime: Int) {
+    private fun playSong() {
         if (AppManager.getInstance().musicAutoService!!.binder.isPrepare) {
-            AppManager.getInstance().musicAutoService!!.binder.playOrPauseSong(-1)
+            AppManager.getInstance().musicAutoService!!.binder.playOrPauseSong()
         } else {
-            AppManager.getInstance().musicAutoService!!.binder.playCurrentSong(mCurrentSong!!, mCurrentTime, false)
+            AppManager.getInstance().musicAutoService!!.binder.playCurrentSong(null, false)
         }
     }
 
     /**
      * 更新页面
-     *
-     * @param song
      */
-    private fun reFreshLayout(song: TracksBean) {
-        mCurrentSong = song
-        mSearchBinding.song = mCurrentSong
-        mSearchBinding.tvCurrentSongProgress.text = "00:00"
+    private fun reFreshLayout() {
+        mSearchBinding.song = AppManager.getInstance().musicAutoService!!.binder.currentSong!!
+        tvCurrentSongProgress.text = getString(R.string.song_start_time)
     }
 
     /**
@@ -382,18 +375,23 @@ class SearchActivity : BaseActivity() {
      */
     override fun initService() {
         AppManager.getInstance().musicAutoService!!.binder.bindSongStatusListener(listener)
-        if (mActivityFromRestore && mPlayStatus == 1) {
-            if (keyWord != "") {
-                mSearchAutoComplete!!.setText(keyWord)
-                mSearchAutoComplete!!.setSelection(keyWord.length)
-                searchView!!.setQuery(keyWord, true)
-            }
-            showSnackBarWithAction("播放被系统暂停，是否恢复播放", "是", object : OnActionListener {
-                override fun action() {
-                    playCurrentSong(mCurrentSong!!.currentTime)
+        if (mActivityFromRestore) {
+            reFreshLayout()
+            mPlayBtn.isPlaying = if (AppManager.getInstance().musicAutoService!!.binder.mediaPlayer!!.isPlaying) 1 else -1
+            if (mPlayStatus == 1) {
+                if (keyWord != "") {
+                    mSearchAutoComplete!!.setText(keyWord)
+                    mSearchAutoComplete!!.setSelection(keyWord.length)
+                    searchView!!.setQuery(keyWord, true)
                 }
-            })
+                showSnackBarWithAction("播放被系统暂停，是否恢复播放", "是", object : OnActionListener {
+                    override fun action() {
+                        playSong()
+                    }
+                })
+            }
         }
+
     }
 
     /**
@@ -404,38 +402,37 @@ class SearchActivity : BaseActivity() {
         mViewModel.searchSongByKeyWord()!!.observe(this, Observer { listViewDataBean ->
             if (listViewDataBean == null) {
                 isLoadMoreIng = false
-                (mSearchBinding.mRecyclerView.adapter as SearchResultListAdapter).setLoadMoreTip(getString(R.string.load_more_tip))
-                mSearchBinding.mSwipeRefreshLayout.isRefreshing = false
+                (mRecyclerView.adapter as SearchResultListAdapter).setLoadMoreTip(getString(R.string.load_more_tip))
+                mSwipeRefreshLayout.isRefreshing = false
                 return@Observer
             }
             when (listViewDataBean.status) {
                 PageStatus.Loading -> if (page == 1)
-                    mSearchBinding.mSwipeRefreshLayout.isRefreshing = true
+                    mSwipeRefreshLayout.isRefreshing = true
                 PageStatus.Error -> {
                     isLoadMoreIng = false
                     mViewModel.refreshSearchSongs(keyWord, page, false)
-                    mSearchBinding.mSwipeRefreshLayout.isRefreshing = false
-                    val msg: String
-                    msg = if (listViewDataBean.throwable is BaseException) {
+                    mSwipeRefreshLayout.isRefreshing = false
+                    val msg: String = if (listViewDataBean.throwable is BaseException) {
                         (listViewDataBean.throwable as BaseException).msg
                     } else {
                         listViewDataBean.throwable!!.message!!
                     }
-                    if ((mSearchBinding.mRecyclerView.adapter as SearchResultListAdapter).data.size == 1 &&
-                            (mSearchBinding.mRecyclerView.adapter as SearchResultListAdapter).data[0] is String) {
-                        (mSearchBinding.mRecyclerView.adapter as SearchResultListAdapter).setSearchHistory(msg, null)
+                    if ((mRecyclerView.adapter as SearchResultListAdapter).data.size == 1 &&
+                            (mRecyclerView.adapter as SearchResultListAdapter).data[0] is String) {
+                        (mRecyclerView.adapter as SearchResultListAdapter).setSearchHistory(msg, null)
                     } else {
                         showSnackBar(msg)
-                        (mSearchBinding.mRecyclerView.adapter as SearchResultListAdapter).setLoadMoreTip(getString(R.string.load_more_tip))
+                        (mRecyclerView.adapter as SearchResultListAdapter).setLoadMoreTip(getString(R.string.load_more_tip))
                     }
                 }
                 PageStatus.Empty -> {
                     isLoadMoreIng = false
                     mViewModel.refreshSearchSongs(keyWord, page, false)
-                    mSearchBinding.mSwipeRefreshLayout.isRefreshing = false
-                    if ((mSearchBinding.mRecyclerView.adapter as SearchResultListAdapter).data.size == 1 &&
-                            (mSearchBinding.mRecyclerView.adapter as SearchResultListAdapter).data[0] is String) {
-                        (mSearchBinding.mRecyclerView.adapter as SearchResultListAdapter).setSearchHistory(getString(R.string.search_result_empty_tip), null)
+                    mSwipeRefreshLayout.isRefreshing = false
+                    if ((mRecyclerView.adapter as SearchResultListAdapter).data.size == 1 &&
+                            (mRecyclerView.adapter as SearchResultListAdapter).data[0] is String) {
+                        (mRecyclerView.adapter as SearchResultListAdapter).setSearchHistory(getString(R.string.search_result_empty_tip), null)
                     } else {
                         showSnackBar(getString(R.string.search_result_no_more_tip))
                     }
@@ -443,7 +440,7 @@ class SearchActivity : BaseActivity() {
                 PageStatus.Content -> {
                     isLoadMoreIng = false
                     mViewModel.refreshSearchSongs(keyWord, page, false)
-                    mSearchBinding.mSwipeRefreshLayout.isRefreshing = false
+                    mSwipeRefreshLayout.isRefreshing = false
                     setData(listViewDataBean.data)
                 }
             }
@@ -527,17 +524,17 @@ class SearchActivity : BaseActivity() {
     private fun setData(data: List<SearchResultSongBean>?) {
         if (data != null && data.isNotEmpty()) {
             if (page == 1) {
-                (mSearchBinding.mRecyclerView.adapter as SearchResultListAdapter).setSongs(data, getString(R.string.load_more_tip))
+                (mRecyclerView.adapter as SearchResultListAdapter).setSongs(data, getString(R.string.load_more_tip))
             } else {
-                (mSearchBinding.mRecyclerView.adapter as SearchResultListAdapter).addSongs(data, getString(R.string.load_more_tip))
+                (mRecyclerView.adapter as SearchResultListAdapter).addSongs(data, getString(R.string.load_more_tip))
             }
             page++
         } else {
             if (page == 1) {
-                (mSearchBinding.mRecyclerView.adapter as SearchResultListAdapter).setSearchHistory(getString(R.string.search_result_empty_tip), null)
+                (mRecyclerView.adapter as SearchResultListAdapter).setSearchHistory(getString(R.string.search_result_empty_tip), null)
             } else {
                 showSnackBar(getString(R.string.search_result_no_more_tip))
-                (mSearchBinding.mRecyclerView.adapter as SearchResultListAdapter).setLoadMoreTip(getString(R.string.load_more_tip))
+                (mRecyclerView.adapter as SearchResultListAdapter).setLoadMoreTip(getString(R.string.load_more_tip))
             }
         }
     }
@@ -557,8 +554,7 @@ class SearchActivity : BaseActivity() {
     override fun onBackPressed() {
         val intent = Intent(this@SearchActivity, MainActivity::class.java)
         intent.putExtra("isDownLoadSong", isDownLoadSong)
-        intent.putExtra("status", mSearchBinding.mPlayBtn.isPlaying)
-        intent.putExtra("song", mCurrentSong)
+        intent.putExtra("isChangeSong", isChangeSong)
         setResult(Contacts.RESULT_SONG_CODE, intent)
         super.onBackPressed()
     }
@@ -577,7 +573,7 @@ class SearchActivity : BaseActivity() {
                         showDeleteDialog(song as SearchResultSongBean)
                     } else {
                         AppManager.getInstance().musicAutoService!!.binder.playCurrentSong(
-                                AppUtils.getSongBean(song as SearchResultSongBean), 0, true)
+                                AppUtils.getSongBean(song as SearchResultSongBean), true)
                     }
                     1 -> {
                         println((song as BaseSongBean).singer!!.name)
@@ -628,18 +624,18 @@ class SearchActivity : BaseActivity() {
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribe({
                     showSnackBar("删除成功")
-                    ((mSearchBinding.mRecyclerView.adapter as SearchResultListAdapter).data[song.index] as SearchResultSongBean).isDownLoad = false
-                    mSearchBinding.mRecyclerView.adapter.notifyItemChanged(song.index)
+                    ((mRecyclerView.adapter as SearchResultListAdapter).data[song.index] as SearchResultSongBean).isDownLoad = false
+                    mRecyclerView.adapter.notifyItemChanged(song.index)
                 }) { showSnackBar("删除失败") }
     }
 
     override fun onSaveInstanceState(outState: Bundle?) {
         super.onSaveInstanceState(outState)
 
-        outState!!.putInt("status", mSearchBinding.mPlayBtn.isPlaying)
-        mCurrentSong!!.currentTime = AppManager.getInstance().musicAutoService!!.binder.mediaPlayer!!.currentPosition
+        outState!!.putInt("status", mPlayBtn.isPlaying)
+        AppManager.getInstance().musicAutoService!!.binder.currentSong!!.currentTime = AppManager.getInstance().musicAutoService!!.binder.mediaPlayer!!.currentPosition
         println(AppUtils.formatTime(AppManager.getInstance().musicAutoService!!.binder.mediaPlayer!!.currentPosition))
-        outState.putSerializable("song", mCurrentSong)
+        outState.putSerializable("song", AppManager.getInstance().musicAutoService!!.binder.currentSong)
         outState.putString("keyword", keyWord)
     }
 
@@ -648,9 +644,9 @@ class SearchActivity : BaseActivity() {
 
         mActivityFromRestore = true
         mPlayStatus = outState!!.getInt("status")
-        mSearchBinding.mPlayBtn.isPlaying = -1
-        mCurrentSong = outState.getSerializable("song") as TracksBean?
-        mSearchBinding.song = mCurrentSong
+        mPlayBtn.isPlaying = -1
+        AppManager.getInstance().musicAutoService!!.binder.currentSong = outState.getSerializable("song") as TracksBean?
+        mSearchBinding.song = AppManager.getInstance().musicAutoService!!.binder.currentSong!!
         keyWord = outState.getString("keyword")
     }
 }

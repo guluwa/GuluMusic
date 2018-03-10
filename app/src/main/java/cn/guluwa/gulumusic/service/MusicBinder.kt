@@ -23,6 +23,7 @@ import cn.guluwa.gulumusic.manage.AppManager
 import cn.guluwa.gulumusic.service.notification.MyNotificationManager
 import cn.guluwa.gulumusic.utils.AppUtils
 import cn.guluwa.gulumusic.utils.RandomPicker
+import com.google.gson.Gson
 import io.reactivex.Observable
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.disposables.Disposable
@@ -52,7 +53,6 @@ class MusicBinder(val service: MusicAutoService) : Binder() {
      * 当前播放歌曲
      */
     var currentSong: TracksBean? = null
-        private set
 
     /**
      * 歌曲播放进度
@@ -82,18 +82,20 @@ class MusicBinder(val service: MusicAutoService) : Binder() {
 
     init {
         isLoading = false
+        currentSong = Gson().fromJson(AppUtils.getString("mCurrentSong", ""), TracksBean::class.java)
         listeners = ArrayList()
         mediaPlayer = MediaPlayer()
         mediaPlayer!!.setOnPreparedListener { isPrepare = true }
         mediaPlayer!!.setOnCompletionListener {
             when (AppManager.getInstance().playMode) {
                 0//单曲循环
+                -> playCurrentSong(null, false)
+                1, 2//顺序播放,随机播放
                 -> {
+                    getNextSong()
+                    isPrepare = false
+                    playCurrentSong(null, false)
                 }
-                1//顺序播放
-                -> getNextSong(currentSong!!)
-                2//随机播放
-                -> getNextSong(currentSong!!)
             }
             if (listeners.isNotEmpty()) {
                 listeners[listeners.size - 1].end(currentSong!!)
@@ -124,17 +126,19 @@ class MusicBinder(val service: MusicAutoService) : Binder() {
      * 播放当前歌曲
      *
      * @param song
-     * @param mCurrentTime
+     * @param onlyDownload
      */
-    fun playCurrentSong(song: TracksBean, mCurrentTime: Int, onlyDownload: Boolean) {
-        if (!onlyDownload)
-            currentSong = song
+    fun playCurrentSong(song: TracksBean?, onlyDownload: Boolean) {
+
         //本地不存在，则去下载
-        mSongPath = AppUtils.isExistFile(String.format("%s_%s.mp3", song.name, song.id), 1)
+        mSongPath = AppUtils.isExistFile(String.format("%s_%s.mp3", currentSong!!.name, currentSong!!.id), 1)
         println(mSongPath)
         if ("" == mSongPath) {
             isLoading = true
-            querySongPath(song, onlyDownload)
+            if (onlyDownload)
+                querySongPath(song, onlyDownload)
+            else
+                querySongPath(currentSong, onlyDownload)
             if (listeners.isNotEmpty() && !onlyDownload) {
                 listeners[listeners.size - 1].loading()
             }
@@ -147,14 +151,14 @@ class MusicBinder(val service: MusicAutoService) : Binder() {
                 stop()
             }
             if (listeners.isNotEmpty()) {
-                listeners[listeners.size - 1].download(song.index)
+                listeners[listeners.size - 1].download(currentSong!!.index)
             }
             Observable.just("")
                     .subscribeOn(Schedulers.io())
                     .observeOn(Schedulers.io())
                     .map {
-                        if (LocalSongsDataSource.getInstance().queryLocalSong(song.id, song.name) == null) {
-                            LocalSongsDataSource.getInstance().addLocalSong(AppUtils.getLocalSongBean(song))
+                        if (LocalSongsDataSource.getInstance().queryLocalSong(currentSong!!.id, currentSong!!.name) == null) {
+                            LocalSongsDataSource.getInstance().addLocalSong(AppUtils.getLocalSongBean(currentSong!!))
                         } else {
                             println("歌曲已存在")
                         }
@@ -162,20 +166,20 @@ class MusicBinder(val service: MusicAutoService) : Binder() {
                     .observeOn(AndroidSchedulers.mainThread())
                     .subscribe()
             if (!onlyDownload)
-                playOrPauseSong(mCurrentTime)
+                playOrPauseSong()
         }
     }
 
     /**
      * 查询歌曲路径(首页、搜索)
      */
-    private fun querySongPath(song: TracksBean, onlyDownload: Boolean) {
-        SongsRepository.getInstance().querySongPath(song, object : OnResultListener<SongPathBean> {
+    private fun querySongPath(song: TracksBean?, onlyDownload: Boolean) {
+        SongsRepository.getInstance().querySongPath(song!!, object : OnResultListener<SongPathBean> {
             override fun success(result: SongPathBean) {
                 if ("" == result.url) {
                     if (listeners.isNotEmpty() && !onlyDownload) {
                         listeners[listeners.size - 1].error(service.getString(R.string.song_cant_plsy_tip))
-                        getNextSong(currentSong!!)
+                        getNextSong()
                         listeners[listeners.size - 1].end(currentSong!!)
                     }
                 } else {
@@ -198,7 +202,7 @@ class MusicBinder(val service: MusicAutoService) : Binder() {
                                         if (mediaPlayer!!.isPlaying) {
                                             stop()
                                         }
-                                        playOrPauseSong(0)
+                                        playOrPauseSong()
                                         if (listeners.isNotEmpty()) {
                                             listeners[listeners.size - 1].start()
                                         }
@@ -208,7 +212,7 @@ class MusicBinder(val service: MusicAutoService) : Binder() {
                                 override fun failed(error: String) {
                                     if (listeners.isNotEmpty() && !onlyDownload) {
                                         listeners[listeners.size - 1].error(error)
-                                        getNextSong(currentSong!!)
+                                        getNextSong()
                                         listeners[listeners.size - 1].end(currentSong!!)
                                     }
                                 }
@@ -219,7 +223,7 @@ class MusicBinder(val service: MusicAutoService) : Binder() {
             override fun failed(error: String) {
                 if (listeners.isNotEmpty() && !onlyDownload) {
                     listeners[listeners.size - 1].error(error)
-                    getNextSong(song)
+                    getNextSong()
                     listeners[listeners.size - 1].end(currentSong!!)
                 }
             }
@@ -229,8 +233,8 @@ class MusicBinder(val service: MusicAutoService) : Binder() {
     /**
      * 查询歌曲歌词(首页、搜索)
      */
-    private fun querySongWord(song: TracksBean, onlyDownload: Boolean) {
-        SongsRepository.getInstance().querySongWord(song, object : OnResultListener<SongWordBean> {
+    private fun querySongWord(song: TracksBean?, onlyDownload: Boolean) {
+        SongsRepository.getInstance().querySongWord(song!!, object : OnResultListener<SongWordBean> {
             override fun success(result: SongWordBean) {
                 AppUtils.writeWord2Disk(result.lyric!!, String.format("%s_%s.txt", result.song!!.name, result.song!!.id))
             }
@@ -246,8 +250,8 @@ class MusicBinder(val service: MusicAutoService) : Binder() {
     /**
      * 查询歌曲封面图（首页、搜索）
      */
-    private fun querySongPic(song: TracksBean, onlyDownload: Boolean) {
-        SongsRepository.getInstance().querySongPic(song, object : OnResultListener<SongPathBean> {
+    private fun querySongPic(song: TracksBean?, onlyDownload: Boolean) {
+        SongsRepository.getInstance().querySongPic(song!!, object : OnResultListener<SongPathBean> {
             override fun success(result: SongPathBean) {
                 println(result.url)
                 if (listeners.isNotEmpty() && !onlyDownload) {
@@ -280,10 +284,8 @@ class MusicBinder(val service: MusicAutoService) : Binder() {
 
     /**
      * 开始或暂停播放
-     *
-     * @param currentTime
      */
-    fun playOrPauseSong(currentTime: Int) {
+    fun playOrPauseSong() {
         if (!isPrepare) {
             if (service.audioFocusManager!!.requestAudioFocus()) {
                 if (mediaPlayer != null) {
@@ -291,7 +293,7 @@ class MusicBinder(val service: MusicAutoService) : Binder() {
                         mediaPlayer!!.reset()
                         mediaPlayer!!.setDataSource(mSongPath)
                         mediaPlayer!!.prepare()
-                        mediaPlayer!!.seekTo(currentTime)
+                        mediaPlayer!!.seekTo(currentSong!!.currentTime)
                         mediaPlayer!!.start()
                         if (listeners.isNotEmpty()) {
                             listeners[listeners.size - 1].start()
@@ -314,7 +316,7 @@ class MusicBinder(val service: MusicAutoService) : Binder() {
                 } else {
                     mediaPlayer!!.start()
                     if (listeners.isNotEmpty()) {
-                        listeners[listeners.size - 1].start()
+                        listeners[listeners.size - 1].resume()
                         service.initNotification()
                     }
                 }
@@ -327,12 +329,12 @@ class MusicBinder(val service: MusicAutoService) : Binder() {
      *
      * @return
      */
-    fun getNextSong(song: TracksBean) {
+    fun getNextSong() {
         if (mSongList != null && mSongList!!.size != 0) {
             if (listeners.isNotEmpty()) {
                 listeners[listeners.size - 1].end(currentSong!!)
             }
-            var index = song.index
+            var index = currentSong!!.index
             if (AppManager.getInstance().playMode == 0 || AppManager.getInstance().playMode == 1) {
                 if (index + 1 >= mSongList!!.size) {
                     index = 0
@@ -367,12 +369,12 @@ class MusicBinder(val service: MusicAutoService) : Binder() {
      *
      * @return
      */
-    fun getLastSong(song: TracksBean) {
+    fun getLastSong() {
         if (mSongList != null && mSongList!!.size != 0) {
             if (listeners.isNotEmpty()) {
                 listeners[listeners.size - 1].end(currentSong!!)
             }
-            var index = song.index
+            var index = currentSong!!.index
             if (AppManager.getInstance().playMode == 0 || AppManager.getInstance().playMode == 1) {
                 if (index - 1 < 0) {
                     index = mSongList!!.size - 1

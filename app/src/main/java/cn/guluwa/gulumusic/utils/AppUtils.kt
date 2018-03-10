@@ -410,10 +410,11 @@ object AppUtils {
 
     //当前歌曲定位
     fun locationCurrentSongShow(currentSong: TracksBean?, data: List<BaseSongBean>?): Int {
+        if (currentSong == null) return -1
         for ((index, song) in data!!.withIndex()) {
-            if (song is TracksBean && currentSong!!.id == song.id && currentSong.name == song.name) {
+            if (song is TracksBean && currentSong.id == song.id && currentSong.name == song.name) {
                 return index
-            } else if (song is LocalSongBean && currentSong!!.id == song.id && currentSong.name == song.name) {
+            } else if (song is LocalSongBean && currentSong.id == song.id && currentSong.name == song.name) {
                 return index
             }
         }
@@ -426,7 +427,7 @@ object AppUtils {
     }
 
     @SuppressLint("SimpleDateFormat")
-    fun formatTime(progress:Int):String {
+    fun formatTime(progress: Int): String {
         return SimpleDateFormat("mm:ss").format(progress)
     }
 }

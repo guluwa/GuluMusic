@@ -14,6 +14,7 @@ import android.widget.RemoteViews
 import cn.guluwa.gulumusic.R
 import cn.guluwa.gulumusic.manage.AppManager
 import cn.guluwa.gulumusic.manage.MyApplication
+import cn.guluwa.gulumusic.ui.main.MainActivity
 import cn.guluwa.gulumusic.utils.AppUtils
 import com.bumptech.glide.Glide
 import com.bumptech.glide.load.DataSource
@@ -64,7 +65,11 @@ class MyNotificationManager {
             notificationLayoutBig!!.setOnClickPendingIntent(R.id.action_next,
                     PendingIntent.getBroadcast(context, 0, Intent("next"), 0))
 
-            builder!!.setSmallIcon(R.mipmap.ic_launcher)
+            val intent = Intent(context, MainActivity::class.java)
+            val contentIntent = PendingIntent.getActivity(context, 0, intent, 0)
+
+            builder!!.setContentIntent(contentIntent)
+                    .setSmallIcon(R.mipmap.ic_launcher)
                     .setContent(notificationLayout)
                     .setCustomBigContentView(notificationLayoutBig)
                     .setOngoing(true).priority = NotificationCompat.PRIORITY_MAX
@@ -104,7 +109,7 @@ class MyNotificationManager {
                             return true
                         }
                     }).into(AppUtils.dp2px(context, 128f), AppUtils.dp2px(context, 128f))
-        }else{
+        } else {
             notification = builder!!.build()
             manager!!.notify(22, notification)
         }

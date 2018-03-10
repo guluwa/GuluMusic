@@ -30,6 +30,7 @@ import cn.guluwa.gulumusic.ui.main.MainActivity
 import cn.guluwa.gulumusic.utils.AppUtils
 import cn.guluwa.gulumusic.utils.LrcParser
 import jp.wasabeef.glide.transformations.BlurTransformation
+import kotlinx.android.synthetic.main.activity_play.*
 
 class PlayActivity : BaseActivity() {
 
@@ -47,6 +48,11 @@ class PlayActivity : BaseActivity() {
      * 歌曲当前位置
      */
     private var mLrcPosition: Int = 0
+
+    /**
+     * 是否改变了歌曲
+     */
+    private var isChangeSong: Boolean = false
 
     /**
      * 页面是否来自恢复
@@ -69,23 +75,24 @@ class PlayActivity : BaseActivity() {
     private val listener = object : OnSongStatusListener {
 
         override fun loading() {
-            mPlayBinding.mPlayBtn.isPlaying = 0
+            mPlayBtn.isPlaying = 0
         }
 
         override fun start() {
-            mPlayBinding.mPlayBtn.isPlaying = 1
-            if (mCurrentSong!!.id != AppManager.getInstance().musicAutoService!!.binder.currentSong!!.id) {
-                reFreshLayout(AppManager.getInstance().musicAutoService!!.binder.currentSong!!)
-            }
-            initSongLrc()
+            mPlayBtn.isPlaying = 1
+            reFreshLayout()
+            isChangeSong=true
         }
 
         override fun pause() {
-            mPlayBinding.mPlayBtn.isPlaying = -1
+            mPlayBtn.isPlaying = -1
+        }
+
+        override fun resume() {
+            mPlayBtn.isPlaying = 1
         }
 
         override fun end(tracksBean: TracksBean) {
-            playCurrentSong(tracksBean)
             mLrcPosition = -1
             mLrcList = null
         }
@@ -106,8 +113,8 @@ class PlayActivity : BaseActivity() {
                             } else {
                                 0
                             }
-                            if (mPlayBinding.mPlayBtn.isPlaying != 0) {
-                                mPlayBinding.tvSongWord.text = mLrcList!![mLrcPosition].word
+                            if (mPlayBtn.isPlaying != 0) {
+                                tvSongWord.text = mLrcList!![mLrcPosition].word
                             }
                             break
                         }
@@ -117,8 +124,8 @@ class PlayActivity : BaseActivity() {
                         if (mLrcList!![mLrcPosition + 1].time < progress) {
                             mLrcPosition++
                             if (mLrcList!!.size > mLrcPosition) {
-                                if (mPlayBinding.mPlayBtn.isPlaying != 0) {
-                                    mPlayBinding.tvSongWord.text = mLrcList!![mLrcPosition].word
+                                if (mPlayBtn.isPlaying != 0) {
+                                    tvSongWord.text = mLrcList!![mLrcPosition].word
                                     println(progress.toString() + ";" + mLrcList!![mLrcPosition].word)
                                 }
                             }
@@ -126,14 +133,13 @@ class PlayActivity : BaseActivity() {
                     }
                 }
             }
-            if (mPlayBinding.mPlayBtn.isPlaying != 0) {
-                mPlayBinding.mProgressView.setSongPlayLength(progress, duration)
+            if (mPlayBtn.isPlaying != 0) {
+                mProgressView.setSongPlayLength(progress, duration)
             }
         }
 
         override fun pic(url: String) {
-            mCurrentSong!!.al!!.picUrl = url
-            mPlayBinding.song = mCurrentSong
+            mPlayBinding.song = AppManager.getInstance().musicAutoService!!.binder.currentSong!!
         }
 
         override fun download(position: Int) {
@@ -142,8 +148,6 @@ class PlayActivity : BaseActivity() {
 
     override fun initViews() {
         initDataBinding()
-        initData()
-        initSongPic()
         initStatusBar()
         initClickListener()
     }
@@ -153,75 +157,34 @@ class PlayActivity : BaseActivity() {
      */
     private fun initDataBinding() {
         mPlayBinding = mViewDataBinding as ActivityPlayBinding
-    }
-
-    /**
-     * 数据初始化
-     */
-    private fun initData() {
-        mLrcPosition = -1
-        mCurrentSong = intent.getSerializableExtra("song") as TracksBean
-        mPlayBinding.mPlayBtn.isPlaying = intent.getIntExtra("status", -1)
-        mPlayBinding.mProgressView.setSongPlayLength(mCurrentSong!!.currentTime, mCurrentSong!!.duration)
-        mPlayBinding.song = mCurrentSong
-        showPlayModeImg(AppManager.getInstance().playMode)
-        initSongLrc()
-    }
-
-    /**
-     * 歌词处理
-     */
-    private fun initSongLrc() {
-        if (mLrcList == null) {
-            try {
-                println(mCurrentSong!!.name)
-                mLrcList = LrcParser.parserLocal(String.format("%s_%s.txt", mCurrentSong!!.name, mCurrentSong!!.id))
-                for (i in mLrcList!!.indices) {
-                    if (mLrcList!![i].time > mCurrentSong!!.currentTime) {
-                        mLrcPosition = if (i != 0) {
-                            i - 1
-                        } else {
-                            0
-                        }
-                        if (mPlayBinding.mPlayBtn.isPlaying != 0) {
-                            mPlayBinding.tvSongWord.text = mLrcList!![mLrcPosition].word
-                        }
-                        break
-                    }
-                }
-            } catch (e: Exception) {
-                mLrcList = null
-                mPlayBinding.tvSongWord.text = "暂无歌词"
-                e.printStackTrace()
-            }
-        }
+        initData()
     }
 
     /**
      * 图片初始化
      */
-    private fun initSongPic() {
+    private fun initSongPic(tracksBean: TracksBean?) {
         Glide.with(MyApplication.getContext()).asBitmap().apply(RequestOptions().centerCrop())
-                .load(mCurrentSong!!.al!!.picUrl)
+                .load(tracksBean!!.al!!.picUrl)
                 .apply(RequestOptions().transform(BlurTransformation(25)).override(100, 100))
                 .listener(object : RequestListener<Bitmap> {
                     override fun onLoadFailed(e: GlideException?, model: Any, target: Target<Bitmap>, isFirstResource: Boolean): Boolean {
                         Glide.with(this@PlayActivity).asBitmap()
                                 .apply(RequestOptions().transform(BlurTransformation(25)).override(100, 100))
                                 .load(R.mipmap.ic_launcher)
-                                .into(mPlayBinding.ivBackGround)
+                                .into(ivBackGround)
                         return true
                     }
 
                     override fun onResourceReady(resource: Bitmap?, model: Any, target: Target<Bitmap>, dataSource: DataSource, isFirstResource: Boolean): Boolean {
                         if (resource != null) {
-                            mPlayBinding.ivBackGround.setImageBitmap(resource)
+                            ivBackGround.setImageBitmap(resource)
                             return true
                         }
                         return false
                     }
                 })
-                .into(mPlayBinding.ivBackGround)
+                .into(ivBackGround)
     }
 
     /**
@@ -249,11 +212,11 @@ class PlayActivity : BaseActivity() {
                 R.id.mPlayBtn -> if (AppManager.getInstance().musicAutoService != null &&
                         AppManager.getInstance().musicAutoService!!.binder.mediaPlayer != null) {
                     if (AppManager.getInstance().musicAutoService!!.binder.mediaPlayer!!.isPlaying) {
-                        mPlayBinding.mPlayBtn.isPlaying = -1
+                        mPlayBtn.isPlaying = -1
                     } else {
-                        mPlayBinding.mPlayBtn.isPlaying = 1
+                        mPlayBtn.isPlaying = 1
                     }
-                    playCurrentSong(mCurrentSong!!.currentTime)
+                    playSong()
                 }
                 R.id.ivDownBack -> onBackPressed()
                 R.id.ivPlayMode -> {
@@ -264,13 +227,13 @@ class PlayActivity : BaseActivity() {
                 R.id.ivPlayMenu -> showSnackBar("菜单")
                 R.id.mLastSongBtn -> {
                     AppManager.getInstance().musicAutoService!!.binder.stop()
-                    AppManager.getInstance().musicAutoService!!.binder.getLastSong(mCurrentSong!!)
-                    playCurrentSong(AppManager.getInstance().musicAutoService!!.binder.currentSong as TracksBean)
+                    AppManager.getInstance().musicAutoService!!.binder.getLastSong()
+                    AppManager.getInstance().musicAutoService!!.binder.playCurrentSong(null, false)
                 }
                 R.id.mNextSongBtn -> {
                     AppManager.getInstance().musicAutoService!!.binder.stop()
-                    AppManager.getInstance().musicAutoService!!.binder.getNextSong(mCurrentSong!!)
-                    playCurrentSong(AppManager.getInstance().musicAutoService!!.binder.currentSong as TracksBean)
+                    AppManager.getInstance().musicAutoService!!.binder.getNextSong()
+                    AppManager.getInstance().musicAutoService!!.binder.playCurrentSong(null, false)
                 }
             }
         }
@@ -285,12 +248,58 @@ class PlayActivity : BaseActivity() {
      */
     override fun initService() {
         AppManager.getInstance().musicAutoService!!.binder.bindSongStatusListener(listener)
-        if (mActivityFromRestore && mPlayStatus == 1) {
-            showSnackBarWithAction("播放被系统暂停，是否恢复播放", "是", object : OnActionListener {
-                override fun action() {
-                    playCurrentSong(mCurrentSong!!.currentTime)
+        if (mActivityFromRestore) {
+            if (mPlayStatus == 1) {
+                showSnackBarWithAction("播放被系统暂停，是否恢复播放", "是", object : OnActionListener {
+                    override fun action() {
+                        playSong()
+                    }
+                })
+            }
+            initData()
+        }
+    }
+
+    /**
+     * 数据初始化
+     */
+    private fun initData() {
+        mLrcPosition = -1
+        mPlayBtn.isPlaying = if (AppManager.getInstance().musicAutoService!!.binder.mediaPlayer!!.isPlaying) 1 else -1
+        mProgressView.setSongPlayLength(AppManager.getInstance().musicAutoService!!.binder.currentSong!!.currentTime,
+                AppManager.getInstance().musicAutoService!!.binder.currentSong!!.duration)
+        mPlayBinding.song = AppManager.getInstance().musicAutoService!!.binder.currentSong!!
+        showPlayModeImg(AppManager.getInstance().playMode)
+        initSongLrc(mPlayBinding.song)
+        initSongPic(mPlayBinding.song)
+    }
+
+    /**
+     * 歌词处理
+     */
+    private fun initSongLrc(tracksBean: TracksBean?) {
+        if (mLrcList == null) {
+            try {
+                println(tracksBean!!.name)
+                mLrcList = LrcParser.parserLocal(String.format("%s_%s.txt", tracksBean.name, tracksBean.id))
+                for (i in mLrcList!!.indices) {
+                    if (mLrcList!![i].time > tracksBean.currentTime) {
+                        mLrcPosition = if (i != 0) {
+                            i - 1
+                        } else {
+                            0
+                        }
+                        if (mPlayBtn.isPlaying != 0) {
+                            tvSongWord.text = mLrcList!![mLrcPosition].word
+                        }
+                        break
+                    }
                 }
-            })
+            } catch (e: Exception) {
+                mLrcList = null
+                tvSongWord.text = "暂无歌词"
+                e.printStackTrace()
+            }
         }
     }
 
@@ -301,22 +310,10 @@ class PlayActivity : BaseActivity() {
      */
     private fun showPlayModeImg(mode: Int) {
         when (mode) {
-            0 -> mPlayBinding.ivPlayMode.setImageResource(R.drawable.ic_single_circle)
-            1 -> mPlayBinding.ivPlayMode.setImageResource(R.drawable.ic_list_circle)
-            else -> mPlayBinding.ivPlayMode.setImageResource(R.drawable.ic_list_random)
+            0 -> ivPlayMode.setImageResource(R.drawable.ic_single_circle)
+            1 -> ivPlayMode.setImageResource(R.drawable.ic_list_circle)
+            else -> ivPlayMode.setImageResource(R.drawable.ic_list_random)
         }
-    }
-
-    /**
-     * 播放歌曲
-     *
-     * @param song
-     */
-    private fun playCurrentSong(song: TracksBean) {
-        reFreshLayout(song)
-        //播放歌曲、利用服务后台播放
-        AppManager.getInstance().musicAutoService!!.binder.isPrepare = false
-        playCurrentSong(0)
     }
 
     /**
@@ -324,31 +321,43 @@ class PlayActivity : BaseActivity() {
      *
      * @param song
      */
-    private fun reFreshLayout(song: TracksBean) {
-        mCurrentSong = song
-        mPlayBinding.song = mCurrentSong
-        mPlayBinding.tvSongWord.text = ""
-        mPlayBinding.mProgressView.setSongPlayLength(0, 0)
-        initSongPic()
+    private fun reFreshLayout() {
+        mPlayBinding.song = AppManager.getInstance().musicAutoService!!.binder.currentSong!!
+        tvSongWord.text = ""
+        mProgressView.setSongPlayLength(0, 0)
+        initSongPic(mPlayBinding.song)
+        initSongLrc(mPlayBinding.song)
+    }
+
+    /**
+     * 播放歌曲
+     *
+     * @param song
+     */
+    private fun playNewSong(song: TracksBean) {
+        reFreshLayout()
+        //播放歌曲、利用服务后台播放
+        AppManager.getInstance().musicAutoService!!.binder.isPrepare = false
+        AppManager.getInstance().musicAutoService!!.binder.currentSong = song
+        playSong()
     }
 
     /**
      * 不换歌曲（第一次进入）
      *
-     * @param mCurrentTime
+     * @param
      */
-    private fun playCurrentSong(mCurrentTime: Int) {
+    private fun playSong() {
         if (AppManager.getInstance().musicAutoService!!.binder.isPrepare) {
-            AppManager.getInstance().musicAutoService!!.binder.playOrPauseSong(-1)
+            AppManager.getInstance().musicAutoService!!.binder.playOrPauseSong()
         } else {
-            AppManager.getInstance().musicAutoService!!.binder.playCurrentSong(mCurrentSong!!, mCurrentTime, false)
+            AppManager.getInstance().musicAutoService!!.binder.playCurrentSong(null, false)
         }
     }
 
     override fun onBackPressed() {
         val intent = Intent(this, MainActivity::class.java)
-        intent.putExtra("status", mPlayBinding.mPlayBtn.isPlaying)
-        intent.putExtra("song", mCurrentSong)
+        intent.putExtra("isChangeSong",isChangeSong)
         setResult(Contacts.RESULT_SONG_CODE, intent)
         super.onBackPressed()
     }
@@ -361,10 +370,10 @@ class PlayActivity : BaseActivity() {
     override fun onSaveInstanceState(outState: Bundle?) {
         super.onSaveInstanceState(outState)
 
-        outState!!.putInt("status", mPlayBinding.mPlayBtn.isPlaying)
-        mCurrentSong!!.currentTime = AppManager.getInstance().musicAutoService!!.binder.mediaPlayer!!.currentPosition
+        outState!!.putInt("status", mPlayBtn.isPlaying)
+        AppManager.getInstance().musicAutoService!!.binder.currentSong!!.currentTime = AppManager.getInstance().musicAutoService!!.binder.mediaPlayer!!.currentPosition
         println(AppUtils.formatTime(AppManager.getInstance().musicAutoService!!.binder.mediaPlayer!!.currentPosition))
-        outState.putSerializable("song", mCurrentSong)
+        outState.putSerializable("song", AppManager.getInstance().musicAutoService!!.binder.currentSong)
     }
 
     override fun onRestoreInstanceState(outState: Bundle?) {
@@ -373,12 +382,13 @@ class PlayActivity : BaseActivity() {
         mActivityFromRestore = true
         mLrcPosition = -1
         mPlayStatus = outState!!.getInt("status")
-        mPlayBinding.mPlayBtn.isPlaying = -1
-        mCurrentSong = outState.getSerializable("song") as TracksBean?
-        mPlayBinding.mProgressView.setSongPlayLength(mCurrentSong!!.currentTime, mCurrentSong!!.duration)
-        mPlayBinding.song = mCurrentSong
+        mPlayBtn.isPlaying = -1
+        AppManager.getInstance().musicAutoService!!.binder.currentSong = outState.getSerializable("song") as TracksBean?
+        mProgressView.setSongPlayLength(AppManager.getInstance().musicAutoService!!.binder.currentSong!!.currentTime,
+                AppManager.getInstance().musicAutoService!!.binder.currentSong!!.duration)
+        mPlayBinding.song = AppManager.getInstance().musicAutoService!!.binder.currentSong!!
         showPlayModeImg(AppManager.getInstance().playMode)
-        initSongPic()
-        initSongLrc()
+        initSongPic(mPlayBinding.song)
+        initSongLrc(mPlayBinding.song)
     }
 }

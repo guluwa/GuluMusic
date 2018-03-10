@@ -32,7 +32,7 @@ class HeadsetPlugReceiver : BroadcastReceiver() {
         if (AudioManager.ACTION_AUDIO_BECOMING_NOISY == action) {
             if (AppManager.getInstance().musicAutoService!!.binder.mediaPlayer!!.isPlaying) {
                 AppManager.getInstance().musicAutoService!!.binder.isPrepare = true
-                AppManager.getInstance().musicAutoService!!.binder.playOrPauseSong(-1)
+                AppManager.getInstance().musicAutoService!!.binder.playOrPauseSong()
             }
         }
     }

@@ -28,7 +28,7 @@ class AudioFocusManager(private val mPlayService: MusicAutoService) : AudioManag
             AudioManager.AUDIOFOCUS_GAIN -> {
                 if (!willPlay() && isPausedByFocusLossTransient) {
                     // 通话结束，恢复播放
-                    mPlayService.binder.playOrPauseSong(-1)
+                    mPlayService.binder.playOrPauseSong()
                 }
 
                 volume = mAudioManager.getStreamVolume(AudioManager.STREAM_MUSIC)
@@ -72,7 +72,7 @@ class AudioFocusManager(private val mPlayService: MusicAutoService) : AudioManag
         if (mPlayService.binder.isLoading) {
             mPlayService.binder.stop()
         } else if (mPlayService.binder.mediaPlayer!!.isPlaying) {
-            mPlayService.binder.playOrPauseSong(-1)
+            mPlayService.binder.playOrPauseSong()
         }
     }
 }

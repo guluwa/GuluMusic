@@ -38,6 +38,7 @@ import io.reactivex.Observable
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.disposables.Disposable
 import io.reactivex.schedulers.Schedulers
+import kotlinx.android.synthetic.main.activity_main.*
 import java.util.concurrent.TimeUnit
 
 class MainActivity<T> : BaseActivity() {
@@ -77,22 +78,24 @@ class MainActivity<T> : BaseActivity() {
      */
     private val listener = object : OnSongStatusListener {
         override fun loading() {
-            mMainBinding.mPlayBtn.isPlaying = 0
+            mPlayBtn.isPlaying = 0
         }
 
         override fun start() {
-            mMainBinding.mPlayBtn.isPlaying = 1
-            if (mCurrentSong!!.id != AppManager.getInstance().musicAutoService!!.binder.currentSong!!.id) {
-                reFreshLayout(AppManager.getInstance().musicAutoService!!.binder.currentSong!!)
-            }
+            mPlayBtn.isPlaying = 1
+            reFreshLayout()
         }
 
         override fun pause() {
-            mMainBinding.mPlayBtn.isPlaying = -1
+            mPlayBtn.isPlaying = -1
+        }
+
+        override fun resume() {
+            mPlayBtn.isPlaying = 1
         }
 
         override fun end(tracksBean: TracksBean) {
-            playCurrentSong(tracksBean)
+
         }
 
         override fun error(msg: String) {
@@ -100,20 +103,19 @@ class MainActivity<T> : BaseActivity() {
         }
 
         override fun progress(progress: Int, duration: Int) {
-            if (mMainBinding.mPlayBtn.isPlaying != 0) {
-                mMainBinding.tvCurrentSongProgress.text = AppUtils.formatTime(progress)
+            if (mPlayBtn.isPlaying != 0) {
+                tvCurrentSongProgress.text = AppUtils.formatTime(progress)
             }
         }
 
         override fun pic(url: String) {
-            mCurrentSong!!.al!!.picUrl = url
-            mMainBinding.song = mCurrentSong
+            mMainBinding.song = AppManager.getInstance().musicAutoService!!.binder.currentSong!!
         }
 
         override fun download(position: Int) {
-            if (position != -1 && (mMainBinding.mRecyclerView.adapter as PlayListAdapter).data.size != 0 &&
-                    (mMainBinding.mRecyclerView.adapter as PlayListAdapter).data[position] is TracksBean)
-                ((mMainBinding.mRecyclerView.adapter as PlayListAdapter).data[position] as TracksBean).local = true
+            if (position != -1 && (mRecyclerView.adapter as PlayListAdapter).data.size != 0 &&
+                    (mRecyclerView.adapter as PlayListAdapter).data[position] is TracksBean)
+                ((mRecyclerView.adapter as PlayListAdapter).data[position] as TracksBean).local = true
         }
     }
 
@@ -140,15 +142,9 @@ class MainActivity<T> : BaseActivity() {
      */
     private fun initData() {
         isFirstComing = true
-        mCurrentSong = Gson().fromJson(AppUtils.getString("mCurrentSong", ""), TracksBean::class.java)
-        if (mCurrentSong != null) {
-            val mSongPath = AppUtils.isExistFile(String.format("%s_%s.mp3", mCurrentSong!!.name, mCurrentSong!!.id), 1)
-            if ("" != mSongPath) {
-                mMainBinding.song = mCurrentSong
-                mMainBinding.tvCurrentSongProgress.text = AppUtils.formatTime(mCurrentSong!!.currentTime)
-            }
-        }
-        mMainBinding.mPlayBtn.isPlaying = -1
+        mPlayBtn.isPlaying = -1
+        tvCurrentSongName.text = "请选择播放歌曲"
+        tvCurrentSongProgress.text = ""
     }
 
     /**
@@ -159,48 +155,43 @@ class MainActivity<T> : BaseActivity() {
             when (view.id) {
                 R.id.mBottomPlayInfo -> {
                     val intent = Intent(this@MainActivity, PlayActivity::class.java)
-                    if (AppManager.getInstance().musicAutoService!!.binder.mediaPlayer!!.isPlaying) {
-                        mCurrentSong!!.currentTime = AppManager.getInstance().musicAutoService!!.binder.mediaPlayer!!.currentPosition
-                    }
-                    intent.putExtra("song", mCurrentSong)
-                    intent.putExtra("status", mMainBinding.mPlayBtn.isPlaying)
-                    val options = ActivityOptionsCompat.makeSceneTransitionAnimation(this, Pair(mMainBinding.ivCurrentSongPic, "songImage"))
+                    val options = ActivityOptionsCompat.makeSceneTransitionAnimation(this, Pair(ivCurrentSongPic, "songImage"))
                     ActivityCompat.startActivityForResult(this, intent, Contacts.REQUEST_CODE_PLAY, options.toBundle())
                 }
                 R.id.mPlayBtn -> if (AppManager.getInstance().musicAutoService != null && AppManager.getInstance().musicAutoService!!.binder.mediaPlayer != null) {
                     if (AppManager.getInstance().musicAutoService!!.binder.mediaPlayer!!.isPlaying) {
-                        mMainBinding.mPlayBtn.isPlaying = -1
+                        mPlayBtn.isPlaying = -1
                     } else {
-                        mMainBinding.mPlayBtn.isPlaying = 1
+                        mPlayBtn.isPlaying = 1
                     }
-                    playCurrentSong(mCurrentSong!!.currentTime)
+                    playSong()
                 }
                 R.id.flNetCloudSongs -> {
-                    mMainBinding.mDrawerLayout.closeDrawer(Gravity.START)
+                    mDrawerLayout.closeDrawer(Gravity.START)
                     if ("hot" != AppManager.getInstance().playStatus) {
                         getSongListData("hot")
                     }
                 }
                 R.id.flLocalSongs -> {
-                    mMainBinding.mDrawerLayout.closeDrawer(Gravity.START)
+                    mDrawerLayout.closeDrawer(Gravity.START)
                     if ("local" != AppManager.getInstance().playStatus) {
                         getSongListData("local")
                     }
                 }
                 R.id.flAppSetting -> {
                     startActivity(Intent(this@MainActivity, SettingsActivity::class.java))
-                    mMainBinding.mDrawerLayout.closeDrawer(Gravity.START)
+                    mDrawerLayout.closeDrawer(Gravity.START)
                 }
                 R.id.fabLocationMusic -> {
-                    val index = AppUtils.locationCurrentSongShow(mCurrentSong, (mMainBinding.mRecyclerView.adapter as PlayListAdapter).data)
-                    mMainBinding.mRecyclerView.smoothScrollToPosition(index)
+                    val index = AppUtils.locationCurrentSongShow(AppManager.getInstance().musicAutoService!!.binder.currentSong, (mRecyclerView.adapter as PlayListAdapter).data)
+                    mRecyclerView.smoothScrollToPosition(index)
                 }
                 R.id.mToolBar -> {
                     if (System.currentTimeMillis() - mLastClickTime > 2000) {
                         showSnackBar("再按一次返回顶部")
                         mLastClickTime = System.currentTimeMillis()
                     } else {
-                        mMainBinding.mRecyclerView.smoothScrollToPosition(0)
+                        mRecyclerView.smoothScrollToPosition(0)
                     }
                 }
             }
@@ -211,8 +202,8 @@ class MainActivity<T> : BaseActivity() {
      * toolbar初始化
      */
     private fun initToolBar() {
-        mMainBinding.mToolBar.setTitle(R.string.app_name)//设置Toolbar标题
-        setSupportActionBar(mMainBinding.mToolBar)
+        mToolBar.setTitle(R.string.app_name)//设置Toolbar标题
+        setSupportActionBar(mToolBar)
         supportActionBar!!.setHomeButtonEnabled(true) //设置返回键可用
         supportActionBar!!.setDisplayHomeAsUpEnabled(true)
         window.statusBarColor = AppUtils.deepenColor(Color.rgb(85, 160, 122))
@@ -223,20 +214,20 @@ class MainActivity<T> : BaseActivity() {
      */
     private fun initDrawerLayout() {
         //创建返回键，并实现打开关/闭监听
-        val mDrawerToggle = object : ActionBarDrawerToggle(this, mMainBinding.mDrawerLayout, mMainBinding.mToolBar,
+        val mDrawerToggle = object : ActionBarDrawerToggle(this, mDrawerLayout, mToolBar,
                 R.string.drawer_open, R.string.drawer_close) {}
         mDrawerToggle.syncState()
-        mMainBinding.mDrawerLayout.setDrawerListener(mDrawerToggle)
+        mDrawerLayout.setDrawerListener(mDrawerToggle)
     }
 
     /**
      * 下拉刷新初始化
      */
     private fun initSwipeRefreshLayout() {
-        mMainBinding.mSwipeRefreshLayout.setColorSchemeColors(
+        mSwipeRefreshLayout.setColorSchemeColors(
                 resources.getColor(R.color.yellow),
                 resources.getColor(R.color.green))
-        mMainBinding.mSwipeRefreshLayout.setOnRefreshListener { getSongListData(AppManager.getInstance().playStatus) }
+        mSwipeRefreshLayout.setOnRefreshListener { getSongListData(AppManager.getInstance().playStatus) }
     }
 
     /**
@@ -248,15 +239,17 @@ class MainActivity<T> : BaseActivity() {
                 when (arg1) {
                     1 -> {
                         if (arg2 is TracksBean) {
-                            if (mCurrentSong != null) {
-                                if (arg2.id == mCurrentSong!!.id && mMainBinding.mPlayBtn.isPlaying == 1) {
+
+                            if (AppManager.getInstance().musicAutoService!!.binder.currentSong != null) {
+                                if (arg2.id == AppManager.getInstance().musicAutoService!!.binder.currentSong!!.id &&
+                                        mPlayBtn.isPlaying == 1) {
                                     return
                                 }
                             }
                             if (AppManager.getInstance().musicAutoService!!.binder.mediaPlayer!!.isPlaying) {
                                 AppManager.getInstance().musicAutoService!!.binder.stop()
                             }
-                            playCurrentSong(arg2)
+                            playNewSong(arg2)
                         }
                     }
                     2 -> {
@@ -269,9 +262,9 @@ class MainActivity<T> : BaseActivity() {
                 showDeleteDialog(song)
             }
         })
-        mMainBinding.mRecyclerView.layoutManager = LinearLayoutManager(this)
-        mMainBinding.mRecyclerView.adapter = mAdapter
-        mMainBinding.mRecyclerView.addOnScrollListener(object : RecyclerView.OnScrollListener() {
+        mRecyclerView.layoutManager = LinearLayoutManager(this)
+        mRecyclerView.adapter = mAdapter
+        mRecyclerView.addOnScrollListener(object : RecyclerView.OnScrollListener() {
             override fun onScrollStateChanged(recyclerView: RecyclerView?, newState: Int) {
                 super.onScrollStateChanged(recyclerView, newState)
                 if (newState == RecyclerView.SCROLL_STATE_DRAGGING || newState == RecyclerView.SCROLL_STATE_SETTLING) {
@@ -319,7 +312,7 @@ class MainActivity<T> : BaseActivity() {
                     0 -> if (isLocal) {
                         showDeleteDialog(song as LocalSongBean)
                     } else {
-                        AppManager.getInstance().musicAutoService!!.binder.playCurrentSong(song as TracksBean, 0, true)
+                        AppManager.getInstance().musicAutoService!!.binder.playCurrentSong(song as TracksBean, true)
                     }
                     1 -> {
                         println((song as BaseSongBean).singer!!.name)
@@ -371,17 +364,18 @@ class MainActivity<T> : BaseActivity() {
                 .subscribe({
                     showSnackBar("删除成功")
                     if (AppManager.getInstance().playStatus == "local") {
-                        (mMainBinding.mRecyclerView.adapter as PlayListAdapter).removeSong(song.position)
-                        if (mCurrentSong!!.id == song.id && mCurrentSong!!.name == song.name) {
-                            val mNextSong = if ((mMainBinding.mRecyclerView.adapter as PlayListAdapter).data[song.position - 1] is TracksBean) {
-                                (mMainBinding.mRecyclerView.adapter as PlayListAdapter).data[song.position - 1] as TracksBean
+                        (mRecyclerView.adapter as PlayListAdapter).removeSong(song.position)
+                        if (AppManager.getInstance().musicAutoService!!.binder.currentSong!!.id == song.id &&
+                                AppManager.getInstance().musicAutoService!!.binder.currentSong!!.name == song.name) {
+                            AppManager.getInstance().musicAutoService!!.binder.currentSong = if ((mRecyclerView.adapter as PlayListAdapter).data[song.position - 1] is TracksBean) {
+                                (mRecyclerView.adapter as PlayListAdapter).data[song.position - 1] as TracksBean
                             } else {
-                                AppUtils.getSongBean((mMainBinding.mRecyclerView.adapter as PlayListAdapter).data[song.position - 1] as LocalSongBean)
+                                AppUtils.getSongBean((mRecyclerView.adapter as PlayListAdapter).data[song.position - 1] as LocalSongBean)
                             }
-                            AppManager.getInstance().musicAutoService!!.binder.playCurrentSong(mNextSong, 0, false)
+                            AppManager.getInstance().musicAutoService!!.binder.playCurrentSong(null, false)
                         }
                     } else
-                        ((mMainBinding.mRecyclerView.adapter as PlayListAdapter).data[song.position] as TracksBean).local = false
+                        ((mRecyclerView.adapter as PlayListAdapter).data[song.position] as TracksBean).local = false
                 }) { showSnackBar("删除失败") }
     }
 
@@ -391,7 +385,12 @@ class MainActivity<T> : BaseActivity() {
     override fun initService() {
         getSongListData(AppManager.getInstance().playStatus)
         AppManager.getInstance().musicAutoService!!.binder.bindSongStatusListener(listener)
-//        initNotification()
+        val mCurrentSong = AppManager.getInstance().musicAutoService!!.binder.currentSong
+        if (mCurrentSong != null &&
+                "" != AppUtils.isExistFile(String.format("%s_%s.mp3", mCurrentSong.name, mCurrentSong.id), 1)) {
+            mMainBinding.song = mCurrentSong
+            tvCurrentSongProgress.text = AppUtils.formatTime(mCurrentSong.currentTime)
+        }
     }
 
     /**
@@ -402,27 +401,27 @@ class MainActivity<T> : BaseActivity() {
         mViewModel.queryNetCloudHotSong()!!.observe(this, Observer { data ->
             if (data == null) {
                 showSnackBar("数据出错啦")
-                mMainBinding.mSwipeRefreshLayout.isRefreshing = false
+                mSwipeRefreshLayout.isRefreshing = false
                 return@Observer
             }
             when (data.status) {
-                PageStatus.Loading -> mMainBinding.mSwipeRefreshLayout.isRefreshing = true
+                PageStatus.Loading -> mSwipeRefreshLayout.isRefreshing = true
                 PageStatus.Error -> {
                     mViewModel.refreshHot(false, isFirstComing)
                     showSnackBar(data.throwable!!.message!!)
-                    mMainBinding.mSwipeRefreshLayout.isRefreshing = false
+                    mSwipeRefreshLayout.isRefreshing = false
                 }
                 PageStatus.Empty -> {
                     mViewModel.refreshHot(false, isFirstComing)
                     showSnackBar("还没有热门歌曲哦")
-                    mMainBinding.mSwipeRefreshLayout.isRefreshing = false
+                    mSwipeRefreshLayout.isRefreshing = false
                 }
                 PageStatus.Content -> {
                     AppManager.getInstance().playStatus = "hot"
                     showSnackBar("热门")
                     isFirstComing = false
                     mViewModel.refreshHot(false, false)
-                    mMainBinding.mSwipeRefreshLayout.isRefreshing = false
+                    mSwipeRefreshLayout.isRefreshing = false
                     setData(data.data as ArrayList<BaseSongBean>)
                 }
             }
@@ -431,25 +430,25 @@ class MainActivity<T> : BaseActivity() {
         mViewModel.queryLocalSong()!!.observe(this, Observer { listViewDataBean ->
             if (listViewDataBean == null) {
                 showSnackBar("数据出错啦")
-                mMainBinding.mSwipeRefreshLayout.isRefreshing = false
+                mSwipeRefreshLayout.isRefreshing = false
                 return@Observer
             }
             when (listViewDataBean.status) {
-                PageStatus.Loading -> mMainBinding.mSwipeRefreshLayout.isRefreshing = true
+                PageStatus.Loading -> mSwipeRefreshLayout.isRefreshing = true
                 PageStatus.Error -> {
                     mViewModel.refreshLocal(false)
                     showSnackBar(listViewDataBean.throwable!!.message!!)
-                    mMainBinding.mSwipeRefreshLayout.isRefreshing = false
+                    mSwipeRefreshLayout.isRefreshing = false
                 }
                 PageStatus.Empty -> {
                     mViewModel.refreshLocal(false)
                     showSnackBar("还没有本地歌曲哦")
-                    mMainBinding.mSwipeRefreshLayout.isRefreshing = false
+                    mSwipeRefreshLayout.isRefreshing = false
                 }
                 PageStatus.Content -> {
                     AppManager.getInstance().playStatus = "local"
                     mViewModel.refreshLocal(false)
-                    mMainBinding.mSwipeRefreshLayout.isRefreshing = false
+                    mSwipeRefreshLayout.isRefreshing = false
                     setData(listViewDataBean.data as ArrayList<BaseSongBean>)
                 }
             }
@@ -463,22 +462,22 @@ class MainActivity<T> : BaseActivity() {
      */
     private fun setData(data: ArrayList<BaseSongBean>) {
         //填充列表数据
-        (mMainBinding.mRecyclerView.adapter as PlayListAdapter).data = data
+        (mRecyclerView.adapter as PlayListAdapter).data = data
         //列表滚动到顶部
-        mMainBinding.mRecyclerView.smoothScrollToPosition(0)
+        mRecyclerView.smoothScrollToPosition(0)
         //更新service数据
         AppManager.getInstance().musicAutoService!!.binder.setSongList(data)
-        if (mCurrentSong == null) {
-            mCurrentSong = if (data[0] is TracksBean) {
+        if (AppManager.getInstance().musicAutoService!!.binder.currentSong == null) {
+            AppManager.getInstance().musicAutoService!!.binder.currentSong = if (data[0] is TracksBean) {
                 data[0] as TracksBean
             } else {
                 AppUtils.getSongBean(data[0] as LocalSongBean)
             }
-            mMainBinding.song = mCurrentSong
-            mMainBinding.tvCurrentSongProgress.text = getString(R.string.song_start_time)
+            reFreshLayout()
             mMainBinding.mPlayBtn.isPlaying = -1
+            //todo 合并
         }
-        isSongInList = AppUtils.locationCurrentSongShow(mCurrentSong, data) != -1
+        isSongInList = AppUtils.locationCurrentSongShow(AppManager.getInstance().musicAutoService!!.binder.currentSong, data) != -1
         mMainBinding.currentSongShow = isSongInList
     }
 
@@ -487,35 +486,33 @@ class MainActivity<T> : BaseActivity() {
      *
      * @param song
      */
-    private fun playCurrentSong(song: TracksBean) {
-        reFreshLayout(song)
+    private fun playNewSong(song: TracksBean) {
+        reFreshLayout()
         //播放歌曲、利用服务后台播放
         AppManager.getInstance().musicAutoService!!.binder.isPrepare = false
-        playCurrentSong(0)
+        AppManager.getInstance().musicAutoService!!.binder.currentSong = song
+        playSong()
     }
 
     /**
      * 不换歌曲（第一次进入）
-     *
-     * @param mCurrentTime
      */
-    private fun playCurrentSong(mCurrentTime: Int) {
+    private fun playSong() {
         if (AppManager.getInstance().musicAutoService!!.binder.isPrepare) {
-            AppManager.getInstance().musicAutoService!!.binder.playOrPauseSong(-1)
+            AppManager.getInstance().musicAutoService!!.binder.playOrPauseSong()
         } else {
-            AppManager.getInstance().musicAutoService!!.binder.playCurrentSong(this.mCurrentSong!!, mCurrentTime, false)
+            AppManager.getInstance().musicAutoService!!.binder.playCurrentSong(null, false)
         }
     }
 
     /**
      * 更新页面
      *
-     * @param song
+     * @param
      */
-    private fun reFreshLayout(song: TracksBean) {
-        mCurrentSong = song
-        mMainBinding.song = mCurrentSong
-        mMainBinding.tvCurrentSongProgress.text = getString(R.string.song_start_time)
+    private fun reFreshLayout() {
+        mMainBinding.song = AppManager.getInstance().musicAutoService!!.binder.currentSong!!
+        tvCurrentSongProgress.text = getString(R.string.song_start_time)
     }
 
 
@@ -533,33 +530,31 @@ class MainActivity<T> : BaseActivity() {
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
         if (requestCode == Contacts.REQUEST_CODE_PLAY && resultCode == Contacts.RESULT_SONG_CODE) {
-            mCurrentSong = data?.getSerializableExtra("song") as TracksBean
-            mMainBinding.song = mCurrentSong
-            val status = data.getIntExtra("status", -1)
-            if (mMainBinding.mPlayBtn.isPlaying != status) {
-                mMainBinding.mPlayBtn.isPlaying = status
+            val isChangeSong = data!!.getBooleanExtra("isChangeSong", false)
+            tvCurrentSongProgress.text = AppManager.getInstance().musicAutoService!!.binder.mediaPlayer!!.currentPosition.toString()
+            if (isChangeSong) {
+                reFreshLayout()
             }
         } else if (requestCode == Contacts.REQUEST_CODE_SEARCH && resultCode == Contacts.RESULT_SONG_CODE) {
             val isDownLoadSong = data!!.getBooleanExtra("isDownLoadSong", false)
             if (isDownLoadSong && "local" == AppManager.getInstance().playStatus) {
                 mViewModel.refreshLocal(true)
             }
-            mCurrentSong = data.getSerializableExtra("song") as TracksBean
-            mMainBinding.song = mCurrentSong
-            val status = data.getIntExtra("status", -1)
-            if (mMainBinding.mPlayBtn.isPlaying != status) {
-                mMainBinding.mPlayBtn.isPlaying = status
+            val isChangeSong = data.getBooleanExtra("isChangeSong", false)
+            if (isChangeSong) {
+                reFreshLayout()
             }
         }
     }
 
     override fun onStop() {
         if (AppManager.getInstance().musicAutoService != null &&
-                AppManager.getInstance().musicAutoService!!.binder.mediaPlayer != null && mCurrentSong != null) {
+                AppManager.getInstance().musicAutoService!!.binder.mediaPlayer != null &&
+                AppManager.getInstance().musicAutoService!!.binder.currentSong != null) {
             if (AppManager.getInstance().musicAutoService!!.binder.mediaPlayer!!.isPlaying) {
-                mCurrentSong!!.duration = AppManager.getInstance().musicAutoService!!.binder.mediaPlayer!!.duration
-                mCurrentSong!!.currentTime = AppManager.getInstance().musicAutoService!!.binder.mediaPlayer!!.currentPosition
-                AppUtils.setString("mCurrentSong", Gson().toJson(mCurrentSong))
+                AppManager.getInstance().musicAutoService!!.binder.currentSong!!.duration = AppManager.getInstance().musicAutoService!!.binder.mediaPlayer!!.duration
+                AppManager.getInstance().musicAutoService!!.binder.currentSong!!.currentTime = AppManager.getInstance().musicAutoService!!.binder.mediaPlayer!!.currentPosition
+                AppUtils.setString("mCurrentSong", Gson().toJson(AppManager.getInstance().musicAutoService!!.binder.currentSong))
             }
         }
         AppUtils.setInteger(Contacts.PLAY_MODE, AppManager.getInstance().playMode)
@@ -602,11 +597,6 @@ class MainActivity<T> : BaseActivity() {
         when (id) {
             R.id.action_search -> {
                 val intent = Intent(this@MainActivity, SearchActivity::class.java)
-                if (AppManager.getInstance().musicAutoService!!.binder.mediaPlayer!!.isPlaying) {
-                    mCurrentSong!!.currentTime = AppManager.getInstance().musicAutoService!!.binder.mediaPlayer!!.currentPosition
-                }
-                intent.putExtra("song", mCurrentSong)
-                intent.putExtra("status", mMainBinding.mPlayBtn.isPlaying)
                 startActivityForResult(intent, Contacts.REQUEST_CODE_SEARCH)
             }
         }

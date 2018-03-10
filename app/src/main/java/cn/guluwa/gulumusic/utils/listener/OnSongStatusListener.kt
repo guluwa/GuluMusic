@@ -24,6 +24,11 @@ interface OnSongStatusListener {
     fun pause()
 
     /**
+     * 继续
+     */
+    fun resume()
+
+    /**
      * 结束
      *
      * @param tracksBean
@@ -54,5 +59,5 @@ interface OnSongStatusListener {
     /**
      * 歌曲缓存完成
      */
-    fun download(position:Int)
+    fun download(position: Int)
 }

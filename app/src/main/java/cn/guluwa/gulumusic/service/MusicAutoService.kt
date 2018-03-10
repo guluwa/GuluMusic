@@ -35,7 +35,6 @@ class MusicAutoService : Service() {
     override fun onCreate() {
         super.onCreate()
         audioFocusManager = AudioFocusManager(this)
-        Log.w(TAG, "MusicAutoService in onCreate")
     }
 
     fun initNotification() {
