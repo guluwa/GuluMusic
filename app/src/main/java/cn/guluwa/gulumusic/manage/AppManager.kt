@@ -14,7 +14,7 @@ class AppManager {
     var musicAutoService: MusicAutoService? = null
 
     /**
-     * 播放模式
+     * 播放模式 （单曲循环、顺序播放、随机播放）
      */
     var playMode: Int = 0
 

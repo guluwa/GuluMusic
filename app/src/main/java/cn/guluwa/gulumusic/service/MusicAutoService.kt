@@ -6,7 +6,10 @@ import android.os.IBinder
 import android.util.Log
 
 import cn.guluwa.gulumusic.manage.AppManager
+import cn.guluwa.gulumusic.manage.Contacts
 import cn.guluwa.gulumusic.service.notification.MyNotificationManager
+import cn.guluwa.gulumusic.utils.AppUtils
+import com.google.gson.Gson
 
 
 /**
@@ -61,6 +64,10 @@ class MusicAutoService : Service() {
      * 主动结束服务
      */
     fun quit() {
+        println("MusicAutoService quit")
+        AppUtils.setString("mCurrentSong", Gson().toJson(AppManager.getInstance().musicAutoService!!.binder.currentSong))
+        AppUtils.setInteger(Contacts.PLAY_MODE, AppManager.getInstance().playMode)
+        AppUtils.setString(Contacts.PLAY_STATUS, AppManager.getInstance().playStatus)
         stopSelf()
     }
 

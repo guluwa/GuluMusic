@@ -9,7 +9,6 @@
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
 
     <application
-
         android:name=".manage.MyApplication"
         android:allowBackup="true"
         android:icon="@mipmap/ic_launcher"
@@ -17,7 +16,8 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
-        <activity android:name=".ui.main.MainActivity"
+        <activity
+            android:name=".ui.main.MainActivity"
             android:launchMode="singleTask">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -25,15 +25,12 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-
         <activity
             android:name=".ui.play.PlayActivity"
             android:screenOrientation="portrait" />
-
         <activity
             android:name=".ui.setting.SettingsActivity"
             android:label="@string/title_activity_settings" />
-
         <activity
             android:name=".ui.search.SearchActivity"
             android:windowSoftInputMode="stateAlwaysHidden|adjustPan" />
@@ -43,9 +40,8 @@
             android:enabled="true"
             android:exported="true" />
 
-        <receiver android:name="cn.guluwa.gulumusic.service.receiver.HeadsetPlugReceiver"/>
-
-        <receiver android:name="cn.guluwa.gulumusic.service.receiver.SongOperationReceiver">
+        <receiver android:name=".service.receiver.HeadsetPlugReceiver" />
+        <receiver android:name=".service.receiver.SongOperationReceiver">
             <intent-filter>
                 <action android:name="play" />
                 <action android:name="previous" />

@@ -2,32 +2,24 @@ package cn.guluwa.gulumusic.service
 
 import android.media.MediaPlayer
 import android.os.Binder
-import android.util.Log
-
-import java.io.File
-import java.io.IOException
-import java.util.ArrayList
-import java.util.concurrent.TimeUnit
-
 import cn.guluwa.gulumusic.R
-import cn.guluwa.gulumusic.data.bean.BaseSongBean
-import cn.guluwa.gulumusic.data.bean.LocalSongBean
-import cn.guluwa.gulumusic.data.bean.SongPathBean
-import cn.guluwa.gulumusic.data.bean.SongWordBean
-import cn.guluwa.gulumusic.data.bean.TracksBean
+import cn.guluwa.gulumusic.data.bean.*
 import cn.guluwa.gulumusic.data.local.LocalSongsDataSource
 import cn.guluwa.gulumusic.data.total.SongsRepository
-import cn.guluwa.gulumusic.utils.listener.OnResultListener
-import cn.guluwa.gulumusic.utils.listener.OnSongStatusListener
 import cn.guluwa.gulumusic.manage.AppManager
 import cn.guluwa.gulumusic.service.notification.MyNotificationManager
 import cn.guluwa.gulumusic.utils.AppUtils
-import cn.guluwa.gulumusic.utils.RandomPicker
+import cn.guluwa.gulumusic.utils.listener.OnResultListener
+import cn.guluwa.gulumusic.utils.listener.OnSongStatusListener
 import com.google.gson.Gson
 import io.reactivex.Observable
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.disposables.Disposable
 import io.reactivex.schedulers.Schedulers
+import java.io.File
+import java.io.IOException
+import java.util.*
+import java.util.concurrent.TimeUnit
 
 /**
  * Created by guluwa on 2018/2/2.
@@ -37,7 +29,7 @@ class MusicBinder(val service: MusicAutoService) : Binder() {
     /**
      * 歌曲路径
      */
-    private var mSongPath: String? = null
+    var mSongPath: String = ""
 
     /**
      * 播放器
@@ -47,22 +39,27 @@ class MusicBinder(val service: MusicAutoService) : Binder() {
     /**
      * 歌曲列表
      */
-    private var mSongList: MutableList<BaseSongBean>? = null
+    var mSongList: MutableList<BaseSongBean>? = null
+
+    /**
+     * 当前播放歌曲位置
+     */
+    var mCurrentPosition: Int = -1
 
     /**
      * 当前播放歌曲
      */
     var currentSong: TracksBean? = null
+        set(value) {
+            field = value
+            if (mSongList != null)
+                mCurrentPosition = AppUtils.locationCurrentSongShow(field, mSongList)
+        }
 
     /**
      * 歌曲播放进度
      */
     private val listeners: MutableList<OnSongStatusListener>
-
-    /**
-     * 随机数生成器
-     */
-    private var mRandomPicker: RandomPicker? = null
 
     /**
      * 歌曲进度轮询
@@ -334,33 +331,16 @@ class MusicBinder(val service: MusicAutoService) : Binder() {
             if (listeners.isNotEmpty()) {
                 listeners[listeners.size - 1].end(currentSong!!)
             }
-            var index = currentSong!!.index
-            if (AppManager.getInstance().playMode == 0 || AppManager.getInstance().playMode == 1) {
-                if (index + 1 >= mSongList!!.size) {
-                    index = 0
-                } else {
-                    index++
-                }
-                currentSong = if (mSongList!![index] is TracksBean) {
-                    mSongList!![index] as TracksBean
-                } else {
-                    AppUtils.getSongBean(mSongList!![index] as LocalSongBean)
-                }
+            if (mCurrentPosition + 1 >= mSongList!!.size) {
+                mCurrentPosition = 0
             } else {
-                if (mRandomPicker == null) {
-                    mRandomPicker = RandomPicker(mSongList!!.size)
-                }
-                index = mRandomPicker!!.next()
-                if (index >= mSongList!!.size) {
-                    index = 0
-                }
-                currentSong = if (mSongList!![index] is TracksBean) {
-                    mSongList!![index] as TracksBean
-                } else {
-                    AppUtils.getSongBean(mSongList!![index] as LocalSongBean)
-                }
+                mCurrentPosition++
             }
-            Log.d(MusicAutoService.TAG, currentSong!!.name)
+            currentSong = if (mSongList!![mCurrentPosition] is TracksBean) {
+                mSongList!![mCurrentPosition] as TracksBean
+            } else {
+                AppUtils.getSongBean(mSongList!![mCurrentPosition] as LocalSongBean)
+            }
         }
     }
 
@@ -374,33 +354,16 @@ class MusicBinder(val service: MusicAutoService) : Binder() {
             if (listeners.isNotEmpty()) {
                 listeners[listeners.size - 1].end(currentSong!!)
             }
-            var index = currentSong!!.index
-            if (AppManager.getInstance().playMode == 0 || AppManager.getInstance().playMode == 1) {
-                if (index - 1 < 0) {
-                    index = mSongList!!.size - 1
-                } else {
-                    index--
-                }
-                currentSong = if (mSongList!![index] is TracksBean) {
-                    mSongList!![index] as TracksBean
-                } else {
-                    AppUtils.getSongBean(mSongList!![index] as LocalSongBean)
-                }
+            if (mCurrentPosition - 1 < 0) {
+                mCurrentPosition = mSongList!!.size - 1
             } else {
-                if (mRandomPicker == null) {
-                    mRandomPicker = RandomPicker(mSongList!!.size)
-                }
-                index = mRandomPicker!!.next()
-                if (index >= mSongList!!.size) {
-                    index = 0
-                }
-                currentSong = if (mSongList!![index] is TracksBean) {
-                    mSongList!![index] as TracksBean
-                } else {
-                    AppUtils.getSongBean(mSongList!![index] as LocalSongBean)
-                }
+                mCurrentPosition--
             }
-            Log.d(MusicAutoService.TAG, currentSong!!.name)
+            currentSong = if (mSongList!![mCurrentPosition] is TracksBean) {
+                mSongList!![mCurrentPosition] as TracksBean
+            } else {
+                AppUtils.getSongBean(mSongList!![mCurrentPosition] as LocalSongBean)
+            }
         }
     }
 
@@ -415,6 +378,8 @@ class MusicBinder(val service: MusicAutoService) : Binder() {
                         if (mediaPlayer!!.isPlaying) {
                             if (listeners.isNotEmpty()) {
                                 listeners[listeners.size - 1].progress(mediaPlayer!!.currentPosition, mediaPlayer!!.duration)
+                                currentSong!!.currentTime = mediaPlayer!!.currentPosition
+                                currentSong!!.duration = mediaPlayer!!.duration
                             }
                         }
                     }
@@ -432,8 +397,16 @@ class MusicBinder(val service: MusicAutoService) : Binder() {
     }
 
     fun setSongList(mSongList: MutableList<BaseSongBean>) {
-        this.mSongList = mSongList
-        mRandomPicker = null
-        mRandomPicker = RandomPicker(mSongList.size)
+        val list = arrayListOf<BaseSongBean>()
+        list.addAll(mSongList)
+        if (AppManager.getInstance().playMode == 2) {
+            list.shuffle()
+            this.mSongList!!.clear()
+            this.mSongList!!.addAll(list)
+            mCurrentPosition = AppUtils.locationCurrentSongShow(currentSong, this.mSongList)
+        } else {
+            this.mSongList!!.clear()
+            this.mSongList!!.addAll(list)
+        }
     }
 }

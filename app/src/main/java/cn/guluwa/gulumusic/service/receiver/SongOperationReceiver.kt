@@ -16,7 +16,11 @@ class SongOperationReceiver : BroadcastReceiver() {
             p0!!.startActivity(Intent(p0, MainActivity::class.java))
         } else {
             when (p1!!.action) {
-                "play" -> AppManager.getInstance().musicAutoService!!.binder.playOrPauseSong()
+                "play" -> if (AppManager.getInstance().musicAutoService!!.binder.mSongPath == "") {
+                    AppManager.getInstance().musicAutoService!!.binder.playCurrentSong(null, false)
+                }else{
+                    AppManager.getInstance().musicAutoService!!.binder.playOrPauseSong()
+                }
                 "previous" -> {
                     AppManager.getInstance().musicAutoService!!.binder.stop()
                     AppManager.getInstance().musicAutoService!!.binder.getLastSong()

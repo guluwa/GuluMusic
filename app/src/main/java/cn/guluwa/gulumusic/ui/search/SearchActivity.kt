@@ -75,11 +75,6 @@ class SearchActivity : BaseActivity() {
     private var isDownLoadSong: Boolean = false
 
     /**
-     * 页面是否来自恢复
-     */
-    private var mActivityFromRestore: Boolean = false
-
-    /**
      * 歌曲播放状态
      */
     private var mPlayStatus: Int = 0
@@ -123,7 +118,7 @@ class SearchActivity : BaseActivity() {
         }
 
         override fun end(tracksBean: TracksBean) {
-
+            println("SearchActivity end")
         }
 
         override fun error(msg: String) {
@@ -185,6 +180,7 @@ class SearchActivity : BaseActivity() {
             when (view.id) {
                 R.id.mBottomPlayInfo -> {
                     val intent = Intent(this@SearchActivity, PlayActivity::class.java)
+                    intent.putExtra("from","search")
                     val options = ActivityOptionsCompat.makeSceneTransitionAnimation(this@SearchActivity, Pair(ivCurrentSongPic, "songImage"))
                     ActivityCompat.startActivityForResult(this@SearchActivity, intent, Contacts.REQUEST_CODE_PLAY, options.toBundle())
                 }
@@ -375,23 +371,6 @@ class SearchActivity : BaseActivity() {
      */
     override fun initService() {
         AppManager.getInstance().musicAutoService!!.binder.bindSongStatusListener(listener)
-        if (mActivityFromRestore) {
-            reFreshLayout()
-            mPlayBtn.isPlaying = if (AppManager.getInstance().musicAutoService!!.binder.mediaPlayer!!.isPlaying) 1 else -1
-            if (mPlayStatus == 1) {
-                if (keyWord != "") {
-                    mSearchAutoComplete!!.setText(keyWord)
-                    mSearchAutoComplete!!.setSelection(keyWord.length)
-                    searchView!!.setQuery(keyWord, true)
-                }
-                showSnackBarWithAction("播放被系统暂停，是否恢复播放", "是", object : OnActionListener {
-                    override fun action() {
-                        playSong()
-                    }
-                })
-            }
-        }
-
     }
 
     /**
@@ -551,6 +530,18 @@ class SearchActivity : BaseActivity() {
                 .hideSoftInputFromWindow(currentFocus!!.windowToken, InputMethodManager.HIDE_NOT_ALWAYS)
     }
 
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        super.onActivityResult(requestCode, resultCode, data)
+        if (requestCode == Contacts.REQUEST_CODE_PLAY && resultCode == Contacts.RESULT_SONG_CODE) {
+            mPlayBtn.isPlaying = if (AppManager.getInstance().musicAutoService!!.binder.mediaPlayer!!.isPlaying) 1 else -1
+            isChangeSong = data!!.getBooleanExtra("isChangeSong", false)
+            tvCurrentSongProgress.text = AppUtils.formatTime(AppManager.getInstance().musicAutoService!!.binder.currentSong!!.currentTime)
+            if (isChangeSong) {
+                reFreshLayout()
+            }
+        }
+    }
+
     override fun onBackPressed() {
         val intent = Intent(this@SearchActivity, MainActivity::class.java)
         intent.putExtra("isDownLoadSong", isDownLoadSong)
@@ -627,26 +618,5 @@ class SearchActivity : BaseActivity() {
                     ((mRecyclerView.adapter as SearchResultListAdapter).data[song.index] as SearchResultSongBean).isDownLoad = false
                     mRecyclerView.adapter.notifyItemChanged(song.index)
                 }) { showSnackBar("删除失败") }
-    }
-
-    override fun onSaveInstanceState(outState: Bundle?) {
-        super.onSaveInstanceState(outState)
-
-        outState!!.putInt("status", mPlayBtn.isPlaying)
-        AppManager.getInstance().musicAutoService!!.binder.currentSong!!.currentTime = AppManager.getInstance().musicAutoService!!.binder.mediaPlayer!!.currentPosition
-        println(AppUtils.formatTime(AppManager.getInstance().musicAutoService!!.binder.mediaPlayer!!.currentPosition))
-        outState.putSerializable("song", AppManager.getInstance().musicAutoService!!.binder.currentSong)
-        outState.putString("keyword", keyWord)
-    }
-
-    override fun onRestoreInstanceState(outState: Bundle?) {
-        super.onRestoreInstanceState(outState)
-
-        mActivityFromRestore = true
-        mPlayStatus = outState!!.getInt("status")
-        mPlayBtn.isPlaying = -1
-        AppManager.getInstance().musicAutoService!!.binder.currentSong = outState.getSerializable("song") as TracksBean?
-        mSearchBinding.song = AppManager.getInstance().musicAutoService!!.binder.currentSong!!
-        keyWord = outState.getString("keyword")
     }
 }

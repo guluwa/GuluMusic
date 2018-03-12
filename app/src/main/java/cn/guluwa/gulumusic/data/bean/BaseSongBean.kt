@@ -30,6 +30,8 @@ open class BaseSongBean : Serializable {
     var ar: List<ArBean>? = null
     @Ignore
     var alia: List<String>? = null
+    @Ignore
+    var isPlayed: Boolean = false
 
     companion object {
 

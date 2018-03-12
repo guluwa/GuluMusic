@@ -32,7 +32,7 @@ class MyApplication : Application() {
 
     private fun initCalligraphy() {
         CalligraphyConfig.initDefault(CalligraphyConfig.Builder()
-                .setDefaultFontPath("fonts/Roboto-Monospace-Regular.ttf")
+                .setDefaultFontPath("fonts/SL-Simplified-Regular.ttf")
                 .setFontAttrId(R.attr.fontPath).build())
     }
 

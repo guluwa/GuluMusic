@@ -95,7 +95,7 @@ class MainActivity<T> : BaseActivity() {
         }
 
         override fun end(tracksBean: TracksBean) {
-
+            println("MainActivity end")
         }
 
         override fun error(msg: String) {
@@ -155,6 +155,7 @@ class MainActivity<T> : BaseActivity() {
             when (view.id) {
                 R.id.mBottomPlayInfo -> {
                     val intent = Intent(this@MainActivity, PlayActivity::class.java)
+                    intent.putExtra("from", "main")
                     val options = ActivityOptionsCompat.makeSceneTransitionAnimation(this, Pair(ivCurrentSongPic, "songImage"))
                     ActivityCompat.startActivityForResult(this, intent, Contacts.REQUEST_CODE_PLAY, options.toBundle())
                 }
@@ -239,7 +240,6 @@ class MainActivity<T> : BaseActivity() {
                 when (arg1) {
                     1 -> {
                         if (arg2 is TracksBean) {
-
                             if (AppManager.getInstance().musicAutoService!!.binder.currentSong != null) {
                                 if (arg2.id == AppManager.getInstance().musicAutoService!!.binder.currentSong!!.id &&
                                         mPlayBtn.isPlaying == 1) {
@@ -530,35 +530,27 @@ class MainActivity<T> : BaseActivity() {
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
         if (requestCode == Contacts.REQUEST_CODE_PLAY && resultCode == Contacts.RESULT_SONG_CODE) {
+            mPlayBtn.isPlaying = if (AppManager.getInstance().musicAutoService!!.binder.mediaPlayer!!.isPlaying) 1 else -1
             val isChangeSong = data!!.getBooleanExtra("isChangeSong", false)
-            tvCurrentSongProgress.text = AppManager.getInstance().musicAutoService!!.binder.mediaPlayer!!.currentPosition.toString()
+            tvCurrentSongProgress.text = AppUtils.formatTime(AppManager.getInstance().musicAutoService!!.binder.currentSong!!.currentTime)
             if (isChangeSong) {
                 reFreshLayout()
             }
         } else if (requestCode == Contacts.REQUEST_CODE_SEARCH && resultCode == Contacts.RESULT_SONG_CODE) {
+            mPlayBtn.isPlaying = if (AppManager.getInstance().musicAutoService!!.binder.mediaPlayer!!.isPlaying) 1 else -1
             val isDownLoadSong = data!!.getBooleanExtra("isDownLoadSong", false)
             if (isDownLoadSong && "local" == AppManager.getInstance().playStatus) {
                 mViewModel.refreshLocal(true)
             }
             val isChangeSong = data.getBooleanExtra("isChangeSong", false)
-            if (isChangeSong) {
+            if (isChangeSong || isDownLoadSong) {
                 reFreshLayout()
             }
         }
     }
 
     override fun onStop() {
-        if (AppManager.getInstance().musicAutoService != null &&
-                AppManager.getInstance().musicAutoService!!.binder.mediaPlayer != null &&
-                AppManager.getInstance().musicAutoService!!.binder.currentSong != null) {
-            if (AppManager.getInstance().musicAutoService!!.binder.mediaPlayer!!.isPlaying) {
-                AppManager.getInstance().musicAutoService!!.binder.currentSong!!.duration = AppManager.getInstance().musicAutoService!!.binder.mediaPlayer!!.duration
-                AppManager.getInstance().musicAutoService!!.binder.currentSong!!.currentTime = AppManager.getInstance().musicAutoService!!.binder.mediaPlayer!!.currentPosition
-                AppUtils.setString("mCurrentSong", Gson().toJson(AppManager.getInstance().musicAutoService!!.binder.currentSong))
-            }
-        }
-        AppUtils.setInteger(Contacts.PLAY_MODE, AppManager.getInstance().playMode)
-        AppUtils.setString(Contacts.PLAY_STATUS, AppManager.getInstance().playStatus)
+        println("stop")
         super.onStop()
     }
 

@@ -5,7 +5,6 @@ import android.content.pm.ActivityInfo
 import android.graphics.Bitmap
 import android.graphics.Color
 import android.os.Build
-import android.os.Bundle
 import android.view.View
 import android.view.WindowManager
 
@@ -21,12 +20,13 @@ import cn.guluwa.gulumusic.base.BaseActivity
 import cn.guluwa.gulumusic.data.bean.LrcBean
 import cn.guluwa.gulumusic.data.bean.TracksBean
 import cn.guluwa.gulumusic.databinding.ActivityPlayBinding
-import cn.guluwa.gulumusic.utils.listener.OnActionListener
 import cn.guluwa.gulumusic.utils.listener.OnSongStatusListener
 import cn.guluwa.gulumusic.manage.AppManager
 import cn.guluwa.gulumusic.manage.Contacts
 import cn.guluwa.gulumusic.manage.MyApplication
+import cn.guluwa.gulumusic.ui.list.PlaySongListFragment
 import cn.guluwa.gulumusic.ui.main.MainActivity
+import cn.guluwa.gulumusic.ui.search.SearchActivity
 import cn.guluwa.gulumusic.utils.AppUtils
 import cn.guluwa.gulumusic.utils.LrcParser
 import jp.wasabeef.glide.transformations.BlurTransformation
@@ -55,11 +55,6 @@ class PlayActivity : BaseActivity() {
     private var isChangeSong: Boolean = false
 
     /**
-     * 页面是否来自恢复
-     */
-    private var mActivityFromRestore: Boolean = false
-
-    /**
      * 歌曲播放状态
      */
     private var mPlayStatus: Int = 0
@@ -81,7 +76,7 @@ class PlayActivity : BaseActivity() {
         override fun start() {
             mPlayBtn.isPlaying = 1
             reFreshLayout()
-            isChangeSong=true
+            isChangeSong = true
         }
 
         override fun pause() {
@@ -95,6 +90,7 @@ class PlayActivity : BaseActivity() {
         override fun end(tracksBean: TracksBean) {
             mLrcPosition = -1
             mLrcList = null
+            println("PlayActivity end")
         }
 
         override fun error(msg: String) {
@@ -161,6 +157,52 @@ class PlayActivity : BaseActivity() {
     }
 
     /**
+     * 数据初始化
+     */
+    private fun initData() {
+        mLrcPosition = -1
+        mPlayBtn.isPlaying = if (AppManager.getInstance().musicAutoService!!.binder.mediaPlayer!!.isPlaying) 1 else -1
+        mProgressView.setSongPlayLength(AppManager.getInstance().musicAutoService!!.binder.currentSong!!.currentTime,
+                AppManager.getInstance().musicAutoService!!.binder.currentSong!!.duration)
+        mPlayBinding.song = AppManager.getInstance().musicAutoService!!.binder.currentSong!!
+        showPlayModeImg(AppManager.getInstance().playMode)
+        initSongLrc(mPlayBinding.song)
+        initSongPic(mPlayBinding.song)
+    }
+
+    /**
+     * 歌词处理
+     */
+    private fun initSongLrc(tracksBean: TracksBean?) {
+        if (mLrcList == null) {
+            try {
+                mLrcList = LrcParser.parserLocal(String.format("%s_%s.txt", tracksBean!!.name, tracksBean.id))
+                val time = if (AppManager.getInstance().musicAutoService!!.binder.mediaPlayer!!.isPlaying)
+                    AppManager.getInstance().musicAutoService!!.binder.mediaPlayer!!.currentPosition
+                else
+                    AppManager.getInstance().musicAutoService!!.binder.currentSong!!.currentTime
+                for (i in mLrcList!!.indices) {
+                    if (mLrcList!![i].time > time) {
+                        mLrcPosition = if (i != 0) {
+                            i - 1
+                        } else {
+                            0
+                        }
+                        if (mPlayBtn.isPlaying != 0) {
+                            tvSongWord.text = mLrcList!![mLrcPosition].word
+                        }
+                        break
+                    }
+                }
+            } catch (e: Exception) {
+                mLrcList = null
+                tvSongWord.text = "暂无歌词"
+                e.printStackTrace()
+            }
+        }
+    }
+
+    /**
      * 图片初始化
      */
     private fun initSongPic(tracksBean: TracksBean?) {
@@ -224,7 +266,7 @@ class PlayActivity : BaseActivity() {
                     AppManager.getInstance().playMode = mode
                     showPlayModeImg(mode)
                 }
-                R.id.ivPlayMenu -> showSnackBar("菜单")
+                R.id.ivPlayMenu -> PlaySongListFragment().show(supportFragmentManager, "dialog")
                 R.id.mLastSongBtn -> {
                     AppManager.getInstance().musicAutoService!!.binder.stop()
                     AppManager.getInstance().musicAutoService!!.binder.getLastSong()
@@ -248,59 +290,6 @@ class PlayActivity : BaseActivity() {
      */
     override fun initService() {
         AppManager.getInstance().musicAutoService!!.binder.bindSongStatusListener(listener)
-        if (mActivityFromRestore) {
-            if (mPlayStatus == 1) {
-                showSnackBarWithAction("播放被系统暂停，是否恢复播放", "是", object : OnActionListener {
-                    override fun action() {
-                        playSong()
-                    }
-                })
-            }
-            initData()
-        }
-    }
-
-    /**
-     * 数据初始化
-     */
-    private fun initData() {
-        mLrcPosition = -1
-        mPlayBtn.isPlaying = if (AppManager.getInstance().musicAutoService!!.binder.mediaPlayer!!.isPlaying) 1 else -1
-        mProgressView.setSongPlayLength(AppManager.getInstance().musicAutoService!!.binder.currentSong!!.currentTime,
-                AppManager.getInstance().musicAutoService!!.binder.currentSong!!.duration)
-        mPlayBinding.song = AppManager.getInstance().musicAutoService!!.binder.currentSong!!
-        showPlayModeImg(AppManager.getInstance().playMode)
-        initSongLrc(mPlayBinding.song)
-        initSongPic(mPlayBinding.song)
-    }
-
-    /**
-     * 歌词处理
-     */
-    private fun initSongLrc(tracksBean: TracksBean?) {
-        if (mLrcList == null) {
-            try {
-                println(tracksBean!!.name)
-                mLrcList = LrcParser.parserLocal(String.format("%s_%s.txt", tracksBean.name, tracksBean.id))
-                for (i in mLrcList!!.indices) {
-                    if (mLrcList!![i].time > tracksBean.currentTime) {
-                        mLrcPosition = if (i != 0) {
-                            i - 1
-                        } else {
-                            0
-                        }
-                        if (mPlayBtn.isPlaying != 0) {
-                            tvSongWord.text = mLrcList!![mLrcPosition].word
-                        }
-                        break
-                    }
-                }
-            } catch (e: Exception) {
-                mLrcList = null
-                tvSongWord.text = "暂无歌词"
-                e.printStackTrace()
-            }
-        }
     }
 
     /**
@@ -318,8 +307,6 @@ class PlayActivity : BaseActivity() {
 
     /**
      * 更新页面
-     *
-     * @param song
      */
     private fun reFreshLayout() {
         mPlayBinding.song = AppManager.getInstance().musicAutoService!!.binder.currentSong!!
@@ -356,39 +343,17 @@ class PlayActivity : BaseActivity() {
     }
 
     override fun onBackPressed() {
-        val intent = Intent(this, MainActivity::class.java)
-        intent.putExtra("isChangeSong",isChangeSong)
-        setResult(Contacts.RESULT_SONG_CODE, intent)
+        val i: Intent = if (intent.getStringExtra("from") == "main")
+            Intent(this, MainActivity::class.java)
+        else
+            Intent(this, SearchActivity::class.java)
+        i.putExtra("isChangeSong", isChangeSong)
+        setResult(Contacts.RESULT_SONG_CODE, i)
         super.onBackPressed()
     }
 
     override fun onDestroy() {
         AppManager.getInstance().musicAutoService!!.binder.unBindSongStatusListener(listener)
         super.onDestroy()
-    }
-
-    override fun onSaveInstanceState(outState: Bundle?) {
-        super.onSaveInstanceState(outState)
-
-        outState!!.putInt("status", mPlayBtn.isPlaying)
-        AppManager.getInstance().musicAutoService!!.binder.currentSong!!.currentTime = AppManager.getInstance().musicAutoService!!.binder.mediaPlayer!!.currentPosition
-        println(AppUtils.formatTime(AppManager.getInstance().musicAutoService!!.binder.mediaPlayer!!.currentPosition))
-        outState.putSerializable("song", AppManager.getInstance().musicAutoService!!.binder.currentSong)
-    }
-
-    override fun onRestoreInstanceState(outState: Bundle?) {
-        super.onRestoreInstanceState(outState)
-
-        mActivityFromRestore = true
-        mLrcPosition = -1
-        mPlayStatus = outState!!.getInt("status")
-        mPlayBtn.isPlaying = -1
-        AppManager.getInstance().musicAutoService!!.binder.currentSong = outState.getSerializable("song") as TracksBean?
-        mProgressView.setSongPlayLength(AppManager.getInstance().musicAutoService!!.binder.currentSong!!.currentTime,
-                AppManager.getInstance().musicAutoService!!.binder.currentSong!!.duration)
-        mPlayBinding.song = AppManager.getInstance().musicAutoService!!.binder.currentSong!!
-        showPlayModeImg(AppManager.getInstance().playMode)
-        initSongPic(mPlayBinding.song)
-        initSongLrc(mPlayBinding.song)
     }
 }
