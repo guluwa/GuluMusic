@@ -28,6 +28,16 @@ class AppManager {
      */
     var searchPlatform: String = "tencent"
 
+    /**
+     * 播放歌曲是否改变
+     */
+    var isChangeSong = false
+
+    /**
+     * 是否下载歌曲
+     */
+    var isDownLoadSong = false
+
     object SingletonHolder {
         //单例（静态内部类）
         val instance = AppManager()

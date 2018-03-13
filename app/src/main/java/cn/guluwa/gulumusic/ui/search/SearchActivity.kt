@@ -18,6 +18,7 @@ import android.view.inputmethod.InputMethodManager
 import android.widget.CheckBox
 import android.widget.TextView
 import cn.guluwa.gulumusic.R
+import cn.guluwa.gulumusic.R.id.ivCurrentSongPic
 import cn.guluwa.gulumusic.ui.adapter.SearchResultListAdapter
 import cn.guluwa.gulumusic.base.BaseActivity
 import cn.guluwa.gulumusic.data.bean.*
@@ -65,16 +66,6 @@ class SearchActivity : BaseActivity() {
     private var color: Int = 0
 
     /**
-     * 是否改变了歌曲
-     */
-    private var isChangeSong: Boolean = false
-
-    /**
-     * 是否下载了歌曲
-     */
-    private var isDownLoadSong: Boolean = false
-
-    /**
      * 歌曲播放状态
      */
     private var mPlayStatus: Int = 0
@@ -106,7 +97,7 @@ class SearchActivity : BaseActivity() {
         override fun start() {
             mPlayBtn.isPlaying = 1
             reFreshLayout()
-            isChangeSong = true
+            AppManager.getInstance().isChangeSong = true
         }
 
         override fun pause() {
@@ -136,7 +127,6 @@ class SearchActivity : BaseActivity() {
         }
 
         override fun download(position: Int) {
-            isDownLoadSong = true
             if (position != -1 &&
                     (mRecyclerView.adapter as SearchResultListAdapter).data[position] is SearchResultSongBean) {
                 ((mRecyclerView.adapter as SearchResultListAdapter).data[position] as SearchResultSongBean).isDownLoad = true
@@ -167,9 +157,8 @@ class SearchActivity : BaseActivity() {
      * 数据初始化
      */
     private fun initData() {
-        keyWord = ""
+        keyWord = if (intent.getStringExtra("keyWord") != null) intent.getStringExtra("keyWord") else ""
         page = -1
-        isDownLoadSong = false
     }
 
     /**
@@ -180,7 +169,7 @@ class SearchActivity : BaseActivity() {
             when (view.id) {
                 R.id.mBottomPlayInfo -> {
                     val intent = Intent(this@SearchActivity, PlayActivity::class.java)
-                    intent.putExtra("from","search")
+                    intent.putExtra("from", "search")
                     val options = ActivityOptionsCompat.makeSceneTransitionAnimation(this@SearchActivity, Pair(ivCurrentSongPic, "songImage"))
                     ActivityCompat.startActivityForResult(this@SearchActivity, intent, Contacts.REQUEST_CODE_PLAY, options.toBundle())
                 }
@@ -459,7 +448,15 @@ class SearchActivity : BaseActivity() {
                 return true
             }
         })
+        startQuery()
         return true
+    }
+
+    private fun startQuery() {
+        searchView!!.isIconified = false
+        mSearchAutoComplete!!.setText(keyWord)
+        mSearchAutoComplete!!.setSelection(keyWord.length)
+        searchView!!.setQuery(keyWord, true)
     }
 
     /**
@@ -534,18 +531,16 @@ class SearchActivity : BaseActivity() {
         super.onActivityResult(requestCode, resultCode, data)
         if (requestCode == Contacts.REQUEST_CODE_PLAY && resultCode == Contacts.RESULT_SONG_CODE) {
             mPlayBtn.isPlaying = if (AppManager.getInstance().musicAutoService!!.binder.mediaPlayer!!.isPlaying) 1 else -1
-            isChangeSong = data!!.getBooleanExtra("isChangeSong", false)
             tvCurrentSongProgress.text = AppUtils.formatTime(AppManager.getInstance().musicAutoService!!.binder.currentSong!!.currentTime)
-            if (isChangeSong) {
+            if (AppManager.getInstance().isChangeSong) {
                 reFreshLayout()
+                AppManager.getInstance().isChangeSong = false
             }
         }
     }
 
     override fun onBackPressed() {
         val intent = Intent(this@SearchActivity, MainActivity::class.java)
-        intent.putExtra("isDownLoadSong", isDownLoadSong)
-        intent.putExtra("isChangeSong", isChangeSong)
         setResult(Contacts.RESULT_SONG_CODE, intent)
         super.onBackPressed()
     }
@@ -567,7 +562,10 @@ class SearchActivity : BaseActivity() {
                                 AppUtils.getSongBean(song as SearchResultSongBean), true)
                     }
                     1 -> {
-                        println((song as BaseSongBean).singer!!.name)
+                        if ((song as SearchResultSongBean).artist!![0] != "") {
+                            keyWord = song.artist!![0]
+                            startQuery()
+                        }
                     }
                 }
             }

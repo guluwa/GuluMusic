@@ -137,6 +137,7 @@ class PlayButton @JvmOverloads constructor(context: Context, attrs: AttributeSet
     //播放--》暂停
     var isPlaying: Int = 0
         set(playing) {
+            if (playing == field) return
             field = playing
             when (this.isPlaying) {
                 1 -> {

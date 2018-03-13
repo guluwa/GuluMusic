@@ -50,11 +50,6 @@ class PlayActivity : BaseActivity() {
     private var mLrcPosition: Int = 0
 
     /**
-     * 是否改变了歌曲
-     */
-    private var isChangeSong: Boolean = false
-
-    /**
      * 歌曲播放状态
      */
     private var mPlayStatus: Int = 0
@@ -74,9 +69,11 @@ class PlayActivity : BaseActivity() {
         }
 
         override fun start() {
+            mLrcPosition = -1
+            mLrcList = null
             mPlayBtn.isPlaying = 1
             reFreshLayout()
-            isChangeSong = true
+            AppManager.getInstance().isChangeSong = true
         }
 
         override fun pause() {
@@ -88,15 +85,11 @@ class PlayActivity : BaseActivity() {
         }
 
         override fun end(tracksBean: TracksBean) {
-            mLrcPosition = -1
-            mLrcList = null
             println("PlayActivity end")
         }
 
         override fun error(msg: String) {
             showSnackBar(msg)
-            mLrcPosition = -1
-            mLrcList = null
         }
 
         override fun progress(progress: Int, duration: Int) {
@@ -139,6 +132,7 @@ class PlayActivity : BaseActivity() {
         }
 
         override fun download(position: Int) {
+
         }
     }
 
@@ -347,7 +341,6 @@ class PlayActivity : BaseActivity() {
             Intent(this, MainActivity::class.java)
         else
             Intent(this, SearchActivity::class.java)
-        i.putExtra("isChangeSong", isChangeSong)
         setResult(Contacts.RESULT_SONG_CODE, i)
         super.onBackPressed()
     }

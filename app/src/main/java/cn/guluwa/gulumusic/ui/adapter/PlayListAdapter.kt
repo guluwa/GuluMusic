@@ -43,17 +43,17 @@ class PlayListAdapter(private val listener: OnClickListener, private val longLis
     }
 
     override fun onBindViewHolder(holder: PlayListAdapter.ViewHolder, position: Int) {
-        holder.mViewBinder.song = this.data[position]
+        holder.mViewBinding.song = this.data[position]
     }
 
     override fun getItemCount(): Int {
         return this.data.size
     }
 
-    inner class ViewHolder(val mViewBinder: PlayListItemLayoutBinding) : RecyclerView.ViewHolder(mViewBinder.root) {
+    inner class ViewHolder(val mViewBinding: PlayListItemLayoutBinding) : RecyclerView.ViewHolder(mViewBinding.root) {
 
         init {
-            mViewBinder.setClickListener({ view ->
+            mViewBinding.setClickListener({ view ->
                 when (view.id) {
                     R.id.mCardView -> {
                         if (this@PlayListAdapter.data[adapterPosition] is TracksBean) {
@@ -78,7 +78,7 @@ class PlayListAdapter(private val listener: OnClickListener, private val longLis
                     }
                 }
             })
-            mViewBinder.setLongClickListener {
+            mViewBinding.setLongClickListener {
                 if (this@PlayListAdapter.data[adapterPosition] is LocalSongBean) {
                     (this@PlayListAdapter.data[adapterPosition] as LocalSongBean).position = adapterPosition
                     longListener.click(this@PlayListAdapter.data[adapterPosition] as LocalSongBean)
@@ -86,10 +86,10 @@ class PlayListAdapter(private val listener: OnClickListener, private val longLis
                 true
             }
             val vectorDrawableCompat = VectorDrawableCompat.create(
-                    mViewBinder.root.resources, R.drawable.ic_more_vertical, mViewBinder.root.context.theme)
+                    mViewBinding.root.resources, R.drawable.ic_more_vertical, mViewBinding.root.context.theme)
             //你需要改变的颜色
-            vectorDrawableCompat!!.setTint(mViewBinder.root.resources.getColor(R.color.play_view_gray))
-            mViewBinder.ivMore.setImageDrawable(vectorDrawableCompat)
+            vectorDrawableCompat!!.setTint(mViewBinding.root.resources.getColor(R.color.play_view_gray))
+            mViewBinding.ivMore.setImageDrawable(vectorDrawableCompat)
         }
     }
 }

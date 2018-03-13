@@ -305,6 +305,7 @@ object AppUtils {
     fun getSongBean(localSongBean: LocalSongBean): TracksBean {
         val tracksBean = TracksBean()
         tracksBean.id = localSongBean.id
+        tracksBean.index = localSongBean.index
         tracksBean.name = localSongBean.name
         tracksBean.al = localSongBean.al
         tracksBean.singer = localSongBean.singer

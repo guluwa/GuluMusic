@@ -128,7 +128,10 @@ class MusicBinder(val service: MusicAutoService) : Binder() {
     fun playCurrentSong(song: TracksBean?, onlyDownload: Boolean) {
 
         //本地不存在，则去下载
-        mSongPath = AppUtils.isExistFile(String.format("%s_%s.mp3", currentSong!!.name, currentSong!!.id), 1)
+        if (!onlyDownload)
+            mSongPath = AppUtils.isExistFile(String.format("%s_%s.mp3", currentSong!!.name, currentSong!!.id), 1)
+        else
+            mSongPath = AppUtils.isExistFile(String.format("%s_%s.mp3", song!!.name, song.id), 1)
         println(mSongPath)
         if ("" == mSongPath) {
             isLoading = true
@@ -192,6 +195,7 @@ class MusicBinder(val service: MusicAutoService) : Binder() {
                                     if (listeners.isNotEmpty()) {
                                         listeners[listeners.size - 1].download(song.index)
                                     }
+                                    AppManager.getInstance().isDownLoadSong = true
                                     println(file.absolutePath)
                                     mSongPath = file.absolutePath
                                     if (result.id == currentSong!!.id && !onlyDownload) {//下载完成的歌曲和当前播放歌曲是同一首
@@ -364,6 +368,23 @@ class MusicBinder(val service: MusicAutoService) : Binder() {
             } else {
                 AppUtils.getSongBean(mSongList!![mCurrentPosition] as LocalSongBean)
             }
+        }
+    }
+
+    /**
+     * 从歌单中移除歌曲
+     */
+    fun removeCurrentSong() {
+        if (mSongList != null && mSongList!!.size != 0) {
+            if (mCurrentPosition >= mSongList!!.size) {
+                mCurrentPosition = 0
+            }
+            currentSong = if (mSongList!![mCurrentPosition] is TracksBean) {
+                mSongList!![mCurrentPosition] as TracksBean
+            } else {
+                AppUtils.getSongBean(mSongList!![mCurrentPosition] as LocalSongBean)
+            }
+            playCurrentSong(null, false)
         }
     }
 

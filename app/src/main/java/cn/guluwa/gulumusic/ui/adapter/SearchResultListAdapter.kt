@@ -111,34 +111,34 @@ class SearchResultListAdapter(private val listener: OnClickListener) :
 
     override fun onBindViewHolder(holder: SearchResultListAdapter.ViewHolder, position: Int) {
         if (getItemViewType(position) == TYPE_NORMAL) {
-            holder.mViewBinder as SearchResultListItemLayoutBinding
-            holder.mViewBinder.song = data[position] as SearchResultSongBean
-            holder.mViewBinder.index = position + 1
+            holder.mViewBinding as SearchResultListItemLayoutBinding
+            holder.mViewBinding.song = data[position] as SearchResultSongBean
+            holder.mViewBinding.index = position + 1
             //more
             val vectorDrawableMore = VectorDrawableCompat.create(
-                    holder.mViewBinder.root.resources,
+                    holder.mViewBinding.root.resources,
                     R.drawable.ic_more_vertical,
-                    holder.mViewBinder.root.context.theme)
-            vectorDrawableMore!!.setTint(holder.mViewBinder.root.resources.getColor(color))
-            holder.mViewBinder.ivMore.setImageDrawable(vectorDrawableMore)
+                    holder.mViewBinding.root.context.theme)
+            vectorDrawableMore!!.setTint(holder.mViewBinding.root.resources.getColor(color))
+            holder.mViewBinding.ivMore.setImageDrawable(vectorDrawableMore)
             //download
             if ((data[position] as SearchResultSongBean).isDownLoad) {
                 val vectorDrawableDownLoad = VectorDrawableCompat.create(
-                        holder.mViewBinder.root.resources,
+                        holder.mViewBinding.root.resources,
                         R.drawable.ic_song_has_down_load,
-                        holder.mViewBinder.root.context.theme)
-                vectorDrawableDownLoad!!.setTint(holder.mViewBinder.root.resources.getColor(color))
-                holder.mViewBinder.ivSongStatus.setImageDrawable(vectorDrawableDownLoad)
-                holder.mViewBinder.ivSongStatus.visibility = View.VISIBLE
+                        holder.mViewBinding.root.context.theme)
+                vectorDrawableDownLoad!!.setTint(holder.mViewBinding.root.resources.getColor(color))
+                holder.mViewBinding.ivSongStatus.setImageDrawable(vectorDrawableDownLoad)
+                holder.mViewBinding.ivSongStatus.visibility = View.VISIBLE
             } else {
-                holder.mViewBinder.ivSongStatus.visibility = View.GONE
+                holder.mViewBinding.ivSongStatus.visibility = View.GONE
             }
         } else if (getItemViewType(position) == TYPE_FOOTER) {
-            (holder.mViewBinder as LoadMoreLayoutBinding).loadMoreTip = data[position] as String
+            (holder.mViewBinding as LoadMoreLayoutBinding).loadMoreTip = data[position] as String
         } else if (getItemViewType(position) == TYPE_SEARCH_HISTORY) {
-            (holder.mViewBinder as SearchHistoryListItemLayoutBinding).history = (data[position] as SearchHistoryBean).text
+            (holder.mViewBinding as SearchHistoryListItemLayoutBinding).history = (data[position] as SearchHistoryBean).text
         } else {
-            (holder.mViewBinder as ListEmptyLayoutBinding).pageTip = (data[position] as SearchHistoryBean).text
+            (holder.mViewBinding as ListEmptyLayoutBinding).pageTip = (data[position] as SearchHistoryBean).text
         }
     }
 
@@ -146,20 +146,20 @@ class SearchResultListAdapter(private val listener: OnClickListener) :
         return data.size
     }
 
-    inner class ViewHolder(val mViewBinder: ViewDataBinding) :
-            RecyclerView.ViewHolder(mViewBinder.root) {
+    inner class ViewHolder(val mViewBinding: ViewDataBinding) :
+            RecyclerView.ViewHolder(mViewBinding.root) {
 
         init {
-            when (mViewBinder) {
-                is SearchResultListItemLayoutBinding -> mViewBinder.setClickListener({ view ->
+            when (mViewBinding) {
+                is SearchResultListItemLayoutBinding -> mViewBinding.setClickListener({ view ->
                     (data[adapterPosition] as SearchResultSongBean).index = adapterPosition
                     when (view.id) {
                         R.id.mSongContainer -> listener.click(1, data[adapterPosition])
                         R.id.ivMore -> listener.click(2, data[adapterPosition])
                     }
                 })
-                is LoadMoreLayoutBinding -> mViewBinder.setClickListener { listener.click(1, data[adapterPosition]) }
-                is SearchHistoryListItemLayoutBinding -> mViewBinder.setClickListener { listener.click(1, data[adapterPosition]) }
+                is LoadMoreLayoutBinding -> mViewBinding.setClickListener { listener.click(1, data[adapterPosition]) }
+                is SearchHistoryListItemLayoutBinding -> mViewBinding.setClickListener { listener.click(1, data[adapterPosition]) }
             }
         }
 
